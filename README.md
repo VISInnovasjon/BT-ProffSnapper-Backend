@@ -160,7 +160,7 @@ Bruker input kan håndteres på samme måte, her må vi passe på at vi har vali
  */
 
 const validateInputBeforeUse = (input: string) => {
-  if (!input.length < 0 || input.length > 200) {
+  if (input.length < 0 || input.length > 200) {
     const error = new Error(
       "Input is outside of permitted range. Keep it between 1-200 characters."
     );
