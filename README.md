@@ -65,10 +65,6 @@
 
 ### Komponenter
 
-| Komponent navn | Komponent form | Komponent Beskrivelse |
-| :------------- | :------------- | :-------------------- |
-| Komponent      | <Komponent/>   | Er en komponent       |
-
 <br/>
 
 ### Funksjoner
@@ -92,6 +88,10 @@
 <br/>
 
 ### Komponent Liste
+
+| Komponent navn | Komponent form | Komponent Beskrivelse |
+| :------------- | :------------- | :-------------------- |
+| Komponent      | <Komponent/>   | Er en komponent       |
 
 <br/>
 
