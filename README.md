@@ -10,8 +10,6 @@
   - [Brancher](#brancher)
   - [Code Review](#code-review)
 - [Kode Standarer](#kode-standarer)
-  - [Komponenter](#komponenter)
-  - [Funksjoner](#funksjoner-STANDARD)
   - [Error Håndtering](#error-håndtering)
 - [Front End](#front-end)
   - [Formål](#formål-FRONTEND)
@@ -85,29 +83,93 @@ Et verktøy som kan gjøre det lettere å hente, manipulere og bruke data fra bl
 
 ## Bruk av GitHub
 
+Vi jobber primært på VIS INNOVASJON sin github, i BT repo.
 <br/>
 
 ### Brancher
 
+Vi utvikler og pusher endringer til DEV, og holder av push til main primært når vi har nådd milepæler.
 <br/>
 
 ### Code Review
 
+Vi bruker primært pull-requests for å oppdatere koden i dev. Det gjør at vi har to øyne på koden som går opp til en hver tid.
 <br/>
 
 ## Kode Standarer
 
-<br/>
+Vi forholder oss til <a href="https://nextjs.org/docs">NextJS docs</a> for best practise. <br>
+Vi bruker primært en jsdoc blokk kommentar for å kommentere funksjoner: <br>
 
-### Komponenter
+```javascript
+/**
+ * Funksjon som consol.logger "hello world!"
+ */
+const helloWorld = () => {
+  console.log("Hello World!");
+};
+```
 
-<br/>
+<br>
 
-<h3 id="funksjoner-STANDARD">Funksjoner</h3>
+Vi bruker korte blokk kommentarer for å forklare enkelt funksjonen til en komponent, hvis det trengs:
 
-<br/>
+```javascript
+/**
+ * underoverskrift til prosjekt.
+ *
+ */
+const MyComponent = () => {
+  return <h2>Hello!</h2>;
+};
+```
+
+<br>
 
 ### Error Håndtering
+
+Errorhåndtering bør håndteres så tidlig som mulig.
+
+Eksempel:
+
+```javascript
+/**
+ * wrapper function over nodefetch
+ * @params{string, requestInit}
+ */
+const fetchData = async (url: string, options: requestInit) => {
+  try {
+    const response = await fetch(url, options);
+    const result = await response.json();
+    return { error: null, result: result };
+  } catch (error) {
+    saveToLog(error);
+    return { error: error, result: null };
+  }
+};
+```
+
+Da har vi en oversiktlig måte å passe states gjort av funksjoner som kan throwe errors videre. slik at både server kan evt. korrektere, eller bruker kan håndtere error.
+
+Bruker input kan håndteres på samme måte, her må vi passe på at vi har valideringsfunksjoner som gjøre det lett og oversitklig for bruker å se hva som blir gjort feil.
+
+```javascript
+/**
+ * Hjelperfunksjon for å validere brukerinput
+ *
+ */
+
+const validateInputBeforeUse = (input: string) => {
+  if (!input.length < 0 || input.length > 200) {
+    const error = new Error(
+      "Input is outside of permitted range. Keep it between 1-200 characters."
+    );
+    return { error: error, result: false };
+  } else {
+    return { error: null, result: true };
+  }
+};
+```
 
 <br/>
 
@@ -180,3 +242,4 @@ Et verktøy som kan gjøre det lettere å hente, manipulere og bruke data fra bl
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
+```
