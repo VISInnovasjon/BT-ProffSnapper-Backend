@@ -65,6 +65,10 @@
 
 ### Komponenter
 
+| Komponent navn | Komponent form | Komponent Beskrivelse |
+| :------------- | :------------- | :-------------------- |
+| Komponent      | <Komponent/>   | Er en komponent       |
+
 <br/>
 
 ### Funksjoner
