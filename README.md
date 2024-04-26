@@ -67,7 +67,7 @@
 
 <br/>
 
-### Funksjoner {#funksjoner-STANDARD}
+<h3 id="funksjoner-STANDARD">Funksjoner</h3>
 
 <br/>
 
@@ -79,11 +79,11 @@
 
 <br/>
 
-### Formål {#formål-FRONTEND}
+<h3 id="formål-FRONTEND">Formål</h3>
 
 <br/>
 
-### Framework {#framework-FRONTEND}
+<h3 id="framework-FRONTEND">Framework</h3>
 
 <br/>
 
@@ -99,7 +99,7 @@
 
 <br/>
 
-### Routing {#routing-FRONTEND}
+<h3 id="routing-FRONTEND">Routing</h3>
 
 <br/>
 
@@ -111,15 +111,15 @@
 
 <br/>
 
-### Formål {#formål-API}
+<h3 id="formål-API">Formål<h3>
 
 <br/>
 
-### Framework {#framework-API}
+<h3 id="framework-API">Framework</h3>
 
 <br/>
 
-### Routing {#routing-API}
+<h3 id="routing-API">Routing</h3>
 
 <br/>
 
@@ -135,7 +135,7 @@
 
 <br/>
 
-### Formål {#formål-DATABASE}
+<h3 id="formål-DATABASE">Formål</h3>
 
 <br/>
 
@@ -143,4 +143,4 @@
 
 <br/>
 
-### Funksjoner {#funksjoner-DATABASE}
+<h3 id="funksjoner-DATABASE">Funksjoner</h3>
