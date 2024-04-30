@@ -265,7 +265,8 @@ Authorizering skal samkjøres via MAL og MALJS, Dette må gjøres når siden ska
 
 <br/>
 
-<h3 id="formål-API">Formål<h3>
+<h3 id="formål-API">Formål</h3>
+
 Skape en rask og lett api med to formål:
 
 1. være et mellomledd mellom frontend og database.
