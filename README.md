@@ -73,7 +73,7 @@ Hva skal produktet gjøre:
 1. Lage et wireframe oppsett på hvordan siden skal se ut, og hvordan brukeropplevelsen skal være. <a href="https://excalidraw.com/#json=qp0am50gVeJC4uG-84dPQ,30uxisDeckPDPbJXrDlwWg"> Foreløbig ide</a>
 2. Designe oppsett og komponenter i FIGMA, Tenke på bruk og formål. Dette er mer et enterprise verktøy enn en butikk. (Legg til figma link her.)
 3. Få tilbakemelding fra sluttbruker når det kommer til brukervennlighet og design.
-4. Bestemme bruk av Frontend framework, hva som egner seg best, og hva som er lettest å self-hoste på azure. Next? Ren react? JS + HTML? <br> Vi har som mål å bruke NEXTJS som en fullstack løsning for client.
+4. Bestemme bruk av Frontend framework, hva som egner seg best, og hva som er lettest å self-hoste på azure. Next? Ren react? JS + HTML? <br> Vi har som mål å følge bergen stacken tett, og velger NextJS som frontend og C# som backend.
 5. Bestemme oss for database oppsett. Vi har som mål å bruke POSTGRESQL for å lagre brukerdata samt data fra proff og vis.
 6. Når det kommer til brukertyper, mener vi mht formål at alle brukere har tilgang til samme funksjonalitet.
 7. Nå et punkt hvor C# backend kan snakke med databasen på samme måte som nodejs prototype backend.
@@ -333,7 +333,7 @@ Bedrift_Info
 
 Tabell 2.
 
-Oversikt_bedrift_fase_lokasjon_pr_år
+Oversikt*bedrift_fase_lokasjon_pr*år
 
 | bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår) | Bedrift_adrr (VARCHAR(255))    |
 | :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------- | :----------------------------- |
