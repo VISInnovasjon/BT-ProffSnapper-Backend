@@ -333,11 +333,11 @@ Bedrift_Info
 
 Tabell 2.
 
-Oversikt_bedrift_fase_pr_år
+Oversikt*bedrift_fase_lokasjon_pr*år
 
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår) |
-| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------- |
-| 1                                                        | 2023                         | '{Alumni}'            | (1,2023)                           |
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår) | Bedrift_adrr (VARCHAR(255))    |
+| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------- | :----------------------------- |
+| 1                                                        | 2023                         | '{Alumni}'            | (1,2023)                           | Trollskogen 99, 1234 Helgoland |
 
 Tabell 3.
 
