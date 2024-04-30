@@ -14,6 +14,7 @@
 - [Front End](#front-end)
   - [Formål](#formål-FRONTEND)
   - [Framework](#framework-FRONTEND)
+  - [Delmål](#delmål-FRONTEND)
   - [Komponent Liste](#Komponent-liste)
   - [Håndtering av State](#håndtering-av-state)
   - [Routing](#routing-FRONTEND)
@@ -200,11 +201,45 @@ Målet er å skape en stil-ren, lettleselig og enkel frontend for å gjennomfør
 
 <br/>
 
+<h3 id="delmål-FRONTENT">Delmål</h3>
+
+Delmål for å oppnå frontend:
+
+1. Ta i bruk testData json fil, og lag en funksjon som kan vise en og en bedrift i en grafekomponent.
+
+2. Lage en tabell som kan presentere top fem bedrifter i testData.json for gjeldende økonomisk data.
+
+3. Lage en felles Header for alle endepunkt. Headeren skal inneholde en logo, pluss to knapper: Oppdater database, Generer Årsrapport.
+
+4. Lage en filtermeny, som dropdown. som kan filtrere gjennom økonomisk data set i testdata.json.
+
+5. Gjøre tabellen interaktiv, trykke på en bedrift i tabell vises i graf.
+
+6. Koble opp mot API, passe på at graf og tabell fremdeles er interaktiv og kan jobbe med fetched data fra api.
+
+7. Årsrapport Endpoint.
+   - Drag and Drop endpoint som kan ta imot excel filer.
+   - Encrypte og sende excelfiler til backend i en POST til /Årsrapport.
+   - Initialisere en nedlasting av returnert EXCEL fil.
+8. Oppdatere database endpoint.
+   - Drag and drop endpoint for å ta imot excel filer.
+   - Endcrypte og sende filer til backen i en POST til /UpdateDb
+   - Presentere bruker med svar om lagring er ok.
+9. Integrere med MAL.
+   - Integrere med MAL for Azure.
+   - endre endepunkter til å inkludere /:uid/ før endepunkt.
+
+<br/>
+
 <h3 id="framework-FRONTEND">Framework</h3>
+
+Vi har som mål å basere frontend på NextJS.
 
 <br/>
 
 ### Komponent Liste
+
+Her er en liste over komponenter som trengs til prosjektet.
 
 | Komponent navn | Komponent form | Komponent Beskrivelse |
 | :------------- | :------------- | :-------------------- |
@@ -307,9 +342,17 @@ Tabell 3.
 
 Årlig_økonomisk_data
 
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | øko_kode(VARCHAR(255)) | øko_verdi (INTEGER DEFAULT NULL) | PRIMARY KEY(bedrift_id, rapportår, øko_kode) |
-| :------------------------------------------------------- | :------------------ | :--------------------- | :------------------------------- | -------------------------------------------- |
-| 1                                                        | 2023                | EK                     | 230                              | (1,2023,EK)                                  |
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | øko_kode(VARCHAR(255) REFERENCES øko_kode_lookup(øko_kode)) | øko_verdi (INTEGER DEFAULT NULL) | PRIMARY KEY(bedrift_id, rapportår, øko_kode) |
+| :------------------------------------------------------- | :------------------ | :---------------------------------------------------------- | :------------------------------- | -------------------------------------------- |
+| 1                                                        | 2023                | EK                                                          | 230                              | (1,2023,EK)                                  |
+
+Tabell 4.
+
+Øko_kode_lookup
+
+| øko_kode(VARCHAR(255)) | kode_beskrivelse(text) |
+| :--------------------- | :--------------------- |
+| EK                     | 'Egen Kapital'         |
 
 <br/>
 
