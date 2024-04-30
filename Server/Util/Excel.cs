@@ -3,6 +3,7 @@ using MiniExcelLibs;
 namespace Util.Excel;
 
 
+/* Dette er ganske spesifikt for ett ekselark nå, her er det kanskje bedre å lage noen methods som har med lesing og skriving av excel ark, og så heller pjåte disse typene inn i readeren spesifikt. */
 public class ExcelInfo
 {
     public string Målbedrift { get; set; }
