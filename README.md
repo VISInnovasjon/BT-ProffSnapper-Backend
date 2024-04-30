@@ -333,7 +333,7 @@ Bedrift_Info
 
 Tabell 2.
 
-Oversikt*bedrift_fase_lokasjon_pr*år
+Oversikt_bedrift_fase_lokasjon_pr_år
 
 | bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår) | Bedrift_adrr (VARCHAR(255))    |
 | :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------- | :----------------------------- |
