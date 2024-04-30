@@ -4,7 +4,7 @@ namespace Util.Excel;
 
 
 /* Dette er ganske spesifikt for ett ekselark nå, her er det kanskje bedre å lage noen methods som har med lesing og skriving av excel ark, og så heller pjåte disse typene inn i readeren spesifikt. */
-public class ExcelInfo
+public class RawExcelSheet
 {
     public string Målbedrift { get; set; }
     public string Rapportår { get; set; }
@@ -16,11 +16,11 @@ public class ExcelInfo
     public string? Bransje { get; set; }
     public string? Idekilde { get; set; }
     public string? Etableringsdato { get; set; }
-    public List<ExcelInfo> ListFromExcelSheet(string path, string excelSheetName)
+    public List<RawExcelSheet> ListFromExcelSheet(string path, string excelSheetName)
     {
         using (var stream = File.OpenRead(path))
         {
-            var rows = stream.Query<ExcelInfo>(sheetName: excelSheetName).ToList();
+            var rows = stream.Query<RawExcelSheet>(sheetName: excelSheetName).ToList();
 
             var ensureOrgNr = rows.Where(row => row.Orgnummer != null).ToList();
             ensureOrgNr.Sort((a, b) =>
@@ -46,7 +46,7 @@ public class CompactedExcelSheet
     public string? Idekilde { get; set; }
     public string? Etableringsdato { get; set; }
 
-    public static List<CompactedExcelSheet> ListOfCompactedExcelSheet(List<ExcelInfo> data)
+    public static List<CompactedExcelSheet> ListOfCompactedExcelSheet(List<RawExcelSheet> data)
     {
         List<CompactedExcelSheet> CleanData = new List<CompactedExcelSheet>();
         for (int i = 0; i < data.Count; i++)
