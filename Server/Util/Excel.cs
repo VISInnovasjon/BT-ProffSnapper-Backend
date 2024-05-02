@@ -4,7 +4,7 @@ namespace Util.Excel;
 
 
 /* Dette er ganske spesifikt for ett ekselark nå, her er det kanskje bedre å lage noen methods som har med lesing og skriving av excel ark, og så heller pjåte disse typene inn i readeren spesifikt. */
-public class RawExcelSheet
+public class RawVisBedriftData
 {
     public string Målbedrift { get; set; }
     public string Rapportår { get; set; }
@@ -16,11 +16,11 @@ public class RawExcelSheet
     public string? Bransje { get; set; }
     public string? Idekilde { get; set; }
     public string? Etableringsdato { get; set; }
-    public List<RawExcelSheet> ListFromExcelSheet(string path, string excelSheetName)
+    public static List<RawVisBedriftData> ListFromVisExcelSheet(string path, string excelSheetName)
     {
         using (var stream = File.OpenRead(path))
         {
-            var rows = stream.Query<RawExcelSheet>(sheetName: excelSheetName).ToList();
+            var rows = stream.Query<RawVisBedriftData>(sheetName: excelSheetName).ToList();
 
             var ensureOrgNr = rows.Where(row => row.Orgnummer != null).ToList();
             ensureOrgNr.Sort((a, b) =>
@@ -33,7 +33,7 @@ public class RawExcelSheet
 
 }
 
-public class CompactedExcelSheet
+public class CompactedVisBedriftData
 {
     public List<string> MålbedriftNavn { get; set; }
     public List<string> Rapportår { get; set; }
@@ -46,9 +46,9 @@ public class CompactedExcelSheet
     public string? Idekilde { get; set; }
     public string? Etableringsdato { get; set; }
 
-    public static List<CompactedExcelSheet> ListOfCompactedExcelSheet(List<RawExcelSheet> data)
+    public static List<CompactedVisBedriftData> ListOfCompactedVisExcelSheet(List<RawVisBedriftData> data)
     {
-        List<CompactedExcelSheet> CleanData = new List<CompactedExcelSheet>();
+        List<CompactedVisBedriftData> CleanData = new List<CompactedVisBedriftData>();
         for (int i = 0; i < data.Count; i++)
         {
             if (CleanData.Count > 0 && CleanData.Last().Orgnummer == data[i].Orgnummer)
@@ -62,7 +62,7 @@ public class CompactedExcelSheet
             }
             else
             {
-                var cleanExcelData = new CompactedExcelSheet
+                var cleanExcelData = new CompactedVisBedriftData
                 {
                     Bransje = data[i].Bransje,
                     Idekilde = data[i].Idekilde,

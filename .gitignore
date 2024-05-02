@@ -1,1 +1,5 @@
 TestFiles/
+pgAdmin/
+postgres/
+.env
+helperJSON/

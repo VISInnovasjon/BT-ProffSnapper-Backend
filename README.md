@@ -348,11 +348,11 @@ Bedrift_Info
 
 Tabell 2.
 
-oversikt_bedrift_fase_lokasjon_pr_år
+oversikt*bedrift_fase_lokasjon_pr*år
 
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår) | fylke (VARCHAR(255)) | Kommune (VARCHAR(255)) | kommunenr (INTEGER) |
-| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------- | :------------------- | :--------------------- | :------------------ |
-| 1                                                        | 2023                         | '{Alumni}'            | (1,2023)                           | Vestland             | Bjørnafjorden          | 4624                |
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår, fase) | fylke (VARCHAR(255)) | Kommune (VARCHAR(255)) | kommunenr (INTEGER) |
+| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------------- | :------------------- | :--------------------- | :------------------ |
+| 1                                                        | 2023                         | '{Alumni}'            | (1,2023, '{Alumni}')                     | Vestland             | Bjørnafjorden          | 4624                |
 
 Tabell 3.
 
