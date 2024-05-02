@@ -84,7 +84,7 @@ Hva skal produktet gjøre:
 ### Endemål
 
 Vi ønsker å lage et enkelt verktøy for å samle, presentere, og hjelpe med organisering av data for bedrifter som har vært med i VIS sine systemer. <br>
-Et verktøy som kan gjøre det lettere å hente, manipulere og bruke data fra bl.a. PROFF for bl.a. generer årsrapporter.
+Et verktøy som kan gjøre det lettere å hente, manipulere og bruke data fra bl.a. PROFF for bl.a. generer årsrapporter. <br>
 
 <br/>
 
@@ -95,7 +95,8 @@ Vi jobber primært på VIS INNOVASJON sin github, i BT repo.
 
 ### Brancher
 
-Vi utvikler og pusher endringer til DEV, og holder av push til main primært når vi har nådd milepæler.
+Vi utvikler og pusher endringer til DEV, og holder av push til MAIN primært når vi har nådd milepæler.
+Hvis det blir laget nye feature-set eller test brancher kan disse navngis etter formål i.e. EXCEL_IMPORT_TESTING.
 <br/>
 
 ### Code Review
@@ -239,7 +240,16 @@ Vi har som mål å basere frontend på NextJS.
 
 ### Komponent Liste
 
-Her er en liste over komponenter som trengs til prosjektet.
+Front-end skal ha følgende funksjonalitet:
+| Endpoint | Funksjonalitet |
+| :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| felles alle | <ul>Header:<li>Logo</li><li>Navn</li><li>LINK: Oppdater database</li><li>LINK: Generer årsrapport</li></ul> |
+| /login | <ul>Log in with Microsoft Account: <li>Email(or autocomplete with MSAL components)</li><li>Password(not needed when using MSAL components)</li></ul> |
+| /Query | <ul>graf:<li>x-akse i år</li><li>y-akse bestemt av dataset.</li></ul><ul>funksjonalitetsknapper: <li>Filter, for å filtre i gjeldende dataset.</li><li>Søk, for å gjøre nye søk</li></ul><ul>tabell: <li>Gjeldende Bedrift</li><li>Gjeldene år</li><li>Data</li><li>Exporter dataset</li></ul> |
+| /UpdateDb | <ul>Import Excel: <li>drag and drop file-upload</li><li>Upload button</li><li>user feedback/error</li></ul> |
+| /Årsrapport | <ul>Import Excel: <li>drag and drop file-upload</li><li>Upload button</li><li>user feedback/error</li></ul><ul>Handling av generert excel fil: <li>Forhåndsvisning og/eller automatisk nedlastning</li></ul> |
+
+For å gjennomføre dette trenger vi følgende komponenter:
 
 | Komponent navn | Komponent form | Komponent Beskrivelse |
 | :------------- | :------------- | :-------------------- |
@@ -333,19 +343,21 @@ Bedrift_Info
 
 Tabell 2.
 
-Oversikt*bedrift_fase_lokasjon_pr*år
+oversikt_bedrift_fase_lokasjon_pr_år
 
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår) | Bedrift_adrr (VARCHAR(255))    |
-| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------- | :----------------------------- |
-| 1                                                        | 2023                         | '{Alumni}'            | (1,2023)                           | Trollskogen 99, 1234 Helgoland |
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår) | fylke (VARCHAR(255)) | Kommune (VARCHAR(255)) | kommunenr (INTEGER) |
+| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------- | :------------------- | :--------------------- | :------------------ |
+| 1                                                        | 2023                         | '{Alumni}'            | (1,2023)                           | Vestland             | Bjørnafjorden          | 4624                |
 
 Tabell 3.
 
 Årlig_økonomisk_data
 
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | øko_kode(VARCHAR(255) REFERENCES øko_kode_lookup(øko_kode)) | øko_verdi (INTEGER DEFAULT NULL) | PRIMARY KEY(bedrift_id, rapportår, øko_kode) |
-| :------------------------------------------------------- | :------------------ | :---------------------------------------------------------- | :------------------------------- | -------------------------------------------- |
-| 1                                                        | 2023                | EK                                                          | 230                              | (1,2023,EK)                                  |
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | øko_kode(VARCHAR(255) REFERENCES øko_kode_lookup(øko_kode)) | øko_verdi (NUMERIC(10,4) DEFAULT NULL) | PRIMARY KEY(bedrift_id, rapportår, øko_kode) |
+| :------------------------------------------------------- | :------------------ | :---------------------------------------------------------- | :------------------------------------- | -------------------------------------------- |
+| 1                                                        | 2023                | EK                                                          | 230.4                                  | (1,2023,EK)                                  |
+
+Denne tabellen kan potensielt partisjoneres etter BERDIFT_ID hvis den blir stor.
 
 Tabell 4.
 
