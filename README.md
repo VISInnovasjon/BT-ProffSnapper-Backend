@@ -251,9 +251,14 @@ Front-end skal ha følgende funksjonalitet:
 
 For å gjennomføre dette trenger vi følgende komponenter:
 
-| Komponent navn | Komponent form | Komponent Beskrivelse |
-| :------------- | :------------- | :-------------------- |
-| Komponent      | `<Komponent/>` | Er en komponent       |
+| Komponent navn | Komponent form | Komponent Beskrivelse                                      | Children:                       | Finnes i bibliotek |
+| :------------- | :------------- | :--------------------------------------------------------- | :------------------------------ | :----------------- |
+| Header         | `<Header/>`    | Header hoved component                                     | `<Logo/>` `<Link/>`             | Nei                |
+| Link           | `<Link/>`      | Håndterer routing internt i siden                          | none                            | Ja                 |
+| Input: radial  | `<Radial/>`    | Radial knapp for veksling mellom funksjonalitet            | none                            | Kanskje            |
+| Input: Button  | `<Button/>`    | Knapp for generell funksjonalitet.                         | none                            | Kanskje            |
+| Graf           | `<Graph/> `    | Graf for å visualisere dataset.                            | General Graph Components        | Ja                 |
+| Tabell         | `<Table/>`     | Tabell for å vise deler av datasett på en strukturert måte | Bygget opp av `<tr>` components | Ja                 |
 
 <br/>
 
