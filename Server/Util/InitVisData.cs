@@ -7,7 +7,7 @@ namespace Util.InitVisData;
 public class RawVisBedriftData
 {
     public string Målbedrift { get; set; }
-    public string Rapportår { get; set; }
+    public string RapportÅr { get; set; }
     public string Orgnummer { get; set; }
     public string Fase { get; set; }
     public string Kommunenr { get; set; }
@@ -16,19 +16,17 @@ public class RawVisBedriftData
     public string? Bransje { get; set; }
     public string? Idekilde { get; set; }
     public string? Etableringsdato { get; set; }
-    public static List<RawVisBedriftData> ListFromVisExcelSheet(string path, string excelSheetName)
+    public static List<RawVisBedriftData> ListFromVisExcelSheet(Stream stream, string excelSheetName)
     {
-        using (var stream = File.OpenRead(path))
-        {
-            var rows = stream.Query<RawVisBedriftData>(sheetName: excelSheetName).ToList();
 
-            var ensureOrgNr = rows.Where(row => row.Orgnummer != null).ToList();
-            ensureOrgNr.Sort((a, b) =>
-            {
-                return string.Compare(a.Orgnummer, b.Orgnummer);
-            });
-            return ensureOrgNr;
-        }
+        var rows = stream.Query<RawVisBedriftData>(sheetName: excelSheetName).ToList();
+
+        var ensureOrgNr = rows.Where(row => row.Orgnummer != null).ToList();
+        ensureOrgNr.Sort((a, b) =>
+        {
+            return string.Compare(a.Orgnummer, b.Orgnummer);
+        });
+        return ensureOrgNr;
     }
 
 }
@@ -36,7 +34,7 @@ public class RawVisBedriftData
 public class CompactedVisBedriftData
 {
     public List<string> MålbedriftNavn { get; set; }
-    public List<string> Rapportår { get; set; }
+    public List<string> RapportÅr { get; set; }
     public string Orgnummer { get; set; }
     public List<string> Faser { get; set; }
     public List<string> Kommunenr { get; set; }
@@ -55,7 +53,7 @@ public class CompactedVisBedriftData
             {
                 CleanData.Last().MålbedriftNavn.Add(data[i].Målbedrift);
                 CleanData.Last().Faser.Add(data[i].Fase);
-                CleanData.Last().Rapportår.Add(data[i].Rapportår);
+                CleanData.Last().RapportÅr.Add(data[i].RapportÅr);
                 CleanData.Last().Fylke.Add(data[i].Fylke);
                 CleanData.Last().Kommune.Add(data[i].Kommune);
                 CleanData.Last().Kommunenr.Add(data[i].Kommunenr);
@@ -68,14 +66,14 @@ public class CompactedVisBedriftData
                     Idekilde = data[i].Idekilde,
                     Orgnummer = data[i].Orgnummer,
                     Etableringsdato = data[i].Etableringsdato,
-                    Rapportår = new List<string>(),
+                    RapportÅr = new List<string>(),
                     MålbedriftNavn = new List<string>(),
                     Faser = new List<string>(),
                     Kommune = new List<string>(),
                     Kommunenr = new List<string>(),
                     Fylke = new List<string>()
                 };
-                cleanExcelData.Rapportår.Add(data[i].Rapportår);
+                cleanExcelData.RapportÅr.Add(data[i].RapportÅr);
                 cleanExcelData.MålbedriftNavn.Add(data[i].Målbedrift);
                 cleanExcelData.Faser.Add(data[i].Fase);
                 cleanExcelData.Kommune.Add(data[i].Kommune);
