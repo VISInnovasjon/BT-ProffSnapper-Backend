@@ -2,5 +2,7 @@
 
 GET {{Server_HostAddress}}/weatherforecast/
 Accept: application/json
+GET {{Server_HostAddress}}/databaseTest/
+Accept: application/json
 
 ###

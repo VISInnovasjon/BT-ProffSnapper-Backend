@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.TagHelpers;
 using Npgsql;
@@ -68,8 +69,12 @@ app.MapGet("/databaseTest", () =>
     Database.Query("SELECT * FROM testing_database", processRow);
     string jsonedNames = JsonSerializer.Serialize(name);
     string jsonedIds = JsonSerializer.Serialize(id);
-    return jsonedNames;
-});
+    return jsonedIds;
+})
+.WithName("DatabaseTest")
+.WithOpenApi();
+
+
 
 app.Run();
 

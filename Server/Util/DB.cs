@@ -10,7 +10,7 @@ class Database
     /// DotEnv.Load must be updated when env file changes.
     /// </summary>
     /// <param name="sqlQuery"></param>
-    /// <param name="processRowAction">Function determining how to process the return stream.</param>
+    /// <param name="processRowAction">Takes in an action with a single reader parameter. Allows to create an action, then calling query and using said action as a param for handling DB stream.</param>
     public static void Query(string sqlQuery, Action<NpgsqlDataReader> processRowAction)
     {
         DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "../.env" }, ignoreExceptions: false));
@@ -31,6 +31,8 @@ class Database
                         }
                     }
                 }
+                connection.Close();
+                Console.WriteLine("Connection Closed");
             }
         }
         catch (Exception ex)
