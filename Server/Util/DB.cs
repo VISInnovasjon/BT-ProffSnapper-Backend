@@ -7,20 +7,21 @@ class Database
 {
     /// <summary>
     /// Queries postgres database and reads return stream.
+    /// DotEnv.Load must be updated when env file changes.
     /// </summary>
     /// <param name="sqlQuery"></param>
     /// <param name="processRowAction">Function determining how to process the return stream.</param>
     public static void Query(string sqlQuery, Action<NpgsqlDataReader> processRowAction)
     {
-        DotEnv.Load();
-        string connectionString = $"Host={Environment.GetEnvironmentVariable("POSTGRES_HOST")};Username={Environment.GetEnvironmentVariable("POSTGRES_USER")};Password={Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")};Database={Environment.GetEnvironmentVariable("POSTGRES_NAME")}";
+        DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "../.env" }, ignoreExceptions: false));
+        string connectionString = $"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}";
         try
         {
             using (var connection = new NpgsqlConnection(connectionString))
             {
                 connection.Open();
                 Console.WriteLine("Connected to db.");
-                using (var cmd = new NpgsqlCommand(sqlQuery, connection))
+                using (NpgsqlCommand cmd = new NpgsqlCommand(sqlQuery, connection))
                 {
                     using (NpgsqlDataReader reader = cmd.ExecuteReader())
                     {

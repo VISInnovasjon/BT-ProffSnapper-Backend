@@ -1,3 +1,8 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
+using Npgsql;
+using Util.DB;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -23,7 +28,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
+    var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
             DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
@@ -36,9 +41,40 @@ app.MapGet("/weatherforecast", () =>
 .WithName("GetWeatherForecast")
 .WithOpenApi();
 
+app.MapGet("/databaseTest", () =>
+{
+    List<string> name = new List<string>();
+    List<int> id = new List<int>();
+    Action<NpgsqlDataReader> processRow = reader =>
+    {
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            if (reader.GetFieldType(i) == typeof(string))
+            {
+                string? value = reader.IsDBNull(i) ? null : reader.GetString(i);
+                if (value != null)
+                {
+                    name.Add(value);
+                }
+            }
+            else if (reader.GetFieldType(i) == typeof(int))
+            {
+                int value = reader.GetInt32(i);
+                id.Add(value);
+            }
+            else continue;
+        }
+    };
+    Database.Query("SELECT * FROM testing_database", processRow);
+    string jsonedNames = JsonSerializer.Serialize(name);
+    string jsonedIds = JsonSerializer.Serialize(id);
+    return jsonedNames;
+});
+
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
