@@ -3,3 +3,4 @@ pgAdmin/
 postgres/
 .env
 helperJSON/
+ProffJsonSchema.json

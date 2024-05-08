@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "qH/GY1ofZqo7fsmDJuHEreS+sX7O1frHbvx7C8t/rloShkz3jbSPjO21gnHdAdzTnl6segVgxUZN2KQXuqM8xg==",
+  "dgSpecHash": "Pin/T0K3lpwhcdq3Fo+KZlxDPLWmYEb9l4b5aKNUDpNZq677HdbvjDDJwA6TXIBwycuXofXWrA/MUqDQXhMy7g==",
   "success": true,
-  "projectFilePath": "C:\\Users\\John Ellingsen\\Documents\\C_Sharp\\BT-temp-navn-\\Server\\Server.csproj",
+  "projectFilePath": "C:\\Users\\John Ellingsen\\Documents\\BT-temp-navn-\\Server\\Server.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\dotenv.net\\3.1.3\\dotenv.net.3.1.3.nupkg.sha512",
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\microsoft.aspnetcore.openapi\\8.0.0\\microsoft.aspnetcore.openapi.8.0.0.nupkg.sha512",
