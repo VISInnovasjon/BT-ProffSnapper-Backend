@@ -29,10 +29,17 @@ public class ExcelTestController : ControllerBase
             string jsonData;
             using (var stream = file.OpenReadStream())
             {
-                var RawData = RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
+                List<RawVisBedriftData> RawData;
+                try
+                {
+                    RawData = RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                /* Database.Query("SELECT * FROM øko_kode_lookup", processStream); */
-               CompactedVisBedriftData.AddListToDb(compactData);
+                CompactedVisBedriftData.AddListToDb(compactData);
                 jsonData = JsonSerializer.Serialize(compactData);
             }
             return Ok($"Stream successfully parsed: \n {jsonData}");

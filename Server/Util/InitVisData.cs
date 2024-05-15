@@ -16,6 +16,16 @@ public class RawVisBedriftData
         var rows = stream.Query<RawVisBedriftData>(sheetName: excelSheetName).ToList();
 
         var ensureOrgNr = rows.Where(row => row.Orgnummer != 0).ToList();
+        List<int> WrongOrgNr = new() { };
+        foreach (var org in ensureOrgNr)
+        {
+            if (org.Orgnummer.ToString().Length < 9) WrongOrgNr.Add(org.Orgnummer);
+        }
+        if (WrongOrgNr.Count > 0)
+        {
+            string OrgNrs = string.Join(", ", WrongOrgNr);
+            throw new ArgumentOutOfRangeException($"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}");
+        }
         ensureOrgNr.Sort((a, b) => a.Orgnummer.CompareTo(b.Orgnummer));
         return ensureOrgNr;
     }
