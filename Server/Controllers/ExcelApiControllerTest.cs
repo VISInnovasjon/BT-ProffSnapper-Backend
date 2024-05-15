@@ -1,13 +1,15 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Util.InitVisData;
+using Util.DB;
+using Npgsql;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("/ExcelTest")]
+[Route("/ExcelUpload")]
 public class ExcelTestController : ControllerBase
 {
-    [HttpPost("upload")]
+    [HttpPost("UpdateNewData")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult Create([FromForm] IFormFile file)
@@ -29,6 +31,8 @@ public class ExcelTestController : ControllerBase
             {
                 var RawData = RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
+                /* Database.Query("SELECT * FROM øko_kode_lookup", processStream); */
+               CompactedVisBedriftData.AddListToDb(compactData);
                 jsonData = JsonSerializer.Serialize(compactData);
             }
             return Ok($"Stream successfully parsed: \n {jsonData}");

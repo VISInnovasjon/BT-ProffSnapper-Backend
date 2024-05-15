@@ -1,20 +1,49 @@
 
 namespace Util.ProffApiClasses;
+using Npgsql;
+using Util.DB;
 
 
 
 public class EcoCodes
 {
     public required string Code { get; set; }
-    public required string Amount { get; set; }
+    public required int Amount { get; set; }
 }
 public class AccountsInfo
 {
     public string? AccIncompleteCode { get; set; }
     public string? AccOIncompleteDesc { get; set; }
-    public required string Year { get; set; }
+    public required int Year { get; set; }
     public required List<EcoCodes> Accounts { get; set; }
 
+    /// <summary>
+    /// Converts the AccountsInfo class into a dictionary of npgsql types that can be inserted into a database.
+    /// </br>
+    /// </br>
+    /// codes refer to a sql list of all codes in EcoCodes.</br>
+    /// values refer to a sql list of all values in EcoCodes</br>
+    /// year refers to the year of these codes.
+    /// </summary>
+    /// <returns></returns>
+    public Dictionary<string, NpgsqlParameter> AccountValues()
+    {
+        Dictionary<string, NpgsqlParameter> codeDictionary = new() { };
+        List<string> codeNames = new() { };
+        List<int> values = new() { };
+        foreach (var code in Accounts)
+        {
+            codeNames.Add(code.Code);
+            values.Add(code.Amount);
+        }
+        NpgsqlParameter convertedCodenames = Database.ConvertListToParameter<string>(codeNames, "codes");
+        NpgsqlParameter convertedValues = Database.ConvertListToParameter<int>(values, "values");
+        NpgsqlParameter validYear = new NpgsqlParameter("year", NpgsqlTypes.NpgsqlDbType.Integer) { Value = Year };
+        codeDictionary.Add("codes", convertedCodenames);
+        codeDictionary.Add("values", convertedValues);
+        codeDictionary.Add("year", validYear);
+        return codeDictionary;
+    }
 }
 public class WebInfo
 {
@@ -29,6 +58,7 @@ public class ShareHolderInfo
     public int NumberOfShares { get; set; }
     public required string Share { get; set; }
     public WebInfo? Details { get; set; }
+    
 }
 public class LocationInfo
 {

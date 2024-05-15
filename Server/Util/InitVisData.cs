@@ -1,13 +1,13 @@
 using MiniExcelLibs;
+using Util.DB;
+using Npgsql;
 
 namespace Util.InitVisData;
 
-
-/* Dette er ganske spesifikt for ett ekselark nå, her er det kanskje bedre å lage noen methods som har med lesing og skriving av excel ark, og så heller pjåte disse typene inn i readeren spesifikt. */
 public class RawVisBedriftData
 {
-    public string RapportÅr { get; set; }
-    public string Orgnummer { get; set; }
+    public int RapportÅr { get; set; }
+    public int Orgnummer { get; set; }
     public string Fase { get; set; }
     public string? Bransje { get; set; }
     public static List<RawVisBedriftData> ListFromVisExcelSheet(Stream stream, string excelSheetName)
@@ -15,11 +15,8 @@ public class RawVisBedriftData
 
         var rows = stream.Query<RawVisBedriftData>(sheetName: excelSheetName).ToList();
 
-        var ensureOrgNr = rows.Where(row => row.Orgnummer != null).ToList();
-        ensureOrgNr.Sort((a, b) =>
-        {
-            return string.Compare(a.Orgnummer, b.Orgnummer);
-        });
+        var ensureOrgNr = rows.Where(row => row.Orgnummer != 0).ToList();
+        ensureOrgNr.Sort((a, b) => a.Orgnummer.CompareTo(b.Orgnummer));
         return ensureOrgNr;
     }
 
@@ -27,8 +24,8 @@ public class RawVisBedriftData
 
 public class CompactedVisBedriftData
 {
-    public List<string> RapportÅr { get; set; }
-    public string Orgnummer { get; set; }
+    public List<int> RapportÅr { get; set; }
+    public int Orgnummer { get; set; }
     public List<string> Faser { get; set; }
     public string? Bransje { get; set; }
 
@@ -48,7 +45,7 @@ public class CompactedVisBedriftData
                 {
                     Bransje = data[i].Bransje,
                     Orgnummer = data[i].Orgnummer,
-                    RapportÅr = new List<string>(),
+                    RapportÅr = new List<int>(),
                     Faser = new List<string>(),
                 };
                 cleanExcelData.RapportÅr.Add(data[i].RapportÅr);
@@ -57,6 +54,41 @@ public class CompactedVisBedriftData
             }
         }
         return CleanData;
+    }
+    public static void AddListToDb(List<CompactedVisBedriftData> data)
+    {
+        foreach (var company in data)
+        {
+            NpgsqlParameter? years = null;
+            NpgsqlParameter? phases = null;
+            List<NpgsqlParameter> paramList = new() { };
+            try
+            {
+                years = Database.ConvertListToParameter<int>(company.RapportÅr, "years");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            if (years != null) paramList.Add(years);
+            try
+            {
+                phases = Database.ConvertListToParameter<string>(company.Faser, "phases");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            if (phases != null) paramList.Add(phases);
+            NpgsqlParameter OrgNr = new("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = company.Orgnummer };
+            if (OrgNr != null) paramList.Add(OrgNr);
+            NpgsqlParameter bransje = new("bransje", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = company.Bransje };
+            if (bransje != null) paramList.Add(bransje);
+            Database.Query($"SELECT * FROM Insert_Bedrift_Data_Vis(@orgnr,@bransje,@years, @phases)", reader =>
+            {
+                Console.WriteLine($"Storing {company.Orgnummer}");
+            }, paramList);
+        }
     }
 
 }
