@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "Pin/T0K3lpwhcdq3Fo+KZlxDPLWmYEb9l4b5aKNUDpNZq677HdbvjDDJwA6TXIBwycuXofXWrA/MUqDQXhMy7g==",
+  "dgSpecHash": "RhFLN6lpSk7KRfFi5Dn+4k2tKXydjPsgylLobcezFzZzaNC27y7yueZWGa7rPHjwVudt5yctU3yFv5ozWrVZ8Q==",
   "success": true,
   "projectFilePath": "C:\\Users\\John Ellingsen\\Documents\\BT-temp-navn-\\Server\\Server.csproj",
   "expectedPackageFiles": [
@@ -11,7 +11,7 @@
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\microsoft.openapi\\1.4.3\\microsoft.openapi.1.4.3.nupkg.sha512",
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\miniexcel\\1.31.3\\miniexcel.1.31.3.nupkg.sha512",
-    "C:\\Users\\John Ellingsen\\.nuget\\packages\\npgsql\\8.0.2\\npgsql.8.0.2.nupkg.sha512",
+    "C:\\Users\\John Ellingsen\\.nuget\\packages\\npgsql\\8.0.3\\npgsql.8.0.3.nupkg.sha512",
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\swashbuckle.aspnetcore\\6.4.0\\swashbuckle.aspnetcore.6.4.0.nupkg.sha512",
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\swashbuckle.aspnetcore.swagger\\6.4.0\\swashbuckle.aspnetcore.swagger.6.4.0.nupkg.sha512",
     "C:\\Users\\John Ellingsen\\.nuget\\packages\\swashbuckle.aspnetcore.swaggergen\\6.4.0\\swashbuckle.aspnetcore.swaggergen.6.4.0.nupkg.sha512",
