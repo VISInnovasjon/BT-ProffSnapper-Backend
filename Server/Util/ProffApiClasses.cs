@@ -13,7 +13,7 @@ public class EcoCodes
 public class AccountsInfo
 {
     public string? AccIncompleteCode { get; set; }
-    public string? AccOIncompleteDesc { get; set; }
+    public string? AccIncompleteDesc { get; set; }
     public required int Year { get; set; }
     public required List<EcoCodes> Accounts { get; set; }
 
@@ -75,11 +75,44 @@ public class ShareHolderInfo
     }
 
 }
+
+public class Announcement
+{
+    public int Id { get; set; }
+    public string Date { get; set; }
+    public string Text { get; set; }
+    public string Type { get; set; }
+    public Dictionary<string, NpgsqlParameter> AnnouncementParam()
+    {
+        Dictionary<string, NpgsqlParameter> Param = new();
+        Param.Add("Id", new NpgsqlParameter("kunngjøring_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = Id });
+        Param.Add("Date", new NpgsqlParameter("dato", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Date });
+        Param.Add("Text", new NpgsqlParameter("kunngjøringstext", NpgsqlTypes.NpgsqlDbType.Text) { Value = Text });
+        Param.Add("Type", new NpgsqlParameter("kunngjøringstype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Type });
+        return Param;
+    }
+}
 public class LocationInfo
 {
     public string? CountryPart { get; set; }
     public string? County { get; set; }
     public string? Municipality { get; set; }
+}
+public class PersonRole
+{
+    public required string BirthDate { get; set; }
+    public required string Name { get; set; }
+    public required string Title { get; set; }
+    public required string TitleCode { get; set; }
+    public Dictionary<string, NpgsqlParameter> PersonRoleParams()
+    {
+        Dictionary<string, NpgsqlParameter> Param = new() { };
+        Param.Add("BirthDate", new NpgsqlParameter("fødselsdag", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = BirthDate });
+        Param.Add("Name", new NpgsqlParameter("navn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Name });
+        Param.Add("Title", new NpgsqlParameter("tittel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Title });
+        Param.Add("TitleCode", new NpgsqlParameter("tittelkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = TitleCode });
+        return Param;
+    }
 }
 /* Må lage en class basert på hva data som skal hentes inn fra proff. basert på JSON schema. Se på proffjson schema for referanse. */
 public class ReturnStructure
@@ -93,7 +126,10 @@ public class ReturnStructure
     public string? EstablishedDate { get; set; }
     public int? NumberOfEmployees { get; set; }
     public required string Name { get; set; }
-    public required List<AccountsInfo> AnnualAccounts { get; set; }
+    /* Rollekoder vi er ute etter fra PROFF er DAGL, eller LEDE hvis DAGL ikke er tilgjengelig. */
+    public required List<PersonRole> PersonRoles { get; set; }
+    public required List<Announcement> Announcements { get; set; }
+    public required List<AccountsInfo> CompanyAccounts { get; set; }
     public required List<ShareHolderInfo> ShareHolders { get; set; }
     public required LocationInfo Location { get; set; }
 }
@@ -109,6 +145,8 @@ public class SqlParamStructure
     public NpgsqlParameter? EstablishedDate { get; set; }
     public NpgsqlParameter? NumberOfEmployees { get; set; }
     public required NpgsqlParameter Name { get; set; }
+    public required List<Dictionary<string, NpgsqlParameter>> PersonRoles { get; set; }
+    public required List<Dictionary<string, NpgsqlParameter>> Announcements { get; set; }
     public required List<Dictionary<string, NpgsqlParameter>> AnnualAccounts { get; set; }
     public required List<Dictionary<string, NpgsqlParameter>> ShareHolders { get; set; }
     public required NpgsqlParameter CountryPart { get; set; }
@@ -127,13 +165,25 @@ public class SqlParamStructure
             EstablishedDate = ApiReturn.EstablishedDate == null ? null : new NpgsqlParameter("establisheddate", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.EstablishedDate },
             NumberOfEmployees = ApiReturn.NumberOfEmployees == null ? null : new NpgsqlParameter("numberofemployees", NpgsqlTypes.NpgsqlDbType.Integer) { Value = ApiReturn.NumberOfEmployees },
             Name = new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Name },
+            Announcements = new() { },
             AnnualAccounts = new() { },
             ShareHolders = new() { },
+            PersonRoles = new() { },
             CountryPart = new NpgsqlParameter("countrypart", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Location.CountryPart },
             County = new NpgsqlParameter("county", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Location.County },
             Municipality = new NpgsqlParameter("municipality", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Location.Municipality }
         };
-        foreach (var account in ApiReturn.AnnualAccounts)
+        foreach (var person in ApiReturn.PersonRoles)
+        {
+            Dictionary<string, NpgsqlParameter> PersonRole = person.PersonRoleParams();
+            paramStruct.PersonRoles.Add(PersonRole);
+        }
+        foreach (var Announcement in ApiReturn.Announcements)
+        {
+            Dictionary<string, NpgsqlParameter> AnnouncementInfo = Announcement.AnnouncementParam();
+            paramStruct.Announcements.Add(AnnouncementInfo);
+        }
+        foreach (var account in ApiReturn.CompanyAccounts)
         {
             Dictionary<string, NpgsqlParameter> AccountInfo = account.AccountValues();
             paramStruct.AnnualAccounts.Add(AccountInfo);
