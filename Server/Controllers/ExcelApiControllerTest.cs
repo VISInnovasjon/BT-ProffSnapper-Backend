@@ -1,8 +1,10 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.Threading.Tasks;
 using Util.InitVisData;
-using Util.DB;
-using Npgsql;
+using Server.Models;
+
 namespace Server.Controllers;
 
 [ApiController]

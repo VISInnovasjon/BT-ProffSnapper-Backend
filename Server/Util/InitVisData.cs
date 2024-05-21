@@ -1,6 +1,7 @@
 using MiniExcelLibs;
 using Util.DB;
 using Npgsql;
+using Server.Models;
 
 namespace Util.InitVisData;
 
@@ -94,7 +95,7 @@ public class CompactedVisBedriftData
             if (OrgNr != null) paramList.Add(OrgNr);
             NpgsqlParameter bransje = new("bransje", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = company.Bransje };
             if (bransje != null) paramList.Add(bransje);
-            Database.Query($"SELECT * FROM Insert_Bedrift_Data_Vis(@orgnr,@bransje,@years, @phases)", reader =>
+            Database.Query($"SELECT Insert_Bedrift_Data_Vis(@orgnr,@bransje,@years, @phases)", reader =>
             {
                 Console.WriteLine($"Storing {company.Orgnummer}");
             }, paramList);
