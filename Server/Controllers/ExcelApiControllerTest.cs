@@ -40,20 +40,19 @@ public class ExcelTestController : ControllerBase
                 {
                     return BadRequest(ex.Message);
                 }
-                string json = TestJsonStream.ParseJsonStream();
-                /*  var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                 CompactedVisBedriftData.AddListToDb(compactData);
-                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
-                   List<SqlParamStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
-                   foreach (var param in paramStructures)
-                   {
-                       Console.WriteLine($"Adding {param.Name} to DB");
-                       param.AddParamToDb();
-                       await Task.Delay(100);
-                   }
-                   jsonData = JsonSerializer.Serialize(compactData); */
-                return Ok(json);
+                var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
+                CompactedVisBedriftData.AddListToDb(compactData);
+                orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
+                List<SqlParamStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
+                foreach (var param in paramStructures)
+                {
+                    Console.WriteLine($"Adding {param.Name} to DB");
+                    param.AddParamToDb();
+                    await Task.Delay(100);
+                }
+                jsonData = JsonSerializer.Serialize(paramStructures);
             }
+            return Ok();
         }
         catch (Exception ex)
         {

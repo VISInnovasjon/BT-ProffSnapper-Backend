@@ -29,6 +29,8 @@ public class FetchProffData
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
+                    string filePath = $"./LocalData/response{orgNr.ToString()}.json";
+                    await File.WriteAllTextAsync(filePath, responseBody);
                     ReturnStructure returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
                     SqlParamStructure parameters = SqlParamStructure.GetSqlParamStructure(returnValue);
                     ReturnValues.Add(parameters);
