@@ -1,9 +1,8 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq;
-using System.Threading.Tasks;
 using Util.InitVisData;
-using Server.Models;
+using Util.ProffApiClasses;
+using Util.ProffFetch;
 
 namespace Server.Controllers;
 
@@ -14,7 +13,7 @@ public class ExcelTestController : ControllerBase
     [HttpPost("UpdateNewData")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult Create([FromForm] IFormFile file)
+    public async Task<IActionResult> Create([FromForm] IFormFile file)
     {
         if (file == null || file.Length == 0)
         {
@@ -32,6 +31,7 @@ public class ExcelTestController : ControllerBase
             using (var stream = file.OpenReadStream())
             {
                 List<RawVisBedriftData> RawData;
+                List<int> orgNrArray;
                 try
                 {
                     RawData = RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
@@ -42,9 +42,17 @@ public class ExcelTestController : ControllerBase
                 }
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
                 CompactedVisBedriftData.AddListToDb(compactData);
+                orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
+                List<SqlParamStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
+                foreach (var param in paramStructures)
+                {
+                    Console.WriteLine($"Adding {param.Name} to DB");
+                    param.AddParamToDb();
+                    await Task.Delay(100);
+                }
                 jsonData = JsonSerializer.Serialize(compactData);
             }
-            return Ok($"Stream successfully parsed: \n {jsonData}");
+            return Ok();
         }
         catch (Exception ex)
         {

@@ -86,11 +86,12 @@ public class Announcement
     public required string Type { get; set; }
     public List<NpgsqlParameter> AnnouncementParam()
     {
-        List<NpgsqlParameter> Param = new();
-        Param.Add(new NpgsqlParameter("kunngjøring_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = Id });
-        Param.Add(new NpgsqlParameter("dato", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Date });
-        Param.Add(new NpgsqlParameter("kunngjøringstext", NpgsqlTypes.NpgsqlDbType.Text) { Value = Text });
-        Param.Add(new NpgsqlParameter("kunngjøringstype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Type });
+        List<NpgsqlParameter> Param = [
+        new NpgsqlParameter("kunngjøring_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = Id },
+        new NpgsqlParameter("dato", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Date },
+        new NpgsqlParameter("kunngjøringstext", NpgsqlTypes.NpgsqlDbType.Text) { Value = Text },
+        new NpgsqlParameter("kunngjøringstype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Type },
+        ];
         return Param;
     }
 }
@@ -215,42 +216,84 @@ public class SqlParamStructure
         }
         return paramStruct;
     }
-    public void AddParamToDb(SqlParamStructure param)
+    public void AddParamToDb()
     {
-        Console.WriteLine($"Working on {param.CompanyId}");
-        Database.Query("SELECT update_bedrift_info_with_name (@orgnr, @name, @previousnames)", reader =>
+        Console.WriteLine($"Working on {CompanyId}");
+        try
         {
-            Console.WriteLine($"Updating Name to {param.Name}");
-        }, new List<NpgsqlParameter> { param.CompanyId, param.Name, param.PreviousNames });
+            Database.Query("SELECT update_bedrift_info_with_name (@orgnr, @name, @previousnames)", reader =>
+            {
+                Console.WriteLine($"Updating Name to {Name}");
+            }, new List<NpgsqlParameter> { CompanyId, Name, PreviousNames });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
         Console.WriteLine("Inserting general params");
-        Database.Query("SELECT insert_generell_årlig_bedrift_info(@orgnr, @gjeldende_år, @countrypart, @county, @municipality, @adressline, @zipkode, @numberofemployees)", reader => { }, new List<NpgsqlParameter>{
-            param.CompanyId, param.CurrentYear, param.CountryPart, param.County, param.Municipality, param.AdressLine, param.ZipCode, param.NumberOfEmployees
-        });
-        Console.WriteLine("Inserting Øko Data");
-        foreach (var account in param.CompanyAccounts)
+        try
         {
-            account.Add(param.CompanyId);
-            Database.Query("SELECT insert_øko_data(@orgnr, @rapportår, @koder, @verdier)", reader => { }, account);
+            Database.Query("SELECT insert_generell_årlig_bedrift_info(@orgnr, @gjeldende_år, @countrypart, @county, @municipality, @adressline, @zipkode, @numberofemployees)", reader => { }, new List<NpgsqlParameter>{
+            CompanyId, CurrentYear, CountryPart, County, Municipality, AdressLine, ZipCode, NumberOfEmployees
+        });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+        Console.WriteLine("Inserting Øko Data");
+        foreach (var account in CompanyAccounts)
+        {
+            account.Add(CompanyId);
+            try
+            {
+                Database.Query("SELECT insert_øko_data(@orgnr, @rapportår, @koder, @verdier)", reader => { }, account);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         Console.WriteLine("Inserting Announcement data");
-        foreach (var announcement in param.Announcements)
+        foreach (var announcement in Announcements)
         {
-            announcement.Add(param.CompanyId);
-            Database.Query("SELECT insert_kunngjøringer(@orgnr, @kunngjørings_id, @dato, @kunngjøringstekst, @kunngjøringstype)", reader => { }, announcement);
+            announcement.Add(CompanyId);
+            try
+            {
+                Database.Query("SELECT insert_kunngjøringer(@orgnr, @kunngjørings_id, @dato, @kunngjøringstekst, @kunngjøringstype)", reader => { }, announcement);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         Console.WriteLine("Inserting leader data");
-        foreach (var person in param.PersonRoles)
+        foreach (var person in PersonRoles)
         {
-            person.Add(param.CompanyId);
-            person.Add(param.CurrentYear);
-            Database.Query("SELECT insert_bedrift_leder_info(@orgnr, @navn, @tittel, @tittelkode, @fødselsdag, @gjeldende_år)", reader => { }, person);
+            person.Add(CompanyId);
+            person.Add(CurrentYear);
+            try
+            {
+                Database.Query("SELECT insert_bedrift_leder_info(@orgnr, @navn, @tittel, @tittelkode, @fødselsdag, @gjeldende_år)", reader => { }, person);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         Console.WriteLine("Inserting Shareholder Info");
-        foreach (var shareholder in param.ShareHolders)
+        foreach (var shareholder in ShareHolders)
         {
-            shareholder.Add(param.CompanyId);
-            shareholder.Add(param.CurrentYear);
-            Database.Query("SELECT insert_shareholder_info(@orgnr, @gjeldende_år, @sharecount, @name, @share, @shareholder_bedrift_id, @fornavn, @etternavn)", reader => { }, shareholder);
+            shareholder.Add(CompanyId);
+            shareholder.Add(CurrentYear);
+            try
+            {
+                Database.Query("SELECT insert_shareholder_info(@orgnr, @gjeldende_år, @sharecount, @name, @share, @shareholder_bedrift_id, @fornavn, @etternavn)", reader => { }, shareholder);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 

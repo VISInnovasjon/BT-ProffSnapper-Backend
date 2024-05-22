@@ -101,5 +101,13 @@ public class CompactedVisBedriftData
             }, paramList);
         }
     }
-
+    public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)
+    {
+        List<int> orgNrArray = new();
+        foreach (var compactData in data)
+        {
+            orgNrArray.Add(compactData.Orgnummer);
+        }
+        return orgNrArray;
+    }
 }

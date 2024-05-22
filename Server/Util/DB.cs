@@ -13,7 +13,6 @@ class Database
     /// <param name="processRowAction">Takes in an action with a single reader parameter. Allows to create an action, then calling query and using said action as a param for handling DB stream.</param>
     public static void Query(string sqlQuery, Action<NpgsqlDataReader> processRowAction, List<NpgsqlParameter>? paramList = null)
     {
-        DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "../.env" }, ignoreExceptions: false));
         string connectionString = $"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}";
         Console.WriteLine(connectionString);
         try
