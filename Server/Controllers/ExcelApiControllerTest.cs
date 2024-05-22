@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Util.InitVisData;
 using Util.ProffApiClasses;
 using Util.ProffFetch;
-
+using Util.TestStructure;
 namespace Server.Controllers;
 
 [ApiController]
@@ -40,19 +40,20 @@ public class ExcelTestController : ControllerBase
                 {
                     return BadRequest(ex.Message);
                 }
-                var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                CompactedVisBedriftData.AddListToDb(compactData);
-                orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
-                List<SqlParamStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
-                foreach (var param in paramStructures)
-                {
-                    Console.WriteLine($"Adding {param.Name} to DB");
-                    param.AddParamToDb();
-                    await Task.Delay(100);
-                }
-                jsonData = JsonSerializer.Serialize(compactData);
+                string json = TestJsonStream.ParseJsonStream();
+                /*  var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
+                 CompactedVisBedriftData.AddListToDb(compactData);
+                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
+                   List<SqlParamStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
+                   foreach (var param in paramStructures)
+                   {
+                       Console.WriteLine($"Adding {param.Name} to DB");
+                       param.AddParamToDb();
+                       await Task.Delay(100);
+                   }
+                   jsonData = JsonSerializer.Serialize(compactData); */
+                return Ok(json);
             }
-            return Ok();
         }
         catch (Exception ex)
         {

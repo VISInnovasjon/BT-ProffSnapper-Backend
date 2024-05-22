@@ -1,5 +1,7 @@
 
 namespace Util.ProffApiClasses;
+
+using System.Numerics;
 using Npgsql;
 using Util.DB;
 
@@ -8,13 +10,13 @@ using Util.DB;
 public class EcoCodes
 {
     public required string Code { get; set; }
-    public required int Amount { get; set; }
+    public required string Amount { get; set; }
 }
 public class AccountsInfo
 {
     public string? AccIncompleteCode { get; set; }
     public string? AccIncompleteDesc { get; set; }
-    public required int Year { get; set; }
+    public required string Year { get; set; }
     public required List<EcoCodes> Accounts { get; set; }
 
     /// <summary>
@@ -30,14 +32,14 @@ public class AccountsInfo
     {
         List<NpgsqlParameter> codeDictionary = new() { };
         List<string> codeNames = new() { };
-        List<int> values = new() { };
+        List<decimal> values = new() { };
         foreach (var code in Accounts)
         {
             codeNames.Add(code.Code);
-            values.Add(code.Amount);
+            values.Add(decimal.Parse(code.Amount));
         }
         NpgsqlParameter convertedCodenames = Database.ConvertListToParameter<string>(codeNames, "koder");
-        NpgsqlParameter convertedValues = Database.ConvertListToParameter<int>(values, "verdier");
+        NpgsqlParameter convertedValues = Database.ConvertListToParameter<decimal>(values, "verdier");
         NpgsqlParameter validYear = new NpgsqlParameter("rapportår", NpgsqlTypes.NpgsqlDbType.Integer) { Value = Year };
         codeDictionary.Add(convertedCodenames);
         codeDictionary.Add(convertedValues);
@@ -80,19 +82,25 @@ public class ShareHolderInfo
 
 public class Announcement
 {
-    public int Id { get; set; }
+    public required string Id { get; set; }
     public required string Date { get; set; }
     public required string Text { get; set; }
     public required string Type { get; set; }
     public List<NpgsqlParameter> AnnouncementParam()
     {
-        List<NpgsqlParameter> Param = [
-        new NpgsqlParameter("kunngjøring_id", NpgsqlTypes.NpgsqlDbType.Integer) { Value = Id },
+        BigInteger IdValue;
+        bool ParsedId = BigInteger.TryParse(Id, out IdValue);
+        if (ParsedId)
+        {
+            List<NpgsqlParameter> Param = [
+            new NpgsqlParameter("kunngjøring_id", NpgsqlTypes.NpgsqlDbType.Bigint) { Value = IdValue },
         new NpgsqlParameter("dato", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Date },
         new NpgsqlParameter("kunngjøringstext", NpgsqlTypes.NpgsqlDbType.Text) { Value = Text },
         new NpgsqlParameter("kunngjøringstype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Type },
         ];
-        return Param;
+            return Param;
+        }
+        else throw new ArgumentException("Failed to parse Id");
     }
 }
 public class LocationInfo
@@ -103,7 +111,7 @@ public class LocationInfo
 }
 public class PostalInfo
 {
-    public required string AdressLine { get; set; }
+    public required string AddressLine { get; set; }
     public required string ZipCode { get; set; }
 }
 public class PersonRole
@@ -117,10 +125,17 @@ public class PersonRole
         List<NpgsqlParameter> Param = new() { };
         if (TitleCode == "DAGL" || TitleCode == "LEDE")
         {
-            Param.Add(new NpgsqlParameter("fødselsdag", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = BirthDate });
-            Param.Add(new NpgsqlParameter("navn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Name });
-            Param.Add(new NpgsqlParameter("tittel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Title });
-            Param.Add(new NpgsqlParameter("tittelkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = TitleCode });
+            try
+            {
+                Param.Add(new NpgsqlParameter("fødselsdag", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = BirthDate });
+                Param.Add(new NpgsqlParameter("navn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Name });
+                Param.Add(new NpgsqlParameter("tittel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Title });
+                Param.Add(new NpgsqlParameter("tittelkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = TitleCode });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
         return Param;
     }
@@ -130,19 +145,17 @@ public class ReturnStructure
 {
     public string? CompanyType { get; set; }
     public string? CompanyTypeName { get; set; }
-    public decimal? EstimatedTurnover { get; set; }
-    public bool HasSecurity { get; set; }
     public List<string>? PreviousNames { get; set; }
     public string? RegistrationDate { get; set; }
     public string? EstablishedDate { get; set; }
-    public int? NumberOfEmployees { get; set; }
-    public required int CompanyId { get; set; }
+    public string? NumberOfEmployees { get; set; }
+    public required string CompanyId { get; set; }
     public required string Name { get; set; }
     /* Rollekoder vi er ute etter fra PROFF er DAGL, eller LEDE hvis DAGL ikke er tilgjengelig. */
     public required List<PersonRole> PersonRoles { get; set; }
     public required List<Announcement> Announcements { get; set; }
     public required List<AccountsInfo> CompanyAccounts { get; set; }
-    public required List<ShareHolderInfo> ShareHolders { get; set; }
+    public required List<ShareHolderInfo> Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
 }
@@ -151,8 +164,6 @@ public class SqlParamStructure
 {
     public NpgsqlParameter? CompanyType { get; set; }
     public NpgsqlParameter? CompanyTypeName { get; set; }
-    public NpgsqlParameter? EstimatedTurnover { get; set; }
-    public required NpgsqlParameter HasSecurity { get; set; }
     public NpgsqlParameter? PreviousNames { get; set; }
     public NpgsqlParameter? RegistrationDate { get; set; }
     public NpgsqlParameter? EstablishedDate { get; set; }
@@ -161,7 +172,7 @@ public class SqlParamStructure
     public required NpgsqlParameter Name { get; set; }
     public required NpgsqlParameter CurrentYear { get; set; }
     public required List<List<NpgsqlParameter>> PersonRoles { get; set; }
-    public required List<List<NpgsqlParameter>> Announcements { get; set; }
+    public List<List<NpgsqlParameter>>? Announcements { get; set; }
     public required List<List<NpgsqlParameter>> CompanyAccounts { get; set; }
     public required List<List<NpgsqlParameter>> ShareHolders { get; set; }
     public required NpgsqlParameter CountryPart { get; set; }
@@ -175,14 +186,12 @@ public class SqlParamStructure
         {
             CompanyType = ApiReturn.CompanyType == null ? null : new NpgsqlParameter("companytype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.CompanyType },
             CompanyTypeName = ApiReturn.CompanyTypeName == null ? null : new NpgsqlParameter("companytypename", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.CompanyTypeName },
-            EstimatedTurnover = ApiReturn.EstimatedTurnover == null ? null : new NpgsqlParameter("estimatedturnover", NpgsqlTypes.NpgsqlDbType.Numeric) { Value = ApiReturn.EstimatedTurnover },
-            HasSecurity = new NpgsqlParameter("hassecurity", NpgsqlTypes.NpgsqlDbType.Boolean) { Value = ApiReturn.HasSecurity },
             PreviousNames = ApiReturn.PreviousNames == null ? null : ApiReturn.PreviousNames.Count == 0 ? null : Database.ConvertListToParameter<string>(ApiReturn.PreviousNames, "previousnames"),
             RegistrationDate = ApiReturn.RegistrationDate == null ? null : new NpgsqlParameter("registrationdate", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.RegistrationDate },
             EstablishedDate = ApiReturn.EstablishedDate == null ? null : new NpgsqlParameter("establisheddate", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.EstablishedDate },
-            NumberOfEmployees = ApiReturn.NumberOfEmployees == null ? null : new NpgsqlParameter("numberofemployees", NpgsqlTypes.NpgsqlDbType.Integer) { Value = ApiReturn.NumberOfEmployees },
+            NumberOfEmployees = ApiReturn.NumberOfEmployees == null ? null : new NpgsqlParameter("numberofemployees", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(ApiReturn.NumberOfEmployees) },
             Name = new NpgsqlParameter("name", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Name },
-            CompanyId = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = ApiReturn.CompanyId },
+            CompanyId = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(ApiReturn.CompanyId) },
             Announcements = new() { },
             CompanyAccounts = new() { },
             ShareHolders = new() { },
@@ -191,7 +200,7 @@ public class SqlParamStructure
             CountryPart = new NpgsqlParameter("countrypart", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Location.CountryPart },
             County = new NpgsqlParameter("county", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Location.County },
             Municipality = new NpgsqlParameter("municipality", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.Location.Municipality },
-            AdressLine = new NpgsqlParameter("adressline", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.PostalAddress.AdressLine },
+            AdressLine = new NpgsqlParameter("adressline", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.PostalAddress.AddressLine },
             ZipCode = new NpgsqlParameter("zipkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = ApiReturn.PostalAddress.ZipCode }
         };
         foreach (var person in ApiReturn.PersonRoles)
@@ -209,7 +218,7 @@ public class SqlParamStructure
             List<NpgsqlParameter> AccountInfo = account.AccountValues();
             paramStruct.CompanyAccounts.Add(AccountInfo);
         }
-        foreach (var shareholder in ApiReturn.ShareHolders)
+        foreach (var shareholder in ApiReturn.Shareholders)
         {
             List<NpgsqlParameter> ShareholderParameter = shareholder.ShareHolderParam();
             paramStruct.ShareHolders.Add(ShareholderParameter);
@@ -219,23 +228,29 @@ public class SqlParamStructure
     public void AddParamToDb()
     {
         Console.WriteLine($"Working on {CompanyId}");
+        List<NpgsqlParameter> param = [
+            CompanyId, Name
+        ];
+        if (PreviousNames != null) param.Add(PreviousNames);
         try
         {
-            Database.Query("SELECT update_bedrift_info_with_name (@orgnr, @name, @previousnames)", reader =>
+            Database.Query($"SELECT update_bedrift_info_with_name (@orgnr, @name{(PreviousNames != null ? ", @PreviousNames" : "")})", reader =>
             {
                 Console.WriteLine($"Updating Name to {Name}");
-            }, new List<NpgsqlParameter> { CompanyId, Name, PreviousNames });
+            }, param);
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
         }
         Console.WriteLine("Inserting general params");
+        param = [
+            CompanyId, CurrentYear, CountryPart, County, Municipality, AdressLine, ZipCode
+        ];
+        if (NumberOfEmployees != null) param.Add(NumberOfEmployees);
         try
         {
-            Database.Query("SELECT insert_generell_årlig_bedrift_info(@orgnr, @gjeldende_år, @countrypart, @county, @municipality, @adressline, @zipkode, @numberofemployees)", reader => { }, new List<NpgsqlParameter>{
-            CompanyId, CurrentYear, CountryPart, County, Municipality, AdressLine, ZipCode, NumberOfEmployees
-        });
+            Database.Query($"SELECT insert_generell_årlig_bedrift_info(@orgnr, @gjeldende_år, @countrypart, @county, @municipality, @adressline, @zipkode, {(NumberOfEmployees != null ? ", @numberofemployees" : "")})", reader => { }, param);
         }
         catch (Exception ex)
         {
@@ -255,16 +270,19 @@ public class SqlParamStructure
             }
         }
         Console.WriteLine("Inserting Announcement data");
-        foreach (var announcement in Announcements)
+        if (Announcements != null)
         {
-            announcement.Add(CompanyId);
-            try
+            foreach (var announcement in Announcements)
             {
-                Database.Query("SELECT insert_kunngjøringer(@orgnr, @kunngjørings_id, @dato, @kunngjøringstekst, @kunngjøringstype)", reader => { }, announcement);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
+                announcement.Add(CompanyId);
+                try
+                {
+                    Database.Query("SELECT insert_kunngjøringer(@orgnr, @kunngjørings_id, @dato, @kunngjøringstekst, @kunngjøringstype)", reader => { }, announcement);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
         }
         Console.WriteLine("Inserting leader data");

@@ -13,6 +13,10 @@ public class FetchProffData
         List<SqlParamStructure> ReturnValues = new();
         string baseUrl = "https://api.proff.no/api/companies/register/NO/";
         string url;
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
         using (HttpClient client = new())
         {
             client.DefaultRequestHeaders.Add("Authorization", $"Token {ApiKey}");
@@ -20,12 +24,12 @@ public class FetchProffData
             {
                 try
                 {
-                    await Task.Delay(100);
+                    await Task.Delay(1000);
                     url = baseUrl + orgNr.ToString();
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    ReturnStructure returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody);
+                    ReturnStructure returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
                     SqlParamStructure parameters = SqlParamStructure.GetSqlParamStructure(returnValue);
                     ReturnValues.Add(parameters);
                 }

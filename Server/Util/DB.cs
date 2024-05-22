@@ -76,6 +76,9 @@ class Database
         {
             param = new NpgsqlParameter(parameterName, NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Varchar);
         }
+        else if (typeof(T) == typeof(decimal)){
+            param = new NpgsqlParameter(parameterName, NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Numeric);
+        }
         else
         {
             throw new NotSupportedException($"The type '{typeof(T)}' is not supported yet.");
