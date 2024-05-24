@@ -1,31 +1,33 @@
 using MiniExcelLibs;
+using Util.DB;
+using Npgsql;
+using Server.Models;
 
 namespace Util.InitVisData;
 
-
-/* Dette er ganske spesifikt for ett ekselark nå, her er det kanskje bedre å lage noen methods som har med lesing og skriving av excel ark, og så heller pjåte disse typene inn i readeren spesifikt. */
 public class RawVisBedriftData
 {
-    public string Målbedrift { get; set; }
-    public string RapportÅr { get; set; }
-    public string Orgnummer { get; set; }
+    public int RapportÅr { get; set; }
+    public int Orgnummer { get; set; }
     public string Fase { get; set; }
-    public string Kommunenr { get; set; }
-    public string Kommune { get; set; }
-    public string Fylke { get; set; }
     public string? Bransje { get; set; }
-    public string? Idekilde { get; set; }
-    public string? Etableringsdato { get; set; }
     public static List<RawVisBedriftData> ListFromVisExcelSheet(Stream stream, string excelSheetName)
     {
 
         var rows = stream.Query<RawVisBedriftData>(sheetName: excelSheetName).ToList();
 
-        var ensureOrgNr = rows.Where(row => row.Orgnummer != null).ToList();
-        ensureOrgNr.Sort((a, b) =>
+        var ensureOrgNr = rows.Where(row => row.Orgnummer != 0).ToList();
+        List<int> WrongOrgNr = new() { };
+        foreach (var org in ensureOrgNr)
         {
-            return string.Compare(a.Orgnummer, b.Orgnummer);
-        });
+            if (org.Orgnummer.ToString().Length < 9) WrongOrgNr.Add(org.Orgnummer);
+        }
+        if (WrongOrgNr.Count > 0)
+        {
+            string OrgNrs = string.Join(", ", WrongOrgNr);
+            throw new ArgumentOutOfRangeException($"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}");
+        }
+        ensureOrgNr.Sort((a, b) => a.Orgnummer.CompareTo(b.Orgnummer));
         return ensureOrgNr;
     }
 
@@ -33,16 +35,10 @@ public class RawVisBedriftData
 
 public class CompactedVisBedriftData
 {
-    public List<string> MålbedriftNavn { get; set; }
-    public List<string> RapportÅr { get; set; }
-    public string Orgnummer { get; set; }
+    public List<int> RapportÅr { get; set; }
+    public int Orgnummer { get; set; }
     public List<string> Faser { get; set; }
-    public List<string> Kommunenr { get; set; }
-    public List<string> Kommune { get; set; }
-    public List<string> Fylke { get; set; }
     public string? Bransje { get; set; }
-    public string? Idekilde { get; set; }
-    public string? Etableringsdato { get; set; }
 
     public static List<CompactedVisBedriftData> ListOfCompactedVisExcelSheet(List<RawVisBedriftData> data)
     {
@@ -51,38 +47,67 @@ public class CompactedVisBedriftData
         {
             if (CleanData.Count > 0 && CleanData.Last().Orgnummer == data[i].Orgnummer)
             {
-                CleanData.Last().MålbedriftNavn.Add(data[i].Målbedrift);
                 CleanData.Last().Faser.Add(data[i].Fase);
                 CleanData.Last().RapportÅr.Add(data[i].RapportÅr);
-                CleanData.Last().Fylke.Add(data[i].Fylke);
-                CleanData.Last().Kommune.Add(data[i].Kommune);
-                CleanData.Last().Kommunenr.Add(data[i].Kommunenr);
             }
             else
             {
                 var cleanExcelData = new CompactedVisBedriftData
                 {
                     Bransje = data[i].Bransje,
-                    Idekilde = data[i].Idekilde,
                     Orgnummer = data[i].Orgnummer,
-                    Etableringsdato = data[i].Etableringsdato,
-                    RapportÅr = new List<string>(),
-                    MålbedriftNavn = new List<string>(),
+                    RapportÅr = new List<int>(),
                     Faser = new List<string>(),
-                    Kommune = new List<string>(),
-                    Kommunenr = new List<string>(),
-                    Fylke = new List<string>()
                 };
                 cleanExcelData.RapportÅr.Add(data[i].RapportÅr);
-                cleanExcelData.MålbedriftNavn.Add(data[i].Målbedrift);
                 cleanExcelData.Faser.Add(data[i].Fase);
-                cleanExcelData.Kommune.Add(data[i].Kommune);
-                cleanExcelData.Kommunenr.Add(data[i].Kommunenr);
-                cleanExcelData.Fylke.Add(data[i].Fylke);
                 CleanData.Add(cleanExcelData);
             }
         }
         return CleanData;
     }
-
+    public static void AddListToDb(List<CompactedVisBedriftData> data)
+    {
+        foreach (var company in data)
+        {
+            NpgsqlParameter? years = null;
+            NpgsqlParameter? phases = null;
+            List<NpgsqlParameter> paramList = new() { };
+            try
+            {
+                years = Database.ConvertListToParameter<int>(company.RapportÅr, "years");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            if (years != null) paramList.Add(years);
+            try
+            {
+                phases = Database.ConvertListToParameter<string>(company.Faser, "phases");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            if (phases != null) paramList.Add(phases);
+            NpgsqlParameter OrgNr = new("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = company.Orgnummer };
+            if (OrgNr != null) paramList.Add(OrgNr);
+            NpgsqlParameter bransje = new("bransje", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = company.Bransje };
+            if (bransje != null) paramList.Add(bransje);
+            Database.Query($"SELECT Insert_Bedrift_Data_Vis(@orgnr,@bransje,@years, @phases)", reader =>
+            {
+                Console.WriteLine($"Storing {company.Orgnummer}");
+            }, paramList);
+        }
+    }
+    public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)
+    {
+        List<int> orgNrArray = new();
+        foreach (var compactData in data)
+        {
+            orgNrArray.Add(compactData.Orgnummer);
+        }
+        return orgNrArray;
+    }
 }

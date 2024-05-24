@@ -5,3 +5,9 @@ Foreløbig TODO
 [] Adde query endpoint. - Må laste inn postgres + bygge query endpoint på nytt, kan bruke prefilled endpoints fra weatherforecast template. - Se på muligheten om å lage mer generel søk. kanskje kreve at query params tilsvarer søkefelt i database.
 
 [] Containerisere via docker compose. - Finne en måte å containerisere postgres + server, gjør det lettere å hoste på Azure etter building.
+
+
+
+[] SIK -> DELTASIK kode i database. 
+
+

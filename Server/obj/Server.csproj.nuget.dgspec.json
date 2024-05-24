@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\John Ellingsen\\Documents\\C_Sharp\\BT-temp-navn-\\Server\\Server.csproj": {}
+    "C:\\Users\\John Ellingsen\\Documents\\BT-temp-navn-\\Server\\Server.csproj": {}
   },
   "projects": {
-    "C:\\Users\\John Ellingsen\\Documents\\C_Sharp\\BT-temp-navn-\\Server\\Server.csproj": {
+    "C:\\Users\\John Ellingsen\\Documents\\BT-temp-navn-\\Server\\Server.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\John Ellingsen\\Documents\\C_Sharp\\BT-temp-navn-\\Server\\Server.csproj",
+        "projectUniqueName": "C:\\Users\\John Ellingsen\\Documents\\BT-temp-navn-\\Server\\Server.csproj",
         "projectName": "Server",
-        "projectPath": "C:\\Users\\John Ellingsen\\Documents\\C_Sharp\\BT-temp-navn-\\Server\\Server.csproj",
+        "projectPath": "C:\\Users\\John Ellingsen\\Documents\\BT-temp-navn-\\Server\\Server.csproj",
         "packagesPath": "C:\\Users\\John Ellingsen\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\John Ellingsen\\Documents\\C_Sharp\\BT-temp-navn-\\Server\\obj\\",
+        "outputPath": "C:\\Users\\John Ellingsen\\Documents\\BT-temp-navn-\\Server\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\John Ellingsen\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -38,6 +38,10 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
+            "Cronos": {
+              "target": "Package",
+              "version": "[0.8.4, )"
+            },
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[8.0.0, )"
@@ -48,7 +52,11 @@
             },
             "Npgsql": {
               "target": "Package",
-              "version": "[8.0.2, )"
+              "version": "[8.0.3, )"
+            },
+            "Npgsql.EntityFrameworkCore.PostgreSQL": {
+              "target": "Package",
+              "version": "[8.0.4, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

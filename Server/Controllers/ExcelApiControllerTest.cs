@@ -1,16 +1,18 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Util.InitVisData;
+using Util.ProffApiClasses;
+using Util.ProffFetch;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("/ExcelTest")]
+[Route("/ExcelUpload")]
 public class ExcelTestController : ControllerBase
 {
-    [HttpPost("upload")]
+    [HttpPost("UpdateNewData")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public IActionResult Create([FromForm] IFormFile file)
+    public async Task<IActionResult> Create([FromForm] IFormFile file)
     {
         if (file == null || file.Length == 0)
         {
@@ -27,11 +29,30 @@ public class ExcelTestController : ControllerBase
             string jsonData;
             using (var stream = file.OpenReadStream())
             {
-                var RawData = RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
+                List<RawVisBedriftData> RawData;
+                List<int> orgNrArray;
+                try
+                {
+                    RawData = RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
+                }
+                catch (Exception ex)
+                {
+                    return BadRequest(ex.Message);
+                }
+
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                jsonData = JsonSerializer.Serialize(compactData);
+                CompactedVisBedriftData.AddListToDb(compactData);
+                orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
+                List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
+                foreach (var param in paramStructures)
+                {
+                    Console.WriteLine($"Adding {param.Name} to DB");
+                    param.InsertToDataBase();
+                    await Task.Delay(100);
+                }
+                jsonData = JsonSerializer.Serialize(paramStructures);
             }
-            return Ok($"Stream successfully parsed: \n {jsonData}");
+            return Ok(jsonData);
         }
         catch (Exception ex)
         {
@@ -40,3 +61,59 @@ public class ExcelTestController : ControllerBase
 
     }
 }
+
+
+
+
+
+/* TEST KODE */
+/* ReturnStructure returnStructure = TestJsonStream.ParseJsonStream();
+                UpdateNameStructure nameStructure = new(
+                    returnStructure.CompanyId, returnStructure.Name, returnStructure.PreviousNames.Count == 0 ? null : returnStructure.PreviousNames
+                );
+                nameStructure.InsertIntoDatabase();
+                InsertGenerellInfoStructure infoStructure = new(
+                    returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, returnStructure.Location, returnStructure.PostalAddress, returnStructure.NumberOfEmployees ?? null
+                );
+                infoStructure.InsertToDataBase();
+                foreach (var announcement in returnStructure.Announcements)
+                {
+                    InsertKunngjøringStructure kunngjøringStructure = new(
+                        returnStructure.CompanyId, announcement
+                    );
+                    kunngjøringStructure.InsertToDataBase();
+                }
+                foreach (var account in returnStructure.CompanyAccounts)
+                {
+                    ØkoDataSqlStructure økoData = new(
+                        returnStructure.CompanyId, account
+                    );
+                    økoData.InsertIntoDatabase();
+                }
+                foreach (var person in returnStructure.PersonRoles)
+                {
+                    if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
+                    else
+                    {
+                        InsertBedriftLederInfoStructure bedriftLeder = new(
+                            returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, person
+                        );
+                        bedriftLeder.InsertToDataBase();
+                    }
+                }
+                foreach (var shareholder in returnStructure.Shareholders)
+                {
+                    InsertShareholderStructure shareholderStructure = new(
+                        returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, shareholder
+                    );
+                    shareholderStructure.InsertIntoDatabase();
+                }
+                try
+                {
+                    Database.Query("SELECT update_delta()", reader => { });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+ */

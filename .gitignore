@@ -3,3 +3,7 @@ pgAdmin/
 postgres/
 .env
 helperJSON/
+ProffJsonSchema.json
+ProffReturnExamle.json
+Models
+LocalData/
