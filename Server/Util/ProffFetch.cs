@@ -5,14 +5,14 @@ using System.Text.Json;
 public class FetchProffData
 {
 
-    public static async Task<List<SqlParamStructure>> GetDatabaseValues(List<int> orgNrArray)
+    public static async Task<List<ReturnStructure>> GetDatabaseValues(List<int> orgNrArray)
     {
         string? ApiKey = Environment.GetEnvironmentVariable("PROFF_API_KEY");
         if (string.IsNullOrEmpty(ApiKey))
             throw new ArgumentNullException("Could not fetch token from Environment.");
-        List<SqlParamStructure> ReturnValues = new();
         string baseUrl = "https://api.proff.no/api/companies/register/NO/";
         string url;
+        List<ReturnStructure> ReturnValues = new();
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -32,8 +32,7 @@ public class FetchProffData
                     string filePath = $"./LocalData/response{orgNr.ToString()}.json";
                     await File.WriteAllTextAsync(filePath, responseBody);
                     ReturnStructure returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
-                    SqlParamStructure parameters = SqlParamStructure.GetSqlParamStructure(returnValue);
-                    ReturnValues.Add(parameters);
+                    if (returnValue != null) ReturnValues.Add(returnValue);
                 }
                 catch (Exception ex)
                 {

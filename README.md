@@ -65,8 +65,12 @@ Hva skal produktet gjøre:
 
 6. Siden skal også presentere en oversiktlig tabell, som viser bedrift, gjeldene år, samt hva data som blir vist. <br> Bruker skal kunne trykke på en bedrift i tabellene, og grafen skal oppdateres til å vise gjeldene data for den bedriften.
 
-7. Vi følger bergen-stacken og har som mål å skrive en front-end i NextJS, med en backend i C#, og bruker postgreSQL som database.
-   <br/>
+7. Vi bruker følgende "stack":
+
+- Front-end: React + Vite
+- Back-End: .NET 8.0
+- Database: Postgresql
+  <br/>
 
 ### Del Mål
 
@@ -198,7 +202,19 @@ Vi har som mål å følge Bergenstacken så tett som mulig. Den mest populære f
 <br/>
 
 <h3 id="formål-FRONTEND">Formål</h3>
-Målet er å skape en stil-ren, lettleselig og enkel frontend for å gjennomføre de arbeidsoppgaver som sluttbruker krever.
+Målet er å skape en stil-ren, lettleselig og enkel frontend for å gjennomføre de arbeidsoppgaver som sluttbruker krever.<br>
+Målet er å ha en interaktiv graf hvor bruker lett kan sammenligne flere datapunkter i en linjegraf.<br>
+DVS. Sammenligne bedrifter basert på hvisse kriterier.<br>
+Kriterier som:
+  - Alder på daglig leder.
+  - Kjønn daglig leder.
+  - Faser i interne inkubatorprogrammer.
+  - Bransje.
+<br>
+Datapunktene bruker skal kunne velge mellom er f.eks:
+  - Innskutt egenkapital.
+  - Driftsresultat.
+<br>
 
 <br/>
 
@@ -251,14 +267,17 @@ Front-end skal ha følgende funksjonalitet:
 
 For å gjennomføre dette trenger vi følgende komponenter:
 
-| Komponent navn | Komponent form | Komponent Beskrivelse                                      | Children:                       | Finnes i bibliotek                     |
-| :------------- | :------------- | :--------------------------------------------------------- | :------------------------------ | :------------------------------------- |
-| Header         | `<Header/>`    | Header hoved component                                     | `<Logo/>` `<Link/>`             | Nei                                    |
-| Link           | `<Link/>`      | Håndterer routing internt i siden                          | none                            | Ja, react base component               |
-| Input: radial  | `<Radial/>`    | Radial knapp for veksling mellom funksjonalitet            | none                            | Kanskje                                |
-| Input: Button  | `<Button/>`    | Knapp for generell funksjonalitet.                         | none                            | Kanskje                                |
-| Graf           | `<BarChart/> ` | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
-| Tabell         | `<Table/>`     | Tabell for å vise deler av datasett på en strukturert måte | Bygget opp av `<tr>` components | Ja, usikker hvilken som skal bli brukt |
+| Komponent navn | Komponent form    | Komponent Beskrivelse                                      | Children:                       | Finnes i bibliotek                     |
+| :------------- | :---------------- | :--------------------------------------------------------- | :------------------------------ | :------------------------------------- |
+| Header         | `<Header/>`       | Header hoved component                                     | `<Logo/>` `<Link/>`             | Nei                                    |
+| Link           | `<Link/>`         | Håndterer routing internt i siden                          | none                            | Ja, react base component               |
+| Input: radial  | `<Radial/>`       | Radial knapp for veksling mellom funksjonalitet            | none                            | Kanskje                                |
+| Input: Button  | `<Button/>`       | Knapp for generell funksjonalitet.                         | none                            | Kanskje                                |
+| Graf           | `<BarChart/> `    | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
+| Tabell         | `<Table/>`        | Tabell for å vise deler av datasett på en strukturert måte | Bygget opp av `<tr>` components | Ja, usikker hvilken som skal bli brukt |
+| AutoComplete   | `<AutoComplete/>` | Komponent som slår sammen dropdown med et søkbart felt.    | Liste eller array av options.   | Ja, hentet fra mui                     |
+
+|
 
 <br/>
 
@@ -342,17 +361,17 @@ Tabell 1.
 
 Bedrift_Info
 
-| bedrift_id (SERIAL PRIMARY KEY) | Orgnummer (INTEGER UNIQUE NOT NULL) | MålBedrift (VARCHAR(255) NOT NULL) | Bransje (VARCHAR(255) DEFAULT NULL) | Beskrivelse (VARCHAR(255) DEFAULT NULL) |
-| :------------------------------ | :---------------------------------- | :--------------------------------- | :---------------------------------- | --------------------------------------- |
-| 1                               | 43234324                            | Bedriften                          | IT                                  | Beste Bedrift                           |
+| bedrift_id (SERIAL PRIMARY KEY) | Orgnummer (INTEGER UNIQUE NOT NULL) | MålBedrift (VARCHAR(255) NOT NULL) | Bransje (VARCHAR(255) DEFAULT NULL) | Beskrivelse (VARCHAR(255) DEFAULT NULL) | NavneListe (VARCHAR(255)[]) DEFAULT NULL |
+| :------------------------------ | :---------------------------------- | :--------------------------------- | :---------------------------------- | --------------------------------------- | :--------------------------------------- |
+| 1                               | 43234324                            | Bedriften                          | IT                                  | Beste Bedrift                           | [startuppen, helt-okay-bedrift]          |
 
 Tabell 2.
 
-oversikt*bedrift_fase_lokasjon_pr*år
+oversikt_bedrift_fase_status
 
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår, fase) | fylke (VARCHAR(255)) | Kommune (VARCHAR(255)) | kommunenr (INTEGER) |
-| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------------- | :------------------- | :--------------------- | :------------------ |
-| 1                                                        | 2023                         | '{Alumni}'            | (1,2023, '{Alumni}')                     | Vestland             | Bjørnafjorden          | 4624                |
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår, fase) |
+| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------------- |
+| 1                                                        | 2023                         | '{Alumni}'            | (1,2023, '{Alumni}')                     |
 
 Tabell 3.
 
@@ -372,7 +391,199 @@ Tabell 4.
 | :--------------------- | :--------------------- |
 | EK                     | 'Egen Kapital'         |
 
+Tabell 5.
+
+bedrift_kunngjøringer
+
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | kunngjørings_id (VARCHAR(255)) | dato (VARCHAR(255)) | kunngjøringstekst (text)                | kunngjøringstype (VARCHAR(255)) | PRIMARY KEY (bedrift_id, kunngjørings_id) |
+| :------------------------------------------------------- | :----------------------------- | :------------------ | :-------------------------------------- | :------------------------------ | :---------------------------------------- |
+| 1                                                        | 2309400923498234               | "20.12.12"          | "Noe ganske stort og kult er kunngjort" | "Generell"                      | (1, 2309400923498234)                     |
+
+Tabell 6.
+
+bedrift_leder_oversikt<br>
+Her beholder vi kun info om de som er markert med Kode DAGL eller LEDE
+
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | tittel (VARCHAR (255)) | navn (VARCHAR(255)) | fødselsdag (VARCHAR(255)) | tittelkode (VARCHAR255) | rapportår (INTEGER) |
+| :------------------------------------------------------- | :--------------------- | :------------------ | :------------------------ | :---------------------- | :------------------ |
+| 1                                                        | Styrets Leder          | John Johnson        | "20.12.12"                | LEDE                    | 2024                |
+
+Tabell 7.
+
+bedrift_shareholder_info
+
+| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | antall_shares (INTEGER) | shareholder_bedrift_id (VARCHAR (255)DEFAULT NULL) | navn (VARCHAR(255)) | sharetype (VARCHAR(255)) | shareholder_fornavn (VARCHAR (255) DEFAULT NULL) | shareholder_etternavn (VARCHAR(255) DEFAULT NULL) |
+| :------------------------------------------------------- | :------------------ | :---------------------- | :------------------------------------------------- | :------------------ | :----------------------- | :----------------------------------------------- | :------------------------------------------------ |
+| 1                                                        | 2024                | 300000                  | null                                               | Fattern             | 50                       | null                                             | null                                              |
+
+Tabell 8.
+
+generell_årlig_bedrift_info
+
+| bedrift_id(INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår INTEGER | antall_ansatte INTEGER | landsdel (VARCHAR(255)) | fylke (VARCHAR(255)) | kommune (VARCHAR(255)) | post_kode (VARCHAR(255)) | post_adresse (VARCHAR(255)) |
+| :------------------------------------------------------ | :---------------- | :--------------------- | :---------------------- | :------------------- | :--------------------- | :----------------------- | :-------------------------- |
+| 1                                                       | 2024              | 1                      | Vestlandet              | Vestland             | Bergen                 | 5050                     | Sandefjordsvika 98          |
+
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
+
+Når C# backend fetcher ny data fra proff dekonstruerer den JSON data til classer som passer til følgende databasefunksjoner:
+
+1. Insert*bedrift_leder_info(orgnr INTEGER, input_navn VARCHAR(255), input_tittel VARCHAR(255), input_tittelkode VARCHAR(255), input*år INTEGER, input_fødselsår VARCHAR(255))<br>
+
+```sql
+
+DECLARE
+	id INTEGER;
+BEGIN
+	SELECT bedrift_id
+	FROM bedrift_info
+	INTO id
+	WHERE orgnummer = orgnr;
+	INSERT INTO bedrift_leder_oversikt(bedrift_id, tittel, navn, fødselsdag, tittelkode, rapportår)
+	VALUES (id, input_tittel, input_navn, input_fødselsår, input_tittelkode, input_år)
+	ON CONFLICT do nothing;
+END;
 ```
+
+2. insert*generell*årlig_bedrift_info(orgnr INTEGER, år INTEGER ,input_landsdel VARCHAR, input_fylke VARCHAR, input_kommune VARCHAR, input_post_kode VARCHAR, input_post_adresse VARCHAR, input_antall_ansatte INTEGER DEFAULT NULL)<br>
+
+```sql
+
+DECLARE
+	id INTEGER;
+BEGIN
+	SELECT bedrift_id
+	FROM bedrift_info
+	INTO id
+	WHERE orgnummer = orgnr;
+	INSERT INTO generell_årlig_bedrift_info(bedrift_id, rapportår, landsdel, fylke, kommune, post_kode, post_addresse, antall_ansatte)
+	VALUES (id, år, input_landsdel, input_fylke, input_kommune, input_post_kode, input_post_addresse, input_antall_ansatte)
+	ON CONFLICT do nothing;
+END;
+```
+
+3. insert_kunngjøringer(orgnr INTEGER, input_id BIGINT, input_dato VARCHAR, input_desc TEXT, input_type VARCHAR)<br>
+
+```sql
+
+DECLARE
+	id INTEGER;
+BEGIN
+	SELECT bedrift_id
+	FROM bedrift_info
+	INTO id
+	WHERE orgnummer = orgnr;
+	INSERT INTO bedrift_kunngjøringer(bedrift_id, kunngjøring_id, dato, kunngjøringstekst, kunngjøringstype)
+	VALUES (id, input_id, input_dato, input_desc, input_type)
+	ON CONFLICT do nothing;
+END;
+```
+
+4. insert_shareholder_info(orgnr INTEGER, år INTEGER, antall INTEGER, input_navn VARCHAR, input_type VARCHAR, bedrift_navn VARCHAR DEFAULT NULL, fornavn VARCHAR DEFAULT NULL, etternavn VARCHAR DEFAULT NULL)<br>
+
+```sql
+
+DECLARE
+	id INTEGER;
+BEGIN
+	SELECT bedrift_id
+	FROM bedrift_info
+	INTO id
+	WHERE orgnummer = orgnr;
+	INSERT INTO bedrift_shareholder_info(bedrift_id, rapportår, antal_shares, shareholder_bedrift_id, shareholder_fornavn, shareholder_etternavn, navn, sharetype)
+	VALUES (id, år, antall, bedrift_navn, fornavn, etternavn, input_navn, input_type)
+		ON CONFLICT do nothing;
+END;
+```
+
+5. insert_øko_data(orgnr INTEGER, år INTEGER, kodenavn VARCHAR[], kodeverdier NUMERIC[])<br>
+
+```sql
+
+DECLARE
+	id INTEGER;
+	curr_kode VARCHAR(255);
+	curr_val NUMERIC;
+BEGIN
+	SELECT bedrift_id
+	FROM bedrift_info
+	INTO id
+	WHERE orgnummer = orgnr;
+	FOR i in 1..array_length(kodenavn, 1)
+	LOOP
+		curr_kode := kodenavn[i];
+		curr_val := kodeverdier[i];
+		INSERT INTO årlig_økonomisk_data(bedrift_id, rapportår, øko_kode, øko_verdi)
+		VALUES (id, år, curr_kode, curr_val)
+		ON CONFLICT do nothing;
+	END LOOP;
+END;
+```
+
+6. update_bedrift_info_with_name(orgnr INTEGER, navn VARCHAR, tidligere_navn VARCHAR[])<br>
+
+```sql
+BEGIN
+	UPDATE bedrift_info
+	SET målbedrift = navn,
+		navneliste = tidligere_navn
+	WHERE orgnummer = orgnr;
+END
+```
+
+Når bruker vil legge til flere bedrifter via excel-ark gjennom dashboard kjøres følgende funksjon:
+
+1. insert_bedrift_data_vis(orgnr INTEGER, bransjenavn VARCHAR, rapportår INTEGER[], faser VARCHAR[])<br>
+
+```sql
+
+DECLARE
+	id INTEGER;
+	år INTEGER;
+	fasetext VARCHAR(255);
+BEGIN
+	INSERT INTO bedrift_info(orgnummer, bransje)
+	VALUES (orgnr, bransjenavn)
+	ON CONFLICT(orgnummer)
+	DO UPDATE SET bransje = EXCLUDED.bransje
+	RETURNING bedrift_id INTO id;
+
+	FOR i in 1..array_length(rapportÅrarray, 1)
+	LOOP
+		år := rapportÅrarray[i];
+		fasetext := Faser[i];
+		INSERT INTO oversikt_bedrift_fase_status(bedrift_id, rapportår, fase)
+		VALUES (id, år, fasetext)
+		ON CONFLICT do nothing;
+	END LOOP;
+END;
+```
+
+Når ny data fra proff er lagt inn i databasen, trigrer C# følgende funksjon for å generere DELTA verdier:
+
+1. update_delta()
+
+```sql
+
+BEGIN
+	UPDATE årlig_økonomisk_data t1
+	SET delta = t1.øko_verdi - t2.øko_verdi
+	FROM årlig_økonomisk_data t2
+	WHERE t1.bedrift_id = t2.bedrift_id
+	AND t2.øko_kode = t2.øko_kode
+	AND t1.rapportår = t2.rapportår+1;
+	UPDATE årlig_økonomisk_data t1
+	SET delta = 0
+	WHERE NOT EXISTS(
+		SELECT 1
+		FROM årlig_økonomisk_data t2
+		WHERE t1.bedrift_id = t2.bedrift_id
+		AND t2.øko_kode = t2.øko_kode
+		AND t1.rapportår = t2.rapportår+1
+	);
+END;
+```
+
+Grunnen for at dette gjøres på C# er fordi postgreSQL ikke har en dedikert batch insert trigger. Dette er en mer nøyaktig måte å gjøre dette på,<br> og garanterer at delta blir laget korrekt uavhengig av hvor mange år som legges inn om gangen.

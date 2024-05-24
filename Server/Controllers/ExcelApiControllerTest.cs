@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Util.InitVisData;
 using Util.ProffApiClasses;
 using Util.ProffFetch;
-using Util.TestStructure;
 namespace Server.Controllers;
 
 [ApiController]
@@ -40,19 +39,20 @@ public class ExcelTestController : ControllerBase
                 {
                     return BadRequest(ex.Message);
                 }
+
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
                 CompactedVisBedriftData.AddListToDb(compactData);
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
-                List<SqlParamStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
+                List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
                 foreach (var param in paramStructures)
                 {
                     Console.WriteLine($"Adding {param.Name} to DB");
-                    param.AddParamToDb();
+                    param.InsertToDataBase();
                     await Task.Delay(100);
                 }
                 jsonData = JsonSerializer.Serialize(paramStructures);
             }
-            return Ok();
+            return Ok(jsonData);
         }
         catch (Exception ex)
         {
@@ -61,3 +61,59 @@ public class ExcelTestController : ControllerBase
 
     }
 }
+
+
+
+
+
+/* TEST KODE */
+/* ReturnStructure returnStructure = TestJsonStream.ParseJsonStream();
+                UpdateNameStructure nameStructure = new(
+                    returnStructure.CompanyId, returnStructure.Name, returnStructure.PreviousNames.Count == 0 ? null : returnStructure.PreviousNames
+                );
+                nameStructure.InsertIntoDatabase();
+                InsertGenerellInfoStructure infoStructure = new(
+                    returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, returnStructure.Location, returnStructure.PostalAddress, returnStructure.NumberOfEmployees ?? null
+                );
+                infoStructure.InsertToDataBase();
+                foreach (var announcement in returnStructure.Announcements)
+                {
+                    InsertKunngjøringStructure kunngjøringStructure = new(
+                        returnStructure.CompanyId, announcement
+                    );
+                    kunngjøringStructure.InsertToDataBase();
+                }
+                foreach (var account in returnStructure.CompanyAccounts)
+                {
+                    ØkoDataSqlStructure økoData = new(
+                        returnStructure.CompanyId, account
+                    );
+                    økoData.InsertIntoDatabase();
+                }
+                foreach (var person in returnStructure.PersonRoles)
+                {
+                    if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
+                    else
+                    {
+                        InsertBedriftLederInfoStructure bedriftLeder = new(
+                            returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, person
+                        );
+                        bedriftLeder.InsertToDataBase();
+                    }
+                }
+                foreach (var shareholder in returnStructure.Shareholders)
+                {
+                    InsertShareholderStructure shareholderStructure = new(
+                        returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, shareholder
+                    );
+                    shareholderStructure.InsertIntoDatabase();
+                }
+                try
+                {
+                    Database.Query("SELECT update_delta()", reader => { });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+ */
