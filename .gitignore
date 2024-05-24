@@ -5,6 +5,5 @@ postgres/
 helperJSON/
 ProffJsonSchema.json
 ProffReturnExamle.json
-bin/
 Models
 LocalData/
