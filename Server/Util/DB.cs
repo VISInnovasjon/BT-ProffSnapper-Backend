@@ -10,7 +10,7 @@ class Database
     /// </summary>
     /// <param name="sqlQuery"></param>
     /// <param name="processRowAction">Takes in an action with a single reader parameter. Allows to create an action, then calling query and using said action as a param for handling DB stream.</param>
-    public static void Query(string sqlQuery, Action<NpgsqlDataReader> processRowAction, List<NpgsqlParameter>? paramList = null)
+    public static async Task Query(string sqlQuery, Action<NpgsqlDataReader> processRowAction, List<NpgsqlParameter>? paramList = null)
     {
         string connectionString = $"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}";
         try
@@ -29,7 +29,7 @@ class Database
                     }
                     using (NpgsqlDataReader reader = cmd.ExecuteReader())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             processRowAction(reader);
                         }

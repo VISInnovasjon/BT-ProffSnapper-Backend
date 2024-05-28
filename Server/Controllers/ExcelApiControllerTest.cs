@@ -5,6 +5,7 @@ using Util.ProffApiClasses;
 using Util.ProffFetch;
 using Util.DB;
 namespace Server.Controllers;
+/* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray); */
 
 [ApiController]
 [Route("/ExcelUpload")]
@@ -34,7 +35,7 @@ public class ExcelTestController : ControllerBase
                 List<int> orgNrArray;
                 try
                 {
-                    RawData = RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
+                    RawData = await RawVisBedriftData.ListFromVisExcelSheet(stream, "Bedrifter");
                 }
                 catch (Exception ex)
                 {
@@ -42,10 +43,9 @@ public class ExcelTestController : ControllerBase
                 }
 
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                CompactedVisBedriftData.AddListToDb(compactData);
+                await CompactedVisBedriftData.AddListToDb(compactData);
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
                 List<ReturnStructure> paramStructures = new();
-                /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray); */
                 string contentPath = "./LocalData";
                 ReturnStructure? Data = null;
                 var options = new JsonSerializerOptions
@@ -74,7 +74,7 @@ public class ExcelTestController : ControllerBase
                     Console.WriteLine($"Adding {param.Name} to DB");
                     try
                     {
-                        param.InsertToDataBase();
+                        await param.InsertToDataBase();
                     }
                     catch (Exception ex)
                     {
@@ -84,7 +84,7 @@ public class ExcelTestController : ControllerBase
                 Console.WriteLine("Insert Complete, updating delta.");
                 try
                 {
-                    Database.Query("SELECT update_delta()", reader => { });
+                    await Database.Query("SELECT update_delta()", reader => { });
                 }
                 catch (Exception ex)
                 {

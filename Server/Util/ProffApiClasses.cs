@@ -79,29 +79,29 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public void InsertToDataBase()
+    public async Task InsertToDataBase()
     {
         UpdateNameStructure nameStructure = new(
                     CompanyId, Name, PreviousNames.Count == 0 ? null : PreviousNames
                 );
-        nameStructure.InsertIntoDatabase();
+        await nameStructure.InsertIntoDatabase();
         InsertGenerellInfoStructure infoStructure = new(
             CompanyId, ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
         );
-        infoStructure.InsertToDataBase();
+        await infoStructure.InsertToDataBase();
         foreach (var announcement in Announcements)
         {
             InsertKunngjøringStructure kunngjøringStructure = new(
                 CompanyId, announcement
             );
-            kunngjøringStructure.InsertToDataBase();
+            await kunngjøringStructure.InsertToDataBase();
         }
         foreach (var account in CompanyAccounts)
         {
             ØkoDataSqlStructure økoData = new(
                 CompanyId, account
             );
-            økoData.InsertIntoDatabase();
+            await økoData.InsertIntoDatabase();
         }
         foreach (var person in PersonRoles)
         {
@@ -111,7 +111,7 @@ public class ReturnStructure
                 InsertBedriftLederInfoStructure bedriftLeder = new(
                     CompanyId, ShareholdersLastUpdatedDate, person
                 );
-                bedriftLeder.InsertToDataBase();
+                await bedriftLeder.InsertToDataBase();
             }
         }
         foreach (var shareholder in Shareholders)
@@ -119,7 +119,7 @@ public class ReturnStructure
             InsertShareholderStructure shareholderStructure = new(
                 CompanyId, ShareholdersLastUpdatedDate, shareholder
             );
-            shareholderStructure.InsertIntoDatabase();
+            await shareholderStructure.InsertIntoDatabase();
         }
     }
 }
@@ -144,14 +144,14 @@ public class ØkoDataSqlStructure
         Kodeverdier = Database.ConvertListToParameter<decimal>(Values, "verdier");
         Kodenavn = Database.ConvertListToParameter<string>(Codes, "koder");
     }
-    public void InsertIntoDatabase()
+    public async Task InsertIntoDatabase()
     {
         try
         {
             List<NpgsqlParameter> parameters = [
                 OrgNr, Rapportår, Kodenavn, Kodeverdier
             ];
-            Database.Query("SELECT insert_øko_data(orgnr => @orgnr, år => @rapportår, kodenavn => @koder, kodeverdier => @verdier)", reader => { }, parameters);
+            await Database.Query("SELECT insert_øko_data(orgnr => @orgnr, år => @rapportår, kodenavn => @koder, kodeverdier => @verdier)", reader => { }, parameters);
         }
         catch (Exception ex)
         {
@@ -170,7 +170,7 @@ public class UpdateNameStructure
         if (PreviousNames != null) this.TidligereNavn = Database.ConvertListToParameter<string>(PreviousNames, "tidligerenavn");
         OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
     }
-    public void InsertIntoDatabase()
+    public async Task InsertIntoDatabase()
     {
         try
         {
@@ -178,7 +178,7 @@ public class UpdateNameStructure
                 Navn, OrgNr
             ];
             if (TidligereNavn != null) parameters.Add(TidligereNavn);
-            Database.Query($"SELECT update_bedrift_info_with_name(orgnr => @orgnr, navn => @navn{(TidligereNavn != null ? ", tidligere_navn => @tidligerenavn" : "")})", reader => { }, parameters);
+            await Database.Query($"SELECT update_bedrift_info_with_name(orgnr => @orgnr, navn => @navn{(TidligereNavn != null ? ", tidligere_navn => @tidligerenavn" : "")})", reader => { }, parameters);
         }
         catch (Exception ex)
         {
@@ -207,7 +207,7 @@ public class InsertShareholderStructure
         if (!string.IsNullOrEmpty(info.FirstName)) Fornavn = new NpgsqlParameter("fornavn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.FirstName };
         if (!string.IsNullOrEmpty(info.LastName)) Etternavn = new NpgsqlParameter("etternavn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.LastName };
     }
-    public void InsertIntoDatabase()
+    public async Task InsertIntoDatabase()
     {
         try
         {
@@ -217,7 +217,7 @@ public class InsertShareholderStructure
             if (BedriftId != null) parameters.Add(BedriftId);
             if (Fornavn != null) parameters.Add(Fornavn);
             if (Etternavn != null) parameters.Add(Etternavn);
-            Database.Query($"SELECT insert_shareholder_info(orgnr => @orgnr, år => @rapportår, antall => @antall, input_navn => @navn, input_type => @type{(BedriftId != null ? ", bedrift_navn => @bedriftid" : "")}{(Fornavn != null ? ", fornavn => @fornavn" : "")}{(Etternavn != null ? ", etternavn => @etternavn" : "")})", reader => { }, parameters);
+            await Database.Query($"SELECT insert_shareholder_info(orgnr => @orgnr, år => @rapportår, antall => @antall, input_navn => @navn, input_type => @type{(BedriftId != null ? ", bedrift_navn => @bedriftid" : "")}{(Fornavn != null ? ", fornavn => @fornavn" : "")}{(Etternavn != null ? ", etternavn => @etternavn" : "")})", reader => { }, parameters);
         }
         catch (Exception ex)
         {
@@ -240,14 +240,14 @@ public class InsertKunngjøringStructure
         InputType = new NpgsqlParameter("inputtype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = kunngjøring.Type };
         Inputdesc = new NpgsqlParameter("inputdesc", NpgsqlTypes.NpgsqlDbType.Text) { Value = kunngjøring.Text };
     }
-    public void InsertToDataBase()
+    public async Task InsertToDataBase()
     {
         try
         {
             List<NpgsqlParameter> parameters = [
                 OrgNr, InputId, InputDato, InputType, Inputdesc
             ];
-            Database.Query("SELECT insert_kunngjøringer(orgnr => @orgnr, input_id => @inputid, input_dato => @inputdato, input_type => @inputtype, input_desc => @inputdesc)", reader => { }, parameters);
+            await Database.Query("SELECT insert_kunngjøringer(orgnr => @orgnr, input_id => @inputid, input_dato => @inputdato, input_type => @inputtype, input_desc => @inputdesc)", reader => { }, parameters);
         }
         catch (Exception ex)
         {
@@ -282,7 +282,7 @@ public class InsertGenerellInfoStructure
             InputAntallAnsatte = new NpgsqlParameter("inputantallansatte", NpgsqlTypes.NpgsqlDbType.Integer) { Value = empNum };
         };
     }
-    public void InsertToDataBase()
+    public async Task InsertToDataBase()
     {
         try
         {
@@ -290,7 +290,7 @@ public class InsertGenerellInfoStructure
                 OrgNr, Rapportår, InputLandsdel, InputFylke, InputKommune, InputPostKode, InputPostAddresse
             ];
             if (InputAntallAnsatte != null) parameters.Add(InputAntallAnsatte);
-            Database.Query($"SELECT insert_generell_årlig_bedrift_info(orgnr => @orgnr, år => @rapportår, input_landsdel => @inputlandsdel, input_fylke => @inputfylke, input_kommune => @inputkommune, input_post_kode => @inputpostkode, input_post_addresse => @inputpostaddresse{(InputAntallAnsatte != null ? ", input_antall_ansatte => @inputantallansatte" : "")})", reader => { }, parameters);
+            await Database.Query($"SELECT insert_generell_årlig_bedrift_info(orgnr => @orgnr, år => @rapportår, input_landsdel => @inputlandsdel, input_fylke => @inputfylke, input_kommune => @inputkommune, input_post_kode => @inputpostkode, input_post_addresse => @inputpostaddresse{(InputAntallAnsatte != null ? ", input_antall_ansatte => @inputantallansatte" : "")})", reader => { }, parameters);
         }
         catch (Exception ex)
         {
@@ -315,14 +315,14 @@ public class InsertBedriftLederInfoStructure
         InputTittel = new NpgsqlParameter("inputtittel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.Title };
         InputTittelKode = new NpgsqlParameter("inputtittelkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.TitleCode };
     }
-    public void InsertToDataBase()
+    public async Task InsertToDataBase()
     {
         try
         {
             List<NpgsqlParameter> parameters = [
                 OrgNr, Rapportår, InputNavn, InputFødselÅr, InputTittel, InputTittelKode
             ];
-            Database.Query("Select insert_bedrift_leder_info(orgnr => @orgnr, input_år => @rapportår, input_navn => @inputnavn, input_fødselsår => @inputfødselsår, input_tittel => @inputtittel, input_tittelkode => @inputtittelkode)", reader => { }, parameters);
+            await Database.Query("Select insert_bedrift_leder_info(orgnr => @orgnr, input_år => @rapportår, input_navn => @inputnavn, input_fødselsår => @inputfødselsår, input_tittel => @inputtittel, input_tittelkode => @inputtittelkode)", reader => { }, parameters);
         }
         catch (Exception ex)
         {

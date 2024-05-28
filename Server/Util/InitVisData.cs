@@ -11,10 +11,10 @@ public class RawVisBedriftData
     public int Orgnummer { get; set; }
     public string Fase { get; set; }
     public string? Bransje { get; set; }
-    public static List<RawVisBedriftData> ListFromVisExcelSheet(Stream stream, string excelSheetName)
+    public static async Task<List<RawVisBedriftData>> ListFromVisExcelSheet(Stream stream, string excelSheetName)
     {
 
-        var rows = stream.Query<RawVisBedriftData>(sheetName: excelSheetName).ToList();
+        var rows = await stream.QueryAsync<RawVisBedriftData>(sheetName: excelSheetName);
 
         var ensureOrgNr = rows.Where(row => row.Orgnummer != 0).ToList();
         List<int> WrongOrgNr = new() { };
@@ -28,6 +28,10 @@ public class RawVisBedriftData
             throw new ArgumentOutOfRangeException($"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}");
         }
         ensureOrgNr.Sort((a, b) => a.Orgnummer.CompareTo(b.Orgnummer));
+        foreach (var orgnr in ensureOrgNr)
+        {
+            Console.WriteLine(orgnr.Orgnummer);
+        }
         return ensureOrgNr;
     }
 
@@ -66,7 +70,7 @@ public class CompactedVisBedriftData
         }
         return CleanData;
     }
-    public static void AddListToDb(List<CompactedVisBedriftData> data)
+    public static async Task AddListToDb(List<CompactedVisBedriftData> data)
     {
         foreach (var company in data)
         {
@@ -93,9 +97,9 @@ public class CompactedVisBedriftData
             if (phases != null) paramList.Add(phases);
             NpgsqlParameter OrgNr = new("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = company.Orgnummer };
             if (OrgNr != null) paramList.Add(OrgNr);
-            NpgsqlParameter bransje = new("bransje", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = company.Bransje };
+            NpgsqlParameter bransje = new("bransje", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = !string.IsNullOrEmpty(company.Bransje) ? company.Bransje : DBNull.Value };
             if (bransje != null) paramList.Add(bransje);
-            Database.Query($"SELECT Insert_Bedrift_Data_Vis(@orgnr,@bransje,@years, @phases)", reader =>
+            await Database.Query($"SELECT insert_bedrift_data_vis(@orgnr, @years, @phases, @bransje)", reader =>
             {
                 Console.WriteLine($"Storing {company.Orgnummer}");
             }, paramList);
