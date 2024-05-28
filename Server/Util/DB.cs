@@ -1,7 +1,6 @@
 namespace Util.DB;
 
 using Npgsql;
-using dotenv.net;
 
 class Database
 {
@@ -14,13 +13,11 @@ class Database
     public static void Query(string sqlQuery, Action<NpgsqlDataReader> processRowAction, List<NpgsqlParameter>? paramList = null)
     {
         string connectionString = $"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}";
-        Console.WriteLine(connectionString);
         try
         {
             using (var connection = new NpgsqlConnection(connectionString))
             {
                 connection.Open();
-                Console.WriteLine("Connected to db.");
                 using (NpgsqlCommand cmd = new NpgsqlCommand(sqlQuery, connection))
                 {
                     if (paramList != null)
@@ -39,7 +36,6 @@ class Database
                     }
                 }
                 connection.Close();
-                Console.WriteLine("Connection Closed");
             }
         }
         catch (Exception ex)
@@ -76,7 +72,8 @@ class Database
         {
             param = new NpgsqlParameter(parameterName, NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Varchar);
         }
-        else if (typeof(T) == typeof(decimal)){
+        else if (typeof(T) == typeof(decimal))
+        {
             param = new NpgsqlParameter(parameterName, NpgsqlTypes.NpgsqlDbType.Array | NpgsqlTypes.NpgsqlDbType.Numeric);
         }
         else

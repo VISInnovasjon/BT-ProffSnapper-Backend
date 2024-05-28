@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Util.InitVisData;
 using Util.ProffApiClasses;
 using Util.ProffFetch;
+using Util.DB;
 namespace Server.Controllers;
 
 [ApiController]
@@ -43,12 +44,51 @@ public class ExcelTestController : ControllerBase
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
                 CompactedVisBedriftData.AddListToDb(compactData);
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
-                List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray);
+                List<ReturnStructure> paramStructures = new();
+                /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray); */
+                string contentPath = "./LocalData";
+                ReturnStructure? Data = null;
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
+                foreach (string filename in Directory.GetFiles(contentPath, "*.json"))
+                {
+                    string jsonContent = System.IO.File.ReadAllText(filename);
+                    try
+                    {
+                        Data = JsonSerializer.Deserialize<ReturnStructure>(jsonContent, options);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                    if (Data != null)
+                    {
+                        Console.WriteLine($"Adding {Data.Name} To List");
+                        paramStructures.Add(Data);
+                    };
+                }
                 foreach (var param in paramStructures)
                 {
                     Console.WriteLine($"Adding {param.Name} to DB");
-                    param.InsertToDataBase();
-                    await Task.Delay(100);
+                    try
+                    {
+                        param.InsertToDataBase();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+                Console.WriteLine("Insert Complete, updating delta.");
+                try
+                {
+                    Database.Query("SELECT update_delta()", reader => { });
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
                 }
                 jsonData = JsonSerializer.Serialize(paramStructures);
             }

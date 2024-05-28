@@ -30,7 +30,7 @@ public class ShareHolderInfo
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? Name { get; set; }
-    public int NumberOfShares { get; set; }
+    public decimal NumberOfShares { get; set; }
     public required string Share { get; set; }
     public WebInfo? Details { get; set; }
 }
@@ -76,7 +76,7 @@ public class ReturnStructure
     public required List<PersonRole> PersonRoles { get; set; }
     public required List<Announcement> Announcements { get; set; }
     public required List<AccountsInfo> CompanyAccounts { get; set; }
-    public required List<ShareHolderInfo> Shareholders { get; set; }
+    public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
     public void InsertToDataBase()
@@ -120,14 +120,6 @@ public class ReturnStructure
                 CompanyId, ShareholdersLastUpdatedDate, shareholder
             );
             shareholderStructure.InsertIntoDatabase();
-        }
-        try
-        {
-            Database.Query("SELECT update_delta()", reader => { });
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine(ex.Message);
         }
     }
 }
@@ -208,7 +200,7 @@ public class InsertShareholderStructure
     {
         OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
         Rapportår = new NpgsqlParameter("rapportår", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(UpdatedYear) };
-        AntallShares = new NpgsqlParameter("antall", NpgsqlTypes.NpgsqlDbType.Integer) { Value = info.NumberOfShares };
+        AntallShares = new NpgsqlParameter("antall", NpgsqlTypes.NpgsqlDbType.Numeric) { Value = info.NumberOfShares };
         InputNavn = new NpgsqlParameter("navn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.Name };
         InputType = new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.Share };
         if (!string.IsNullOrEmpty(info.CompanyId)) BedriftId = new NpgsqlParameter("bedriftid", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.CompanyId };
@@ -282,7 +274,13 @@ public class InsertGenerellInfoStructure
         InputKommune = new NpgsqlParameter("inputkommune", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = location.Municipality };
         InputPostKode = new NpgsqlParameter("inputpostkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = post.ZipCode };
         InputPostAddresse = new NpgsqlParameter("inputpostaddresse", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = post.AddressLine };
-        if (!string.IsNullOrEmpty(NumberOfEmployees)) InputAntallAnsatte = new NpgsqlParameter("inputantallansatte", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(NumberOfEmployees) };
+        if (!string.IsNullOrEmpty(NumberOfEmployees))
+        {
+            int empNum;
+            bool parseSuccess = int.TryParse(NumberOfEmployees, out empNum);
+            if (!parseSuccess) empNum = 1;
+            InputAntallAnsatte = new NpgsqlParameter("inputantallansatte", NpgsqlTypes.NpgsqlDbType.Integer) { Value = empNum };
+        };
     }
     public void InsertToDataBase()
     {
