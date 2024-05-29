@@ -19,13 +19,11 @@ public class FetchProffData
         };
         using (HttpClient client = new())
         {
-            int count = 0;
             client.DefaultRequestHeaders.Add("Authorization", $"Token {ApiKey}");
             foreach (int orgNr in orgNrArray)
             {
                 try
                 {
-                    if (count >= 10) break;
                     await Task.Delay(1000);
                     url = baseUrl + orgNr.ToString();
                     HttpResponseMessage response = await client.GetAsync(url);
@@ -33,9 +31,8 @@ public class FetchProffData
                     string responseBody = await response.Content.ReadAsStringAsync();
                     string filePath = $"./LocalData/response{orgNr.ToString()}.json";
                     await File.WriteAllTextAsync(filePath, responseBody);
-                    ReturnStructure returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
+                    ReturnStructure? returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
                     if (returnValue != null) ReturnValues.Add(returnValue);
-                    count++;
                 }
                 catch (Exception ex)
                 {

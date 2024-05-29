@@ -3,6 +3,7 @@ namespace Util.ProffApiClasses;
 
 using Npgsql;
 using Util.DB;
+using Util.DateCorrector;
 
 
 
@@ -114,13 +115,14 @@ public class ReturnStructure
                 await bedriftLeder.InsertToDataBase();
             }
         }
-        foreach (var shareholder in Shareholders)
-        {
-            InsertShareholderStructure shareholderStructure = new(
-                CompanyId, ShareholdersLastUpdatedDate, shareholder
-            );
-            await shareholderStructure.InsertIntoDatabase();
-        }
+
+        if (Shareholders != null) foreach (var shareholder in Shareholders)
+            {
+                InsertShareholderStructure shareholderStructure = new(
+                    CompanyId, ShareholdersLastUpdatedDate, shareholder
+                );
+                await shareholderStructure.InsertIntoDatabase();
+            }
     }
 }
 
@@ -236,7 +238,7 @@ public class InsertKunngjøringStructure
     {
         OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
         InputId = new NpgsqlParameter("inputid", NpgsqlTypes.NpgsqlDbType.Bigint) { Value = long.Parse(kunngjøring.Id) };
-        InputDato = new NpgsqlParameter("inputdato", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = kunngjøring.Date };
+        InputDato = new NpgsqlParameter("inputdato", NpgsqlTypes.NpgsqlDbType.Date) { Value = string.IsNullOrEmpty(kunngjøring.Date) ? DBNull.Value : DateCorrector.ConvertDate(kunngjøring.Date) };
         InputType = new NpgsqlParameter("inputtype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = kunngjøring.Type };
         Inputdesc = new NpgsqlParameter("inputdesc", NpgsqlTypes.NpgsqlDbType.Text) { Value = kunngjøring.Text };
     }
@@ -272,7 +274,7 @@ public class InsertGenerellInfoStructure
         InputLandsdel = new NpgsqlParameter("inputlandsdel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = location.CountryPart };
         InputFylke = new NpgsqlParameter("inputfylke", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = location.County };
         InputKommune = new NpgsqlParameter("inputkommune", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = location.Municipality };
-        InputPostKode = new NpgsqlParameter("inputpostkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = post.ZipCode };
+        InputPostKode = new NpgsqlParameter("inputpostkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = string.IsNullOrEmpty(post.ZipCode) ? DBNull.Value : post.ZipCode };
         InputPostAddresse = new NpgsqlParameter("inputpostaddresse", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = post.AddressLine };
         if (!string.IsNullOrEmpty(NumberOfEmployees))
         {
@@ -311,7 +313,7 @@ public class InsertBedriftLederInfoStructure
         OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
         Rapportår = new NpgsqlParameter("rapportår", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(UpdateYear) };
         InputNavn = new NpgsqlParameter("inputnavn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.Name };
-        InputFødselÅr = new NpgsqlParameter("inputfødselsår", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.BirthDate };
+        InputFødselÅr = new NpgsqlParameter("inputfødselsår", NpgsqlTypes.NpgsqlDbType.Date) { Value = string.IsNullOrEmpty(person.BirthDate) ? DBNull.Value : DateCorrector.CorrectDate(person.BirthDate) };
         InputTittel = new NpgsqlParameter("inputtittel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.Title };
         InputTittelKode = new NpgsqlParameter("inputtittelkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.TitleCode };
     }

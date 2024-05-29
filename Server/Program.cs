@@ -6,6 +6,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
 DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "../.env" }, ignoreExceptions: false));
 
 var app = builder.Build();
@@ -21,6 +28,7 @@ app.UseHttpsRedirection();
 
 
 app.MapControllers();
+app.UseCors("AllowAll");
 
 app.Run();
 
