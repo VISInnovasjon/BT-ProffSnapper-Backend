@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Npgsql;
 using Util.DB;
+using MiniExcelLibs;
 namespace Server.Controllers;
 
 [ApiController]
@@ -42,9 +43,10 @@ public class CsvConverter
                 string input = reader.GetValue(i).ToString().Replace("\"", "\"\"");
                 if (string.IsNullOrEmpty(input))
                     input = "Data Mangler";
-                csvBuilder.Append($"\"{input}\"");
+                csvBuilder.Append($"{input}");
             }
             csvBuilder.AppendLine();
         }
     }
 }
+
