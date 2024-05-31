@@ -1,4 +1,4 @@
-using System.Text.Json;
+/* using System.Text.Json;
 using Util.ProffApiClasses;
 namespace Util.TestStructure;
 public class TestJsonStream
@@ -23,4 +23,4 @@ public class TestJsonStream
         }
 
     }
-}
+} */
