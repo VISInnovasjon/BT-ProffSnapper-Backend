@@ -5,6 +5,5 @@ postgres/
 helperJSON/
 ProffJsonSchema.json
 ProffReturnExamle.json
-Models
+
 LocalData/
-DbContext/
