@@ -10,24 +10,24 @@ public class DateCorrector
     /// <param name="input"></param>
     /// <returns></returns>
     /// <exception cref="ArgumentOutOfRangeException"></exception>
-    public static DateTime CorrectDate(string input)
+    public static DateOnly CorrectDate(string input)
     {
         try
         {
             input = input.Insert(4, ".").Insert(2, ".");
-            return DateTime.ParseExact(input, "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            return DateOnly.ParseExact(input, "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
         }
         catch (Exception ex)
         {
             throw new ArgumentOutOfRangeException($"Couldn't parse {input} into a date, {ex.Message}");
         }
     }
-    public static DateTime ConvertDate(string input)
+    public static DateOnly ConvertDate(string input)
     {
         if (string.IsNullOrEmpty(input)) throw new ArgumentNullException($"{input} Is null value, can't parse it into a date.");
         try
         {
-            return DateTime.ParseExact(input, "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
+            return DateOnly.ParseExact(input, "dd.MM.yyyy", System.Globalization.CultureInfo.InvariantCulture);
         }
         catch (Exception ex)
         {

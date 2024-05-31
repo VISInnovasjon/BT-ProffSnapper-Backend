@@ -1,6 +1,4 @@
 using MiniExcelLibs;
-using Util.DB;
-using Npgsql;
 using Server.Models;
 
 namespace Util.InitVisData;
@@ -70,39 +68,33 @@ public class CompactedVisBedriftData
         }
         return CleanData;
     }
-    public static async Task AddListToDb(List<CompactedVisBedriftData> data)
+    public static void AddListToDb(List<CompactedVisBedriftData> data)
     {
         foreach (var company in data)
         {
-            NpgsqlParameter? years = null;
-            NpgsqlParameter? phases = null;
-            List<NpgsqlParameter> paramList = new() { };
-            try
+            using (var context = new BtdbContext())
             {
-                years = Database.ConvertListToParameter<int>(company.RapportÅr, "years");
+                var companyData = new BedriftInfo
+                {
+                    Orgnummer = company.Orgnummer,
+                    Bransje = company.Bransje
+                };
+                context.BedriftInfos.Add(companyData);
+                context.SaveChanges();
+                var bedriftId = companyData.BedriftId;
+                for (int i = 0; i < company.RapportÅr.Count; i++)
+                {
+                    var faseData = new OversiktBedriftFaseStatus
+                    {
+                        Fase = company.Faser[i],
+                        Rapportår = company.RapportÅr[i],
+                        BedriftId = bedriftId
+                    };
+                    context.OversiktBedriftFaseStatuses.Add(faseData);
+                    context.SaveChanges();
+                }
+
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            if (years != null) paramList.Add(years);
-            try
-            {
-                phases = Database.ConvertListToParameter<string>(company.Faser, "phases");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            if (phases != null) paramList.Add(phases);
-            NpgsqlParameter OrgNr = new("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = company.Orgnummer };
-            if (OrgNr != null) paramList.Add(OrgNr);
-            NpgsqlParameter bransje = new("bransje", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = !string.IsNullOrEmpty(company.Bransje) ? company.Bransje : DBNull.Value };
-            if (bransje != null) paramList.Add(bransje);
-            await Database.Query($"SELECT insert_bedrift_data_vis(@orgnr, @years, @phases, @bransje)", reader =>
-            {
-                Console.WriteLine($"Storing {company.Orgnummer}");
-            }, paramList);
         }
     }
     public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)

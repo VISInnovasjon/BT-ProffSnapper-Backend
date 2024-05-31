@@ -1,8 +1,6 @@
 
 namespace Util.ProffApiClasses;
-
-using Npgsql;
-using Util.DB;
+using Server.Models;
 using Util.DateCorrector;
 
 
@@ -80,29 +78,29 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public async Task InsertToDataBase()
+    public void InsertToDataBase()
     {
         UpdateNameStructure nameStructure = new(
                     CompanyId, Name, PreviousNames.Count == 0 ? null : PreviousNames
                 );
-        await nameStructure.InsertIntoDatabase();
+        nameStructure.InsertIntoDatabase();
         InsertGenerellInfoStructure infoStructure = new(
             CompanyId, ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
         );
-        await infoStructure.InsertToDataBase();
+        infoStructure.InsertToDataBase();
         foreach (var announcement in Announcements)
         {
             InsertKunngjøringStructure kunngjøringStructure = new(
                 CompanyId, announcement
             );
-            await kunngjøringStructure.InsertToDataBase();
+            kunngjøringStructure.InsertToDataBase();
         }
         foreach (var account in CompanyAccounts)
         {
             ØkoDataSqlStructure økoData = new(
                 CompanyId, account
             );
-            await økoData.InsertIntoDatabase();
+            økoData.InsertIntoDatabase();
         }
         foreach (var person in PersonRoles)
         {
@@ -112,7 +110,7 @@ public class ReturnStructure
                 InsertBedriftLederInfoStructure bedriftLeder = new(
                     CompanyId, ShareholdersLastUpdatedDate, person
                 );
-                await bedriftLeder.InsertToDataBase();
+                bedriftLeder.InsertToDataBase();
             }
         }
 
@@ -121,39 +119,55 @@ public class ReturnStructure
                 InsertShareholderStructure shareholderStructure = new(
                     CompanyId, ShareholdersLastUpdatedDate, shareholder
                 );
-                await shareholderStructure.InsertIntoDatabase();
+                shareholderStructure.InsertIntoDatabase();
             }
     }
 }
 
 public class ØkoDataSqlStructure
 {
-    public NpgsqlParameter OrgNr { get; set; }
-    public NpgsqlParameter Rapportår { get; set; }
-    public NpgsqlParameter Kodenavn { get; set; }
-    public NpgsqlParameter Kodeverdier { get; set; }
+    public int OrgNr { get; set; }
+    public int År { get; set; }
+    public List<string> Kodenavn { get; set; }
+    public List<decimal> Kodeverdier { get; set; }
     public ØkoDataSqlStructure(string CompanyId, AccountsInfo accounts)
     {
         List<string> Codes = new();
         List<decimal> Values = new();
-        OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
-        Rapportår = new NpgsqlParameter("rapportår", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(accounts.Year) };
+        int TempOutput;
+        bool ParsingNr = int.TryParse(CompanyId, out TempOutput);
+        if (!ParsingNr) throw new ArgumentException($"Could not parse {CompanyId} to an integer.");
+        OrgNr = TempOutput;
+        ParsingNr = int.TryParse(accounts.Year, out TempOutput);
+        if (!ParsingNr) throw new ArgumentException($"Could not parse {accounts.Year} to an integer.");
+        År = TempOutput;
         for (int i = 0; i < accounts.Accounts.Count; i++)
         {
             Codes.Add(accounts.Accounts[i].Code);
             Values.Add(decimal.Parse(accounts.Accounts[i].Amount));
         }
-        Kodeverdier = Database.ConvertListToParameter<decimal>(Values, "verdier");
-        Kodenavn = Database.ConvertListToParameter<string>(Codes, "koder");
+        Kodeverdier = accounts.Accounts.Select(a => decimal.Parse(a.Amount)).ToList();
+        Kodenavn = accounts.Accounts.Select(a => a.Code).ToList();
     }
-    public async Task InsertIntoDatabase()
+    public void InsertIntoDatabase()
     {
         try
         {
-            List<NpgsqlParameter> parameters = [
-                OrgNr, Rapportår, Kodenavn, Kodeverdier
-            ];
-            await Database.Query("SELECT insert_øko_data(orgnr => @orgnr, år => @rapportår, kodenavn => @koder, kodeverdier => @verdier)", reader => { }, parameters);
+            using (var context = new BtdbContext())
+            {
+                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
+                for (int i = 0; i < Kodenavn.Count; i++)
+                {
+                    var ØkoData = new ÅrligØkonomiskDatum
+                    {
+                        BedriftId = bedriftId,
+                        ØkoKode = Kodenavn[i],
+                        ØkoVerdi = Kodeverdier[i],
+                        Rapportår = År
+                    };
+                    context.SaveChanges();
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -163,24 +177,29 @@ public class ØkoDataSqlStructure
 }
 public class UpdateNameStructure
 {
-    public NpgsqlParameter Navn { get; set; }
-    public NpgsqlParameter OrgNr { get; set; }
-    public NpgsqlParameter? TidligereNavn { get; set; }
+    public string Navn { get; set; }
+    public int OrgNr { get; set; }
+    public List<string>? TidligereNavn { get; set; }
     public UpdateNameStructure(string CompanyId, string Name, List<string>? PreviousNames = null)
     {
-        Navn = new NpgsqlParameter("navn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = Name };
-        if (PreviousNames != null) this.TidligereNavn = Database.ConvertListToParameter<string>(PreviousNames, "tidligerenavn");
-        OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
+        Navn = Name;
+        if (PreviousNames != null) this.TidligereNavn = PreviousNames;
+        int output;
+        bool parseSuccess = int.TryParse(CompanyId, out output);
+        if (!parseSuccess) throw new ArgumentException($"Failed to parse {CompanyId} to integer");
+        OrgNr = output;
     }
-    public async Task InsertIntoDatabase()
+    public void InsertIntoDatabase()
     {
         try
         {
-            List<NpgsqlParameter> parameters = [
-                Navn, OrgNr
-            ];
-            if (TidligereNavn != null) parameters.Add(TidligereNavn);
-            await Database.Query($"SELECT update_bedrift_info_with_name(orgnr => @orgnr, navn => @navn{(TidligereNavn != null ? ", tidligere_navn => @tidligerenavn" : "")})", reader => { }, parameters);
+            using (var context = new BtdbContext())
+            {
+                var bedriftInfo = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr);
+                bedriftInfo.Målbedrift = Navn;
+                if (TidligereNavn != null && TidligereNavn.Count > 0) bedriftInfo.Navneliste = TidligereNavn;
+                context.SaveChanges();
+            }
         }
         catch (Exception ex)
         {
@@ -190,36 +209,54 @@ public class UpdateNameStructure
 }
 public class InsertShareholderStructure
 {
-    public NpgsqlParameter OrgNr { get; set; }
-    public NpgsqlParameter Rapportår { get; set; }
-    public NpgsqlParameter AntallShares { get; set; }
-    public NpgsqlParameter InputNavn { get; set; }
-    public NpgsqlParameter InputType { get; set; }
-    public NpgsqlParameter? BedriftId { get; set; }
-    public NpgsqlParameter? Fornavn { get; set; }
-    public NpgsqlParameter? Etternavn { get; set; }
+    public int OrgNr { get; set; }
+    public int År { get; set; }
+    public decimal AntallShares { get; set; }
+    public string InputNavn { get; set; }
+    public string InputType { get; set; }
+    public string? ShareholderBId { get; set; }
+    public string? Fornavn { get; set; }
+    public string? Etternavn { get; set; }
     public InsertShareholderStructure(string CompanyId, string UpdatedYear, ShareHolderInfo info)
     {
-        OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
-        Rapportår = new NpgsqlParameter("rapportår", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(UpdatedYear) };
-        AntallShares = new NpgsqlParameter("antall", NpgsqlTypes.NpgsqlDbType.Numeric) { Value = info.NumberOfShares };
-        InputNavn = new NpgsqlParameter("navn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.Name };
-        InputType = new NpgsqlParameter("type", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.Share };
-        if (!string.IsNullOrEmpty(info.CompanyId)) BedriftId = new NpgsqlParameter("bedriftid", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.CompanyId };
-        if (!string.IsNullOrEmpty(info.FirstName)) Fornavn = new NpgsqlParameter("fornavn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.FirstName };
-        if (!string.IsNullOrEmpty(info.LastName)) Etternavn = new NpgsqlParameter("etternavn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = info.LastName };
+        int output;
+
+        bool parseSuccess;
+        parseSuccess = int.TryParse(CompanyId, out output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} to integer");
+        OrgNr = output;
+        parseSuccess = int.TryParse(UpdatedYear, out output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdatedYear} to integer");
+        År = output;
+
+        AntallShares = info.NumberOfShares;
+        InputNavn = info.Name ?? "Ingen navn funnet";
+        InputType = info.Share;
+        if (!string.IsNullOrEmpty(info.CompanyId)) ShareholderBId = info.CompanyId;
+        if (!string.IsNullOrEmpty(info.FirstName)) Fornavn = info.FirstName;
+        if (!string.IsNullOrEmpty(info.LastName)) Etternavn = info.LastName;
     }
-    public async Task InsertIntoDatabase()
+    public void InsertIntoDatabase()
     {
         try
         {
-            List<NpgsqlParameter> parameters = [
-                        OrgNr, Rapportår, AntallShares,  InputNavn, InputType
-                    ];
-            if (BedriftId != null) parameters.Add(BedriftId);
-            if (Fornavn != null) parameters.Add(Fornavn);
-            if (Etternavn != null) parameters.Add(Etternavn);
-            await Database.Query($"SELECT insert_shareholder_info(orgnr => @orgnr, år => @rapportår, antall => @antall, input_navn => @navn, input_type => @type{(BedriftId != null ? ", bedrift_navn => @bedriftid" : "")}{(Fornavn != null ? ", fornavn => @fornavn" : "")}{(Etternavn != null ? ", etternavn => @etternavn" : "")})", reader => { }, parameters);
+            using (var context = new BtdbContext())
+            {
+                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
+                var shareholder = new BedriftShareholderInfo
+                {
+                    BedriftId = bedriftId,
+                    Rapportår = År,
+                    ShareholderBedriftId = ShareholderBId,
+                    ShareholderFornavn = Fornavn,
+                    ShareholderEtternavn = Etternavn,
+                    Sharetype = InputType,
+                    Navn = InputNavn,
+                    AntalShares = AntallShares
+                };
+                context.BedriftShareholderInfos.Add(shareholder);
+                context.SaveChanges();
+            }
         }
         catch (Exception ex)
         {
@@ -229,27 +266,44 @@ public class InsertShareholderStructure
 }
 public class InsertKunngjøringStructure
 {
-    public NpgsqlParameter OrgNr { get; set; }
-    public NpgsqlParameter InputId { get; set; }
-    public NpgsqlParameter InputDato { get; set; }
-    public NpgsqlParameter Inputdesc { get; set; }
-    public NpgsqlParameter InputType { get; set; }
+    public int OrgNr { get; set; }
+    public long InputId { get; set; }
+    public DateOnly? InputDato { get; set; }
+    public string Inputdesc { get; set; }
+    public string InputType { get; set; }
     public InsertKunngjøringStructure(string CompanyId, Announcement kunngjøring)
     {
-        OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
-        InputId = new NpgsqlParameter("inputid", NpgsqlTypes.NpgsqlDbType.Bigint) { Value = long.Parse(kunngjøring.Id) };
-        InputDato = new NpgsqlParameter("inputdato", NpgsqlTypes.NpgsqlDbType.Date) { Value = string.IsNullOrEmpty(kunngjøring.Date) ? DBNull.Value : DateCorrector.ConvertDate(kunngjøring.Date) };
-        InputType = new NpgsqlParameter("inputtype", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = kunngjøring.Type };
-        Inputdesc = new NpgsqlParameter("inputdesc", NpgsqlTypes.NpgsqlDbType.Text) { Value = kunngjøring.Text };
+        int output;
+        long lOutput;
+        bool parseSuccess;
+        parseSuccess = int.TryParse(CompanyId, out output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} to integer");
+        OrgNr = output;
+        parseSuccess = long.TryParse(kunngjøring.Id, out lOutput);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {kunngjøring.Id} to BigInt");
+        InputId = lOutput;
+        InputDato = string.IsNullOrEmpty(kunngjøring.Date) ? null : DateCorrector.ConvertDate(kunngjøring.Date);
+        InputType = kunngjøring.Type;
+        Inputdesc = kunngjøring.Text;
     }
-    public async Task InsertToDataBase()
+    public void InsertToDataBase()
     {
         try
         {
-            List<NpgsqlParameter> parameters = [
-                OrgNr, InputId, InputDato, InputType, Inputdesc
-            ];
-            await Database.Query("SELECT insert_kunngjøringer(orgnr => @orgnr, input_id => @inputid, input_dato => @inputdato, input_type => @inputtype, input_desc => @inputdesc)", reader => { }, parameters);
+            using (var context = new BtdbContext())
+            {
+                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
+                var announcement = new BedriftKunngjøringer
+                {
+                    BedriftId = bedriftId,
+                    Dato = InputDato,
+                    KunngjøringId = InputId,
+                    Kunngjøringstekst = Inputdesc,
+                    Kunngjøringstype = InputType
+                };
+                context.BedriftKunngjøringers.Add(announcement);
+                context.SaveChanges();
+            }
         }
         catch (Exception ex)
         {
@@ -259,40 +313,54 @@ public class InsertKunngjøringStructure
 }
 public class InsertGenerellInfoStructure
 {
-    public NpgsqlParameter OrgNr { get; set; }
-    public NpgsqlParameter Rapportår { get; set; }
-    public NpgsqlParameter InputLandsdel { get; set; }
-    public NpgsqlParameter InputFylke { get; set; }
-    public NpgsqlParameter InputKommune { get; set; }
-    public NpgsqlParameter InputPostKode { get; set; }
-    public NpgsqlParameter InputPostAddresse { get; set; }
-    public NpgsqlParameter? InputAntallAnsatte { get; set; }
+    public int OrgNr { get; set; }
+    public int År { get; set; }
+    public string InputLandsdel { get; set; }
+    public string InputFylke { get; set; }
+    public string InputKommune { get; set; }
+    public string InputPostKode { get; set; }
+    public string InputPostAddresse { get; set; }
+    public int? InputAntallAnsatte { get; set; }
     public InsertGenerellInfoStructure(string CompanyId, string UpdateYear, LocationInfo location, PostalInfo post, string? NumberOfEmployees = null)
     {
-        OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
-        Rapportår = new NpgsqlParameter("rapportår", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(UpdateYear) };
-        InputLandsdel = new NpgsqlParameter("inputlandsdel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = location.CountryPart };
-        InputFylke = new NpgsqlParameter("inputfylke", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = location.County };
-        InputKommune = new NpgsqlParameter("inputkommune", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = location.Municipality };
-        InputPostKode = new NpgsqlParameter("inputpostkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = string.IsNullOrEmpty(post.ZipCode) ? DBNull.Value : post.ZipCode };
-        InputPostAddresse = new NpgsqlParameter("inputpostaddresse", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = post.AddressLine };
-        if (!string.IsNullOrEmpty(NumberOfEmployees))
-        {
-            int empNum;
-            bool parseSuccess = int.TryParse(NumberOfEmployees, out empNum);
-            if (!parseSuccess) empNum = 1;
-            InputAntallAnsatte = new NpgsqlParameter("inputantallansatte", NpgsqlTypes.NpgsqlDbType.Integer) { Value = empNum };
-        };
+        int output;
+        bool parseSuccess;
+        parseSuccess = int.TryParse(CompanyId, out output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} to Integer");
+        OrgNr = output;
+        parseSuccess = int.TryParse(UpdateYear, out output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdateYear} to Integer");
+        År = output;
+        parseSuccess = int.TryParse(NumberOfEmployees, out output);
+        if (!parseSuccess) InputAntallAnsatte = 1;
+        else InputAntallAnsatte = output;
+        InputLandsdel = location.CountryPart;
+        InputFylke = location.County;
+        InputKommune = location.Municipality;
+        InputPostKode = string.IsNullOrEmpty(post.ZipCode) ? "Mangler PostKode" : post.ZipCode;
+        InputPostAddresse = post.AddressLine;
     }
-    public async Task InsertToDataBase()
+    public void InsertToDataBase()
     {
         try
         {
-            List<NpgsqlParameter> parameters = [
-                OrgNr, Rapportår, InputLandsdel, InputFylke, InputKommune, InputPostKode, InputPostAddresse
-            ];
-            if (InputAntallAnsatte != null) parameters.Add(InputAntallAnsatte);
-            await Database.Query($"SELECT insert_generell_årlig_bedrift_info(orgnr => @orgnr, år => @rapportår, input_landsdel => @inputlandsdel, input_fylke => @inputfylke, input_kommune => @inputkommune, input_post_kode => @inputpostkode, input_post_addresse => @inputpostaddresse{(InputAntallAnsatte != null ? ", input_antall_ansatte => @inputantallansatte" : "")})", reader => { }, parameters);
+            using (var context = new BtdbContext())
+            {
+                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
+                var genInfo = new GenerellÅrligBedriftInfo
+                {
+                    BedriftId = bedriftId,
+                    Landsdel = InputLandsdel,
+                    Fylke = InputFylke,
+                    Kommune = InputKommune,
+                    PostAddresse = InputPostAddresse,
+                    PostKode = InputPostKode,
+                    Rapportår = År,
+                    AntallAnsatte = InputAntallAnsatte
+                };
+                context.GenerellÅrligBedriftInfos.Add(genInfo);
+                context.SaveChanges();
+            }
         }
         catch (Exception ex)
         {
@@ -302,29 +370,46 @@ public class InsertGenerellInfoStructure
 }
 public class InsertBedriftLederInfoStructure
 {
-    public NpgsqlParameter OrgNr { get; set; }
-    public NpgsqlParameter Rapportår { get; set; }
-    public NpgsqlParameter InputNavn { get; set; }
-    public NpgsqlParameter InputTittel { get; set; }
-    public NpgsqlParameter InputTittelKode { get; set; }
-    public NpgsqlParameter InputFødselÅr { get; set; }
+    public int OrgNr { get; set; }
+    public int År { get; set; }
+    public string InputNavn { get; set; }
+    public string InputTittel { get; set; }
+    public string InputTittelKode { get; set; }
+    public DateOnly? InputFødselÅr { get; set; }
     public InsertBedriftLederInfoStructure(string CompanyId, string UpdateYear, PersonRole person)
     {
-        OrgNr = new NpgsqlParameter("orgnr", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(CompanyId) };
-        Rapportår = new NpgsqlParameter("rapportår", NpgsqlTypes.NpgsqlDbType.Integer) { Value = int.Parse(UpdateYear) };
-        InputNavn = new NpgsqlParameter("inputnavn", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.Name };
-        InputFødselÅr = new NpgsqlParameter("inputfødselsår", NpgsqlTypes.NpgsqlDbType.Date) { Value = string.IsNullOrEmpty(person.BirthDate) ? DBNull.Value : DateCorrector.CorrectDate(person.BirthDate) };
-        InputTittel = new NpgsqlParameter("inputtittel", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.Title };
-        InputTittelKode = new NpgsqlParameter("inputtittelkode", NpgsqlTypes.NpgsqlDbType.Varchar) { Value = person.TitleCode };
+        int output;
+        bool parseSuccess;
+        parseSuccess = int.TryParse(CompanyId, out output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} into Integer");
+        OrgNr = output;
+        parseSuccess = int.TryParse(CompanyId, out output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdateYear} into Integer");
+        År = output;
+        InputNavn = person.Name;
+        InputFødselÅr = string.IsNullOrEmpty(person.BirthDate) ? null : DateCorrector.CorrectDate(person.BirthDate);
+        InputTittel = person.Title;
+        InputTittelKode = person.TitleCode;
     }
-    public async Task InsertToDataBase()
+    public void InsertToDataBase()
     {
         try
         {
-            List<NpgsqlParameter> parameters = [
-                OrgNr, Rapportår, InputNavn, InputFødselÅr, InputTittel, InputTittelKode
-            ];
-            await Database.Query("Select insert_bedrift_leder_info(orgnr => @orgnr, input_år => @rapportår, input_navn => @inputnavn, input_fødselsår => @inputfødselsår, input_tittel => @inputtittel, input_tittelkode => @inputtittelkode)", reader => { }, parameters);
+            using (var context = new BtdbContext())
+            {
+                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
+                var leder = new BedriftLederOversikt
+                {
+                    BedriftId = bedriftId,
+                    Navn = InputNavn,
+                    Fødselsdag = InputFødselÅr,
+                    Tittel = InputTittel,
+                    Tittelkode = InputTittelKode,
+                    Rapportår = År
+                };
+                context.BedriftLederOversikts.Add(leder);
+                context.SaveChanges();
+            }
         }
         catch (Exception ex)
         {
