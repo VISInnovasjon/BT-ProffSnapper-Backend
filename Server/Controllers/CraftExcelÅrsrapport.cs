@@ -1,52 +1,37 @@
-using System.Text;
+
 using Microsoft.AspNetCore.Mvc;
-using Npgsql;
-using Util.DB;
+using Microsoft.EntityFrameworkCore;
+using Server.Models;
 using MiniExcelLibs;
+using Server.Views;
+using Microsoft.AspNetCore.Http.HttpResults;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("genårsrapport")]
+[Route("årsrapport")]
 public class GenÅrsRapport : ControllerBase
 {
-    [HttpGet("new")]
+    private readonly DbContextOptions<BtdbContext> options = new DbContextOptionsBuilder<BtdbContext>().UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").Options;
+    [HttpGet("get")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> ExportCsv()
+    public async Task<Results<FileStreamHttpResult, NotFound>> ExportExcel()
     {
-        DateTime now = DateTime.Now.Date;
-        Response.ContentType = "text/csv";
-        Response.Headers.Add("Content-Disposition", $"attachement; filename=\"aarsrapport{now}.csv\"");
-        var csvBuilder = new StringBuilder();
-        await Database.Query("SELECT * FROM generer_årsrapport()", async reader =>
+        string now = DateTime.Now.Date.ToShortDateString();
+        Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+        Response.Headers.Add("Content-Disposition", $"attachement; filename=\"aarsrapport{now}.xlsx\"");
+        using (var context = new BtdbContext(options))
         {
-            CsvConverter.ConvertStreamToCsv(reader, csvBuilder);
-        });
-        return File(Encoding.Unicode.GetBytes(csvBuilder.ToString()), "text/csv", $"aarsrapport{now}.csv");
-    }
-}
-public class CsvConverter
-{
-    public static void ConvertStreamToCsv(NpgsqlDataReader reader, StringBuilder csvBuilder)
-    {
-        for (int i = 0; i < reader.FieldCount; i++)
-        {
-            if (i > 0) csvBuilder.Append(',');
-            csvBuilder.Append($"{reader.GetName(i).ToString()}");
-        }
-        csvBuilder.AppendLine();
-        while (reader.Read())
-        {
-            for (int i = 0; i < reader.FieldCount; i++)
+            var dataList = context.Årsrapports.ToList();
+            if (dataList != null)
             {
-                if (i > 0) csvBuilder.Append(',');
-                string input = reader.GetValue(i).ToString().Replace("\"", "\"\"");
-                if (string.IsNullOrEmpty(input))
-                    input = "Data Mangler";
-                csvBuilder.Append($"{input}");
-            }
-            csvBuilder.AppendLine();
+                List<ExcelÅrsrapport> Årsrapportdata = ExcelÅrsrapport.GetExportValues(dataList);
+                var memStream = new MemoryStream();
+                await memStream.SaveAsAsync(Årsrapportdata);
+                memStream.Seek(0, SeekOrigin.Begin);
+                return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"aarsrapport{now}.xlsx");
+            };
+            return TypedResults.NotFound();
         }
     }
 }
-

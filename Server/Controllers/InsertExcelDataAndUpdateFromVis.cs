@@ -1,17 +1,20 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using Util.InitVisData;
-using Util.ProffApiClasses;
-using Util.ProffFetch;
-using Util.DB;
+using Microsoft.EntityFrameworkCore;
+using Server.Models;
 namespace Server.Controllers;
 /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray); */
 
 [ApiController]
-[Route("/ExcelUpload")]
+[Route("/updatedb")]
 public class ExcelTestController : ControllerBase
 {
-    [HttpPost("UpdateNewData")]
+    private readonly DbContextOptions<BtdbContext> dbOptions = new DbContextOptionsBuilder<BtdbContext>().UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").Options;
+    private readonly JsonSerializerOptions jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+    [HttpPost("newdata")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromForm] IFormFile file)
@@ -43,21 +46,17 @@ public class ExcelTestController : ControllerBase
                 }
 
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                await CompactedVisBedriftData.AddListToDb(compactData);
+                CompactedVisBedriftData.AddListToDb(compactData, dbOptions);
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
                 List<ReturnStructure> paramStructures = new();
                 string contentPath = "./LocalData";
                 ReturnStructure? Data = null;
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
                 foreach (string filename in Directory.GetFiles(contentPath, "*.json"))
                 {
                     string jsonContent = System.IO.File.ReadAllText(filename);
                     try
                     {
-                        Data = JsonSerializer.Deserialize<ReturnStructure>(jsonContent, options);
+                        Data = JsonSerializer.Deserialize<ReturnStructure>(jsonContent, jsonOptions);
                     }
                     catch (Exception ex)
                     {
@@ -74,7 +73,7 @@ public class ExcelTestController : ControllerBase
                     Console.WriteLine($"Adding {param.Name} to DB");
                     try
                     {
-                        await param.InsertToDataBase();
+                        param.InsertToDataBase();
                     }
                     catch (Exception ex)
                     {
@@ -84,7 +83,10 @@ public class ExcelTestController : ControllerBase
                 Console.WriteLine("Insert Complete, updating delta.");
                 try
                 {
-                    await Database.Query("SELECT update_delta()", reader => { });
+                    using (var context = new BtdbContext(dbOptions))
+                    {
+                        context.Database.ExecuteSqlRaw("SELECT update_delta()");
+                    }
                 }
                 catch (Exception ex)
                 {
