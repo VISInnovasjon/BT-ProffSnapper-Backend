@@ -29,6 +29,11 @@ public partial class BtdbContext : DbContext
     public virtual DbSet<ÅrligØkonomiskDatum> ÅrligØkonomiskData { get; set; }
 
     public virtual DbSet<ØkoKodeLookup> ØkoKodeLookups { get; set; }
+    public virtual DbSet<DataSortertEtterAldersGruppe> DataSortertEtterAldersGruppes { get; set; }
+    public virtual DbSet<DataSortertEtterBransje> DataSortertEtterBransjes { get; set; }
+    public virtual DbSet<DataSortertEtterFase> DataSortertEtterFases { get; set; }
+    public virtual DbSet<GjennomsnittVerdier> GjennomsnittVerdiers { get; set; }
+    public virtual DbSet<Årsrapport> Årsrapports { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}");
@@ -229,6 +234,73 @@ public partial class BtdbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("øko_kode");
         });
+        modelBuilder.Entity<DataSortertEtterAldersGruppe>(entity =>
+            {
+                entity
+                    .ToView("data_sortert_etter_aldersgruppe")
+                    .HasNoKey();
+                entity.Property(e => e.AldersGruppe).HasColumnName("alders_gruppe");
+                entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
+                entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
+                entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
+                entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
+                entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+
+            }
+        );
+        modelBuilder.Entity<DataSortertEtterBransje>(entity =>
+        {
+            entity
+                .ToView("data_sortert_etter_bransje")
+                .HasNoKey();
+            entity.Property(e => e.Bransje).HasColumnName("bransje");
+            entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
+            entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
+            entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
+            entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
+            entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+        });
+        modelBuilder.Entity<DataSortertEtterFase>(entity =>
+        {
+            entity
+                .ToView("data_sortert_etter_fase")
+                .HasNoKey();
+            entity.Property(e => e.Fase).HasColumnName("fase");
+            entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
+            entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
+            entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
+            entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
+            entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+        });
+        modelBuilder.Entity<GjennomsnittVerdier>(entity =>
+        {
+            entity
+                .ToView("gjennomsnitt_verdier")
+                .HasNoKey();
+            entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
+            entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
+            entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
+            entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
+            entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+        });
+        modelBuilder.Entity<Årsrapport>(entity =>
+        {
+            entity
+                .ToView("årsrapport")
+                .HasNoKey();
+            entity.Property(e => e.AntallAnsatte).HasColumnName("antall_ansatte");
+            entity.Property(e => e.AntallSharesVis).HasColumnName("antall_shares_vis");
+            entity.Property(e => e.DeltaInskuttEgenkapital).HasColumnName("delta_innskutt_egenkapital");
+            entity.Property(e => e.DriftsResultat).HasColumnName("driftsresultat");
+            entity.Property(e => e.OrdinærtResultat).HasColumnName("ordinært_resultat");
+            entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
+            entity.Property(e => e.PostAddresse).HasColumnName("post_addresse");
+            entity.Property(e => e.PostKode).HasColumnName("post_kode");
+            entity.Property(e => e.SharesProsent).HasColumnName("shares_prosent");
+            entity.Property(e => e.SumDriftsIntekter).HasColumnName("sum_drifts_intekter");
+            entity.Property(e => e.SumInskuttEgenkapital).HasColumnName("sum_innskutt_egenkapital");
+        });
+
 
         OnModelCreatingPartial(modelBuilder);
     }

@@ -1,5 +1,5 @@
-namespace Util.ProffFetch;
-using ProffApiClasses;
+namespace Util;
+using Server.Models;
 using System.Text.Json;
 
 public class FetchProffData

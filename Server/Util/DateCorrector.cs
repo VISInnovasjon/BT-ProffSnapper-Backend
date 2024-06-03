@@ -1,4 +1,4 @@
-namespace Util.DateCorrector;
+namespace Util;
 
 
 public class DateCorrector

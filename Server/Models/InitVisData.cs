@@ -1,7 +1,6 @@
 using MiniExcelLibs;
-using Server.Models;
-
-namespace Util.InitVisData;
+using Microsoft.EntityFrameworkCore;
+namespace Server.Models;
 
 public class RawVisBedriftData
 {
@@ -68,11 +67,11 @@ public class CompactedVisBedriftData
         }
         return CleanData;
     }
-    public static void AddListToDb(List<CompactedVisBedriftData> data)
+    public static void AddListToDb(List<CompactedVisBedriftData> data, DbContextOptions<BtdbContext> options)
     {
         foreach (var company in data)
         {
-            using (var context = new BtdbContext())
+            using (var context = new BtdbContext(options))
             {
                 var companyData = new BedriftInfo
                 {
