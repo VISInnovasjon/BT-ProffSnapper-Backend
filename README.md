@@ -424,7 +424,7 @@ generell_årlig_bedrift_info
 | 1                                                       | 2024              | 1                      | Vestlandet              | Vestland             | Bergen                 | 5050                     | Sandefjordsvika 98          |
 
 Ferdig oppsett av database ser slik ut:<br>
-![Bilde som viser relasjonsgraf for databasen](https://imgur.com/a/8vIl1iH)
+![Bilde som viser relasjonsgraf for databasen](https://i.imgur.com/21q4rG5.jpeg)
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
@@ -434,21 +434,21 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
 
 1. Årsrapport.
    Denne viewen er laget for å hjelpe med generering av årsrapporter.<br>
-   `sql
- SELECT b.orgnummer,
- g.antall_ansatte,
- "øk_data".driftsresultat,
- "øk_data".sum_drifts_intekter,
- "øk_data".sum_innskutt_egenkapital,
- "øk_data".delta_innskutt_egenkapital,
- "øk_data"."ordinært_resultat",
- g.post_addresse,
- g.post_kode,
- shareholder_data.antal_shares AS antall_shares_vis,
- shareholder_data.sharetype AS shares_prosent
-FROM bedrift_info b
-  JOIN "generell_årlig_bedrift_info" g ON b.bedrift_id = g.bedrift_id AND g."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)
-  LEFT JOIN LATERAL ( SELECT max(
+   ```sql
+   SELECT b.orgnummer,
+   g.antall_ansatte,
+   "øk_data".driftsresultat,
+   "øk_data".sum_drifts_intekter,
+   "øk_data".sum_innskutt_egenkapital,
+   "øk_data".delta_innskutt_egenkapital,
+   "øk_data"."ordinært_resultat",
+   g.post_addresse,
+   g.post_kode,
+   shareholder_data.antal_shares AS antall_shares_vis,
+   shareholder_data.sharetype AS shares_prosent
+   FROM bedrift_info b
+   JOIN "generell_årlig_bedrift_info" g ON b.bedrift_id = g.bedrift_id AND g."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)
+   LEFT JOIN LATERAL ( SELECT max(
              CASE
                  WHEN "ø"."øko_kode"::text = 'DR'::text THEN "ø"."øko_verdi"
                  ELSE NULL::numeric
@@ -475,12 +475,13 @@ FROM bedrift_info b
              END) AS "ordinært_resultat"
         FROM "årlig_økonomisk_data" "ø"
        WHERE "ø".bedrift_id = b.bedrift_id AND "ø"."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)) "øk_data" ON true
-  LEFT JOIN LATERAL ( SELECT s.antal_shares,
+   LEFT JOIN LATERAL ( SELECT s.antal_shares,
          s.sharetype
         FROM bedrift_shareholder_info s
        WHERE s.bedrift_id = b.bedrift_id AND s."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1) AND s.shareholder_bedrift_id::text = '987753153'::text) shareholder_data ON true;
-`
+   `
    Denne joiner sammen alle verdier ønsket i en årsrapport, og kan queries etter bestemte organisasjoner. <br>
+   ```
 2. Gjennomsnittsverdier:
    ```sql
     SELECT "ø"."rapportår",
@@ -530,7 +531,8 @@ ORDER BY b.bransje, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
 
 ```
 
-Leverer ut gjennomsnittsdata, sortert etter bransje. <br> 5. Data*sortert_etter_aldersgruppe:
+Leverer ut gjennomsnittsdata, sortert etter bransje. <br> 5. Data\*sortert_etter_aldersgruppe:
+
 ```sql
 WITH lederalder AS (
 SELECT b_1.bedrift_id,
@@ -577,4 +579,7 @@ GROUP BY "ø"."rapportår", ag.alders_gruppe, "ø"."øko_kode", l.kode_beskrivel
 ```
 
 Leverer gjennomsnitsverdier, men sorterer basert på alder av enten Daglig Leder eller Styreleder.<br>
+
+```
+
 ```
