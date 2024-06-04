@@ -479,7 +479,7 @@ FROM bedrift_info b
          s.sharetype
         FROM bedrift_shareholder_info s
        WHERE s.bedrift_id = b.bedrift_id AND s."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1) AND s.shareholder_bedrift_id::text = '987753153'::text) shareholder_data ON true;
-`
+       ```
    Denne joiner sammen alle verdier ønsket i en årsrapport, og kan queries etter bestemte organisasjoner. <br>
 2. Gjennomsnittsverdier:
    ```sql
@@ -509,7 +509,7 @@ Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorte
    JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
 GROUP BY f.fase, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
 ORDER BY f.fase, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
-````
+```
 
 Leverer ut gjennomsnittsdata pr år, men sortert etter fase.<br> 4. Data\*sortert_etter_bransje:
 
@@ -575,4 +575,3 @@ GROUP BY "ø"."rapportår", ag.alders_gruppe, "ø"."øko_kode", l.kode_beskrivel
 ```
 
 Leverer gjennomsnitsverdier, men sorterer basert på alder av enten Daglig Leder eller Styreleder.<br>
-```
