@@ -434,7 +434,7 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
 
 1. Årsrapport.
    Denne viewen er laget for å hjelpe med generering av årsrapporter.<br>
-   ```sql
+```sql
  SELECT b.orgnummer,
  g.antall_ansatte,
  "øk_data".driftsresultat,
@@ -479,7 +479,7 @@ FROM bedrift_info b
          s.sharetype
         FROM bedrift_shareholder_info s
        WHERE s.bedrift_id = b.bedrift_id AND s."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1) AND s.shareholder_bedrift_id::text = '987753153'::text) shareholder_data ON true;
-       ```
+```
    Denne joiner sammen alle verdier ønsket i en årsrapport, og kan queries etter bestemte organisasjoner. <br>
 2. Gjennomsnittsverdier:
    ```sql
@@ -493,10 +493,10 @@ FROM bedrift_info b
       JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
    GROUP BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
    ORDER BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
-   ```
+```
 Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br>
 3. Data_sortert_etter_fase:
-	```sql
+```sql
 	 SELECT f.fase,
   "ø"."rapportår",
   "ø"."øko_kode",
