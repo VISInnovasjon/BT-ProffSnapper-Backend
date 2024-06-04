@@ -424,7 +424,7 @@ generell_årlig_bedrift_info
 | 1                                                       | 2024              | 1                      | Vestlandet              | Vestland             | Bergen                 | 5050                     | Sandefjordsvika 98          |
 
 Ferdig oppsett av database ser slik ut:<br>
-![Bilde som viser relasjonsgraf for databasen](https://imgur.com/a/8vIl1iH)
+![Bilde som viser relasjonsgraf for databasen](https://i.imgur.com/21q4rG5.jpeg)
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
@@ -434,7 +434,7 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
 
 1. Årsrapport.
    Denne viewen er laget for å hjelpe med generering av årsrapporter.<br>
-   `sql
+   ```sql
  SELECT b.orgnummer,
  g.antall_ansatte,
  "øk_data".driftsresultat,
