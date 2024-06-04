@@ -23,20 +23,28 @@ public class QueryHandler : ControllerBase
         string jsonString;
         try
         {
-            Dictionary<string, Dictionary<string, List<Values>>> AlderData = new Dictionary<string, Dictionary<string, List<Values>>>() { };
+            Dictionary<string, Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>>> AlderData = new Dictionary<string, Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>>>() { };
 
             using (var context = new BtdbContext(options))
             {
                 List<string?> alderGrupper = context.DataSortertEtterAldersGruppes.Select(b => b.AldersGruppe).Distinct().ToList();
-                foreach (string gruppe in alderGrupper)
+                foreach (string? gruppe in alderGrupper)
                 {
                     if (string.IsNullOrEmpty(gruppe)) continue;
-                    Dictionary<string, List<Values>> yearlyData = new() { };
+                    Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>> yearlyData = new() { };
                     List<int> years = context.DataSortertEtterAldersGruppes.Where(b => b.AldersGruppe == gruppe).Select(b => b.RapportÅr).Distinct().ToList();
                     foreach (int year in years)
                     {
-                        List<Values> DataList = context.DataSortertEtterAldersGruppes.Where(b => b.RapportÅr == year && b.AldersGruppe == gruppe).Select(b => new Values(b.ØkoKode, b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
-                        yearlyData.Add(year.ToString(), DataList);
+                        Dictionary<string, ExtractedEcoCodeValues> CodeValuePairing = new() { };
+                        List<Values> DataList = context.DataSortertEtterAldersGruppes.Where(b => b.RapportÅr == year && b.AldersGruppe == gruppe).Select(b => new Values(b.ØkoKode ?? "Mangler Kode", b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
+                        foreach (var item in DataList)
+                        {
+                            ExtractedEcoCodeValues exVal = new(
+                                item.Value, item.Delta, item.Description
+                            );
+                            CodeValuePairing.Add(item.EcoCode, exVal);
+                        }
+                        yearlyData.Add(year.ToString(), CodeValuePairing);
 
                     }
                     AlderData.Add(gruppe, yearlyData);
@@ -52,7 +60,7 @@ public class QueryHandler : ControllerBase
             var error = new
             {
                 Message = "An Error Occured.",
-                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.TargetSite.ToString() + " " + ex.StackTrace
+                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.StackTrace
 
             };
             return BadRequest(error);
@@ -66,20 +74,28 @@ public class QueryHandler : ControllerBase
         string jsonString;
         try
         {
-            Dictionary<string, Dictionary<string, List<Values>>> BransjeData = new Dictionary<string, Dictionary<string, List<Values>>>() { };
+            Dictionary<string, Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>>> BransjeData = new Dictionary<string, Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>>>() { };
 
             using (var context = new BtdbContext(options))
             {
                 List<string?> bransjer = context.DataSortertEtterBransjes.Select(b => b.Bransje).Distinct().ToList();
-                foreach (string bransje in bransjer)
+                foreach (string? bransje in bransjer)
                 {
                     if (string.IsNullOrEmpty(bransje)) continue;
-                    Dictionary<string, List<Values>> yearlyData = new() { };
+                    Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>> yearlyData = new() { };
                     List<int> years = context.DataSortertEtterBransjes.Where(b => b.Bransje == bransje).Select(b => b.RapportÅr).Distinct().ToList();
                     foreach (int year in years)
                     {
-                        List<Values> DataList = context.DataSortertEtterBransjes.Where(b => b.RapportÅr == year && b.Bransje == bransje).Select(b => new Values(b.ØkoKode, b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
-                        yearlyData.Add(year.ToString(), DataList);
+                        Dictionary<string, ExtractedEcoCodeValues> CodeValuePairing = new() { };
+                        List<Values> DataList = context.DataSortertEtterBransjes.Where(b => b.RapportÅr == year && b.Bransje == bransje).Select(b => new Values(b.ØkoKode ?? "Kode Mangler", b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
+                        foreach (var item in DataList)
+                        {
+                            ExtractedEcoCodeValues exVal = new(
+                                item.Value, item.Delta, item.Description
+                            );
+                            CodeValuePairing.Add(item.EcoCode, exVal);
+                        }
+                        yearlyData.Add(year.ToString(), CodeValuePairing);
 
                     }
                     BransjeData.Add(bransje, yearlyData);
@@ -95,7 +111,7 @@ public class QueryHandler : ControllerBase
             var error = new
             {
                 Message = "An Error Occured.",
-                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.TargetSite.ToString() + " " + ex.StackTrace
+                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.StackTrace
 
             };
             return BadRequest(error);
@@ -109,20 +125,28 @@ public class QueryHandler : ControllerBase
         string jsonString;
         try
         {
-            Dictionary<string, Dictionary<string, List<Values>>> FaseData = new Dictionary<string, Dictionary<string, List<Values>>>() { };
+            Dictionary<string, Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>>> FaseData = new Dictionary<string, Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>>>() { };
 
             using (var context = new BtdbContext(options))
             {
                 List<string?> faser = context.DataSortertEtterFases.Select(b => b.Fase).Distinct().ToList();
-                foreach (string fase in faser)
+                foreach (string? fase in faser)
                 {
                     if (string.IsNullOrEmpty(fase)) continue;
-                    Dictionary<string, List<Values>> yearlyData = new() { };
+                    Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>> yearlyData = new() { };
                     List<int> years = context.DataSortertEtterFases.Where(b => b.Fase == fase).Select(b => b.RapportÅr).Distinct().ToList();
                     foreach (int year in years)
                     {
-                        List<Values> DataList = context.DataSortertEtterFases.Where(b => b.RapportÅr == year && b.Fase == fase).Select(b => new Values(b.ØkoKode, b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
-                        yearlyData.Add(year.ToString(), DataList);
+                        Dictionary<string, ExtractedEcoCodeValues> CodeValuePairing = new() { };
+                        List<Values> DataList = context.DataSortertEtterFases.Where(b => b.RapportÅr == year && b.Fase == fase).Select(b => new Values(b.ØkoKode ?? "Mangler Kode", b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
+                        foreach (var item in DataList)
+                        {
+                            ExtractedEcoCodeValues exVal = new(
+                                item.Value, item.Delta, item.Description
+                            );
+                            CodeValuePairing.Add(item.EcoCode, exVal);
+                        }
+                        yearlyData.Add(year.ToString(), CodeValuePairing);
 
                     }
                     FaseData.Add(fase, yearlyData);
@@ -138,7 +162,7 @@ public class QueryHandler : ControllerBase
             var error = new
             {
                 Message = "An Error Occured.",
-                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.TargetSite.ToString() + " " + ex.StackTrace
+                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.StackTrace
 
             };
             return BadRequest(error);
@@ -152,14 +176,22 @@ public class QueryHandler : ControllerBase
         string jsonString;
         try
         {
-            Dictionary<string, List<Values>> yearlyData = new() { };
+            Dictionary<string, Dictionary<string, ExtractedEcoCodeValues>> yearlyData = new() { };
             using (var context = new BtdbContext(options))
             {
                 List<int> years = context.GjennomsnittVerdiers.Select(b => b.RapportÅr).Distinct().ToList();
                 foreach (int year in years)
                 {
-                    List<Values> DataList = context.GjennomsnittVerdiers.Where(b => b.RapportÅr == year).Select(b => new Values(b.ØkoKode, b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
-                    yearlyData.Add(year.ToString(), DataList);
+                    Dictionary<string, ExtractedEcoCodeValues> CodeValuePairing = new() { };
+                    List<Values> DataList = context.GjennomsnittVerdiers.Where(b => b.RapportÅr == year).Select(b => new Values(b.ØkoKode ?? "Kode Mangler", b.AvgØkoVerdi, b.AvgDelta, b.KodeBeskrivelse)).ToList();
+                    foreach (var item in DataList)
+                    {
+                        ExtractedEcoCodeValues exVal = new(
+                            item.Value, item.Delta, item.Description
+                        );
+                        CodeValuePairing.Add(item.EcoCode, exVal);
+                    }
+                    yearlyData.Add(year.ToString(), CodeValuePairing);
 
                 }
 
@@ -173,7 +205,7 @@ public class QueryHandler : ControllerBase
             var error = new
             {
                 Message = "An Error Occured.",
-                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.TargetSite.ToString() + " " + ex.StackTrace
+                Details = ex.Message + " " + ex.Data.ToString() + " " + ex.StackTrace
 
             };
             return BadRequest(error);
