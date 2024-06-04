@@ -1,0 +1,12 @@
+@Server_HostAddress = https://localhost:5245
+
+GET {{Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+GET {{Server_HostAddress}}/databaseTest/
+Accept: application/json
+
+POST {{Server_HostAddress}}/ExcelTest/
+Accept: application/json
+
+###

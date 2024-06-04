@@ -1,0 +1,39 @@
+
+app.MapGet("/InsertingCodeLookup", () =>
+{
+    Dictionary<string, string> codeDescriptionPair;
+    string jsonString;
+    using (StreamReader reader = new StreamReader("./helperJSON/EconomicCodes.json", true))
+    {
+        jsonString = reader.ReadToEnd();
+    }
+
+    codeDescriptionPair = JsonSerializer.Deserialize<Dictionary<string, string>>(jsonString);
+    if (codeDescriptionPair != null)
+    {
+        try
+        {
+            List<string> queryArray = new List<string>();
+            foreach (var pair in codeDescriptionPair)
+            {
+                string sqlQuery = $"INSERT INTO øko_kode_lookup (øko_kode, kode_beskrivelse) VALUES ('{pair.Key}', '{pair.Value}')";
+                queryArray.Add(sqlQuery);
+            }
+            Action<NpgsqlDataReader> processRow = reader =>
+            {
+                Console.WriteLine(reader.RecordsAffected);
+            };
+            foreach (string query in queryArray)
+            {
+                Database.Query(query, processRow);
+            }
+            return "Ok!";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return ex.Message;
+        }
+    }
+    else return "Failed";
+});
