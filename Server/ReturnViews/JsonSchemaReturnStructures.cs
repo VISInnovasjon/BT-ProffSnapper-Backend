@@ -18,3 +18,17 @@ public class Values
         Description = desc;
     }
 }
+public class ExtractedEcoCodeValues
+{
+    public decimal Value { get; set; }
+    public decimal Delta { get; set; }
+    public string? Description { get; set; }
+    public ExtractedEcoCodeValues(
+        decimal value, decimal delta, string? desc
+    )
+    {
+        Value = value;
+        Delta = delta;
+        Description = desc;
+    }
+}

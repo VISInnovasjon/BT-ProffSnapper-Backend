@@ -80,7 +80,7 @@ public class ReturnStructure
     public void InsertToDataBase()
     {
         UpdateNameStructure nameStructure = new(
-                    CompanyId, Name, PreviousNames.Count == 0 ? null : PreviousNames
+                    CompanyId, Name, PreviousNames?.Count == 0 ? null : PreviousNames
                 );
         nameStructure.InsertIntoDatabase();
         InsertGenerellInfoStructure infoStructure = new(

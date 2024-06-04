@@ -6,7 +6,7 @@ public class RawVisBedriftData
 {
     public int RapportÅr { get; set; }
     public int Orgnummer { get; set; }
-    public string Fase { get; set; }
+    public string? Fase { get; set; }
     public string? Bransje { get; set; }
     public static async Task<List<RawVisBedriftData>> ListFromVisExcelSheet(Stream stream, string excelSheetName)
     {
@@ -36,9 +36,9 @@ public class RawVisBedriftData
 
 public class CompactedVisBedriftData
 {
-    public List<int> RapportÅr { get; set; }
+    public required List<int> RapportÅr { get; set; }
     public int Orgnummer { get; set; }
-    public List<string> Faser { get; set; }
+    public required List<string> Faser { get; set; }
     public string? Bransje { get; set; }
 
     public static List<CompactedVisBedriftData> ListOfCompactedVisExcelSheet(List<RawVisBedriftData> data)
@@ -48,7 +48,7 @@ public class CompactedVisBedriftData
         {
             if (CleanData.Count > 0 && CleanData.Last().Orgnummer == data[i].Orgnummer)
             {
-                CleanData.Last().Faser.Add(data[i].Fase);
+                CleanData.Last().Faser.Add(data[i].Fase ?? "Fase Missing");
                 CleanData.Last().RapportÅr.Add(data[i].RapportÅr);
             }
             else
@@ -61,7 +61,7 @@ public class CompactedVisBedriftData
                     Faser = new List<string>(),
                 };
                 cleanExcelData.RapportÅr.Add(data[i].RapportÅr);
-                cleanExcelData.Faser.Add(data[i].Fase);
+                cleanExcelData.Faser.Add(data[i].Fase ?? "Fase Missing");
                 CleanData.Add(cleanExcelData);
             }
         }
@@ -73,24 +73,31 @@ public class CompactedVisBedriftData
         {
             using (var context = new BtdbContext(options))
             {
-                var companyData = new BedriftInfo
+                try
                 {
-                    Orgnummer = company.Orgnummer,
-                    Bransje = company.Bransje
-                };
-                context.BedriftInfos.Add(companyData);
-                context.SaveChanges();
-                var bedriftId = companyData.BedriftId;
-                for (int i = 0; i < company.RapportÅr.Count; i++)
-                {
-                    var faseData = new OversiktBedriftFaseStatus
+                    var companyData = new BedriftInfo
                     {
-                        Fase = company.Faser[i],
-                        Rapportår = company.RapportÅr[i],
-                        BedriftId = bedriftId
+                        Orgnummer = company.Orgnummer,
+                        Bransje = company.Bransje
                     };
-                    context.OversiktBedriftFaseStatuses.Add(faseData);
+                    context.BedriftInfos.Add(companyData);
                     context.SaveChanges();
+                    var bedriftId = companyData.BedriftId;
+                    for (int i = 0; i < company.RapportÅr.Count; i++)
+                    {
+                        var faseData = new OversiktBedriftFaseStatus
+                        {
+                            Fase = company.Faser[i],
+                            Rapportår = company.RapportÅr[i],
+                            BedriftId = bedriftId
+                        };
+                        context.OversiktBedriftFaseStatuses.Add(faseData);
+                        context.SaveChanges();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
                 }
 
             }

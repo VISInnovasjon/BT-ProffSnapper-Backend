@@ -77,7 +77,7 @@ Hva skal produktet gjøre:
 1. Lage et wireframe oppsett på hvordan siden skal se ut, og hvordan brukeropplevelsen skal være. <a href="https://excalidraw.com/#json=t7vlG0xVLfCtKv7Kl61zd,2p75ewZ4-Q4NYjYgLlf8kA"> Foreløbig ide</a>
 2. Designe oppsett og komponenter i FIGMA, Tenke på bruk og formål. Dette er mer et enterprise verktøy enn en butikk. (Legg til figma link her.)
 3. Få tilbakemelding fra sluttbruker når det kommer til brukervennlighet og design.
-4. Bestemme bruk av Frontend framework, hva som egner seg best, og hva som er lettest å self-hoste på azure. Next? Ren react? JS + HTML? <br> Vi har som mål å følge bergen stacken tett, og velger NextJS som frontend og C# som backend.
+4. Bestemme bruk av Frontend framework, hva som egner seg best, og hva som er lettest å self-hoste på azure. Next? Ren react? JS + HTML? <br> Vi velger React + Vite som frontend og C# som backend.
 5. Bestemme oss for database oppsett. Vi har som mål å bruke POSTGRESQL for å lagre brukerdata samt data fra proff og vis.
 6. Når det kommer til brukertyper, mener vi mht formål at alle brukere har tilgang til samme funksjonalitet.
 7. Nå et punkt hvor C# backend kan snakke med databasen på samme måte som nodejs prototype backend.
@@ -110,7 +110,6 @@ Vi bruker primært pull-requests for å oppdatere koden i dev. Det gjør at vi h
 
 ## Kode Standarer
 
-Vi forholder oss til <a href="https://nextjs.org/docs">NextJS docs</a> for best practise. <br>
 Vi bruker primært en jsdoc blokk kommentar for å kommentere funksjoner: <br>
 
 ```javascript
@@ -424,166 +423,158 @@ generell_årlig_bedrift_info
 | :------------------------------------------------------ | :---------------- | :--------------------- | :---------------------- | :------------------- | :--------------------- | :----------------------- | :-------------------------- |
 | 1                                                       | 2024              | 1                      | Vestlandet              | Vestland             | Bergen                 | 5050                     | Sandefjordsvika 98          |
 
+Ferdig oppsett av database ser slik ut:<br>
+![Bilde som viser relasjonsgraf for databasen](https://imgur.com/a/8vIl1iH)
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
+Mesteparten av operasjoner mot databasen er gjort gjennom Entity Framework Core.<br>
+<br>
+For å simplifisere queries er det laget følgende views på databasen:<br>
 
-Når C# backend fetcher ny data fra proff dekonstruerer den JSON data til classer som passer til følgende databasefunksjoner:
+1. Årsrapport.
+   Denne viewen er laget for å hjelpe med generering av årsrapporter.<br>
+   `sql
+ SELECT b.orgnummer,
+ g.antall_ansatte,
+ "øk_data".driftsresultat,
+ "øk_data".sum_drifts_intekter,
+ "øk_data".sum_innskutt_egenkapital,
+ "øk_data".delta_innskutt_egenkapital,
+ "øk_data"."ordinært_resultat",
+ g.post_addresse,
+ g.post_kode,
+ shareholder_data.antal_shares AS antall_shares_vis,
+ shareholder_data.sharetype AS shares_prosent
+FROM bedrift_info b
+  JOIN "generell_årlig_bedrift_info" g ON b.bedrift_id = g.bedrift_id AND g."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)
+  LEFT JOIN LATERAL ( SELECT max(
+             CASE
+                 WHEN "ø"."øko_kode"::text = 'DR'::text THEN "ø"."øko_verdi"
+                 ELSE NULL::numeric
+             END) AS driftsresultat,
+         max(
+             CASE
+                 WHEN "ø"."øko_kode"::text = 'SI'::text THEN "ø"."øko_verdi"
+                 ELSE NULL::numeric
+             END) AS sum_drifts_intekter,
+         max(
+             CASE
+                 WHEN "ø"."øko_kode"::text = 'SIK'::text THEN "ø"."øko_verdi"
+                 ELSE NULL::numeric
+             END) AS sum_innskutt_egenkapital,
+         max(
+             CASE
+                 WHEN "ø"."øko_kode"::text = 'SIK'::text THEN "ø".delta
+                 ELSE NULL::numeric
+             END) AS delta_innskutt_egenkapital,
+         max(
+             CASE
+                 WHEN "ø"."øko_kode"::text = 'OR'::text THEN "ø"."øko_verdi"
+                 ELSE NULL::numeric
+             END) AS "ordinært_resultat"
+        FROM "årlig_økonomisk_data" "ø"
+       WHERE "ø".bedrift_id = b.bedrift_id AND "ø"."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)) "øk_data" ON true
+  LEFT JOIN LATERAL ( SELECT s.antal_shares,
+         s.sharetype
+        FROM bedrift_shareholder_info s
+       WHERE s.bedrift_id = b.bedrift_id AND s."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1) AND s.shareholder_bedrift_id::text = '987753153'::text) shareholder_data ON true;
+`
+   Denne joiner sammen alle verdier ønsket i en årsrapport, og kan queries etter bestemte organisasjoner. <br>
+2. Gjennomsnittsverdier:
+   ```sql
+    SELECT "ø"."rapportår",
+     "ø"."øko_kode",
+     l.kode_beskrivelse,
+     avg("ø"."øko_verdi") AS "avg_øko_verdi",
+     avg("ø".delta) AS avg_delta
+    FROM bedrift_info b
+      JOIN "årlig_økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
+      JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
+   GROUP BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
+   ORDER BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
+   ```
 
-1. Insert*bedrift_leder_info(orgnr INTEGER, input_navn VARCHAR(255), input_tittel VARCHAR(255), input_tittelkode VARCHAR(255), input*år INTEGER, input_fødselsår VARCHAR(255))<br>
+````
+Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br>
+3. Data_sortert_etter_fase:
+	```sql
+	 SELECT f.fase,
+  "ø"."rapportår",
+  "ø"."øko_kode",
+  l.kode_beskrivelse,
+  avg("ø"."øko_verdi") AS "avg_øko_verdi",
+  avg("ø".delta) AS avg_delta
+ FROM bedrift_info b
+   JOIN oversikt_bedrift_fase_status f ON b.bedrift_id = f.bedrift_id
+   JOIN "årlig_økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
+   JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
+GROUP BY f.fase, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
+ORDER BY f.fase, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
+````
 
-```sql
-
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO bedrift_leder_oversikt(bedrift_id, tittel, navn, fødselsdag, tittelkode, rapportår)
-	VALUES (id, input_tittel, input_navn, input_fødselsår, input_tittelkode, input_år)
-	ON CONFLICT do nothing;
-END;
-```
-
-2. insert*generell*årlig_bedrift_info(orgnr INTEGER, år INTEGER ,input_landsdel VARCHAR, input_fylke VARCHAR, input_kommune VARCHAR, input_post_kode VARCHAR, input_post_adresse VARCHAR, input_antall_ansatte INTEGER DEFAULT NULL)<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO generell_årlig_bedrift_info(bedrift_id, rapportår, landsdel, fylke, kommune, post_kode, post_addresse, antall_ansatte)
-	VALUES (id, år, input_landsdel, input_fylke, input_kommune, input_post_kode, input_post_addresse, input_antall_ansatte)
-	ON CONFLICT do nothing;
-END;
-```
-
-3. insert_kunngjøringer(orgnr INTEGER, input_id BIGINT, input_dato VARCHAR, input_desc TEXT, input_type VARCHAR)<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO bedrift_kunngjøringer(bedrift_id, kunngjøring_id, dato, kunngjøringstekst, kunngjøringstype)
-	VALUES (id, input_id, input_dato, input_desc, input_type)
-	ON CONFLICT do nothing;
-END;
-```
-
-4. insert_shareholder_info(orgnr INTEGER, år INTEGER, antall INTEGER, input_navn VARCHAR, input_type VARCHAR, bedrift_navn VARCHAR DEFAULT NULL, fornavn VARCHAR DEFAULT NULL, etternavn VARCHAR DEFAULT NULL)<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO bedrift_shareholder_info(bedrift_id, rapportår, antal_shares, shareholder_bedrift_id, shareholder_fornavn, shareholder_etternavn, navn, sharetype)
-	VALUES (id, år, antall, bedrift_navn, fornavn, etternavn, input_navn, input_type)
-		ON CONFLICT do nothing;
-END;
-```
-
-5. insert_øko_data(orgnr INTEGER, år INTEGER, kodenavn VARCHAR[], kodeverdier NUMERIC[])<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-	curr_kode VARCHAR(255);
-	curr_val NUMERIC;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	FOR i in 1..array_length(kodenavn, 1)
-	LOOP
-		curr_kode := kodenavn[i];
-		curr_val := kodeverdier[i];
-		INSERT INTO årlig_økonomisk_data(bedrift_id, rapportår, øko_kode, øko_verdi)
-		VALUES (id, år, curr_kode, curr_val)
-		ON CONFLICT do nothing;
-	END LOOP;
-END;
-```
-
-6. update_bedrift_info_with_name(orgnr INTEGER, navn VARCHAR, tidligere_navn VARCHAR[])<br>
+Leverer ut gjennomsnittsdata pr år, men sortert etter fase.<br> 4. Data\*sortert_etter_bransje:
 
 ```sql
-BEGIN
-	UPDATE bedrift_info
-	SET målbedrift = navn,
-		navneliste = tidligere_navn
-	WHERE orgnummer = orgnr;
-END
+SELECT b.bransje,
+"ø"."rapportår",
+"ø"."øko_kode",
+l.kode_beskrivelse,
+avg("ø"."øko_verdi") AS "avg*øko*verdi",
+avg("ø".delta) AS avg_delta
+FROM bedrift_info b
+JOIN "årlig*økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
+JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
+GROUP BY b.bransje, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
+ORDER BY b.bransje, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
+
 ```
 
-Når bruker vil legge til flere bedrifter via excel-ark gjennom dashboard kjøres følgende funksjon:
-
-1. insert_bedrift_data_vis(orgnr INTEGER, bransjenavn VARCHAR, rapportår INTEGER[], faser VARCHAR[])<br>
-
+Leverer ut gjennomsnittsdata, sortert etter bransje. <br> 5. Data*sortert_etter_aldersgruppe:
 ```sql
+WITH lederalder AS (
+SELECT b_1.bedrift_id,
+date_part('year'::text, age(a."fødselsdag"::timestamp with time zone)) AS alder,
+COALESCE(max(
+CASE
+WHEN a.tittelkode::text = 'DAGL'::text THEN a.tittelkode
+ELSE NULL::character varying
+END::text) OVER (PARTITION BY b_1.bedrift_id), max(
+CASE
+WHEN a.tittelkode::text = 'LEDE'::text THEN a.tittelkode
+ELSE NULL::character varying
+END::text) OVER (PARTITION BY b_1.bedrift_id)) AS tittelkode
+FROM bedrift_info b_1
+JOIN bedrift_leder_oversikt a ON b_1.bedrift_id = a.bedrift_id
+), aldersgrupper AS (
+SELECT lederalder.bedrift_id,
+CASE
+WHEN lederalder.alder >= 10::double precision AND lederalder.alder <= 19::double precision THEN '10-20'::text
+WHEN lederalder.alder >= 20::double precision AND lederalder.alder <= 29::double precision THEN '20-29'::text
+WHEN lederalder.alder >= 30::double precision AND lederalder.alder <= 39::double precision THEN '30-39'::text
+WHEN lederalder.alder >= 40::double precision AND lederalder.alder <= 49::double precision THEN '40-49'::text
+WHEN lederalder.alder >= 50::double precision AND lederalder.alder <= 59::double precision THEN '50-59'::text
+WHEN lederalder.alder >= 60::double precision AND lederalder.alder <= 69::double precision THEN '60-69'::text
+WHEN lederalder.alder >= 70::double precision AND lederalder.alder <= 79::double precision THEN '70-79'::text
+WHEN lederalder.alder >= 80::double precision AND lederalder.alder <= 89::double precision THEN '80-89'::text
+WHEN lederalder.alder >= 90::double precision AND lederalder.alder <= 99::double precision THEN '90-99'::text
+ELSE '100+'::text
+END AS alders_gruppe
+FROM lederalder
+)
+SELECT "ø"."rapportår",
+ag.alders_gruppe,
+"ø"."øko_kode",
+avg("ø"."øko_verdi") AS "avg*øko*verdi",
+avg("ø".delta) AS avg_delta,
+l.kode_beskrivelse
+FROM bedrift_info b
+JOIN aldersgrupper ag ON b.bedrift_id = ag.bedrift_id
+JOIN "årlig*økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
+JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
+GROUP BY "ø"."rapportår", ag.alders_gruppe, "ø"."øko_kode", l.kode_beskrivelse;
 
-DECLARE
-	id INTEGER;
-	år INTEGER;
-	fasetext VARCHAR(255);
-BEGIN
-	INSERT INTO bedrift_info(orgnummer, bransje)
-	VALUES (orgnr, bransjenavn)
-	ON CONFLICT(orgnummer)
-	DO UPDATE SET bransje = EXCLUDED.bransje
-	RETURNING bedrift_id INTO id;
-
-	FOR i in 1..array_length(rapportÅrarray, 1)
-	LOOP
-		år := rapportÅrarray[i];
-		fasetext := Faser[i];
-		INSERT INTO oversikt_bedrift_fase_status(bedrift_id, rapportår, fase)
-		VALUES (id, år, fasetext)
-		ON CONFLICT do nothing;
-	END LOOP;
-END;
 ```
 
-Når ny data fra proff er lagt inn i databasen, trigrer C# følgende funksjon for å generere DELTA verdier:
-
-1. update_delta()
-
-```sql
-
-BEGIN
-	UPDATE årlig_økonomisk_data t1
-	SET delta = t1.øko_verdi - t2.øko_verdi
-	FROM årlig_økonomisk_data t2
-	WHERE t1.bedrift_id = t2.bedrift_id
-	AND t2.øko_kode = t2.øko_kode
-	AND t1.rapportår = t2.rapportår+1;
-	UPDATE årlig_økonomisk_data t1
-	SET delta = 0
-	WHERE NOT EXISTS(
-		SELECT 1
-		FROM årlig_økonomisk_data t2
-		WHERE t1.bedrift_id = t2.bedrift_id
-		AND t2.øko_kode = t2.øko_kode
-		AND t1.rapportår = t2.rapportår+1
-	);
-END;
+Leverer gjennomsnitsverdier, men sorterer basert på alder av enten Daglig Leder eller Styreleder.<br>
 ```
-
-Grunnen for at dette gjøres på C# er fordi postgreSQL ikke har en dedikert batch insert trigger. Dette er en mer nøyaktig måte å gjøre dette på,<br> og garanterer at delta blir laget korrekt uavhengig av hvor mange år som legges inn om gangen.
