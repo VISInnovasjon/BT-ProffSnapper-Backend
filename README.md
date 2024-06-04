@@ -494,8 +494,6 @@ FROM bedrift_info b
    GROUP BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
    ORDER BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
    ```
-
-````
 Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br>
 3. Data_sortert_etter_fase:
 	```sql
