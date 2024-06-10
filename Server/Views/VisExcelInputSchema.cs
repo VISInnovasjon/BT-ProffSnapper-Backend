@@ -69,48 +69,47 @@ public class CompactedVisBedriftData
     }
     public static void AddListToDb(List<CompactedVisBedriftData> data, DbContextOptions<BtdbContext> options)
     {
-        foreach (var company in data)
+        using (var context = new BtdbContext(options))
         {
-
-            try
+            foreach (var company in data)
             {
-                var companyData = new BedriftInfo
+
+                try
                 {
-                    Orgnummer = company.Orgnummer,
-                    Bransje = company.Bransje
-                };
-                using (var context = new BtdbContext(options))
-                {
+                    var companyData = new BedriftInfo
+                    {
+                        Orgnummer = company.Orgnummer,
+                        Bransje = company.Bransje
+                    };
+
                     context.BedriftInfos.Add(companyData);
                     context.SaveChanges();
-                }
-                var bedriftId = companyData.BedriftId;
-                /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
-                var årFaseOversikt = new Dictionary<int, string>();
-                for (int i = 0; i < company.RapportÅr.Count; i++)
-                {
-                    årFaseOversikt[company.RapportÅr[i]] = company.Faser[i];
-                }
-                foreach (var pair in årFaseOversikt)
-                {
-                    var faseData = new OversiktBedriftFaseStatus
+                    var bedriftId = companyData.BedriftId;
+                    /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
+                    var årFaseOversikt = new Dictionary<int, string>();
+                    for (int i = 0; i < company.RapportÅr.Count; i++)
                     {
-                        Fase = pair.Value,
-                        Rapportår = pair.Key,
-                        BedriftId = bedriftId
-                    };
-                    using (var context = new BtdbContext(options))
-                    {
-                        context.OversiktBedriftFaseStatuses.Add(faseData);
-                        context.SaveChanges();
+                        årFaseOversikt[company.RapportÅr[i]] = company.Faser[i];
                     }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+                    foreach (var pair in årFaseOversikt)
+                    {
+                        var faseData = new OversiktBedriftFaseStatus
+                        {
+                            Fase = pair.Value,
+                            Rapportår = pair.Key,
+                            BedriftId = bedriftId
+                        };
+                        context.OversiktBedriftFaseStatuses.Add(faseData);
+                    }
 
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+
+            }
+            context.SaveChanges();
         }
     }
     public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)
