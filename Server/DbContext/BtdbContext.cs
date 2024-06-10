@@ -299,6 +299,8 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.SharesProsent).HasColumnName("shares_prosent");
             entity.Property(e => e.SumDriftsIntekter).HasColumnName("sum_drifts_intekter");
             entity.Property(e => e.SumInskuttEgenkapital).HasColumnName("sum_innskutt_egenkapital");
+            entity.Property(e => e.Målbedrift).HasColumnName("målbedrift");
+            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
         });
 
 

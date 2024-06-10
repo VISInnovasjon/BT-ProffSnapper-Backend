@@ -3,7 +3,9 @@ namespace Server.Models;
 public class Årsrapport
 {
     public int Orgnummer { get; set; }
+    public string? Målbedrift { get; set; }
     public int? AntallAnsatte { get; set; }
+    public int? Rapportår { get; set; }
     public decimal? DriftsResultat { get; set; }
     public decimal? SumDriftsIntekter { get; set; }
     public decimal? SumInskuttEgenkapital { get; set; }

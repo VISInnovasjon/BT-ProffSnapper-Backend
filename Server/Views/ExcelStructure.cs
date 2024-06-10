@@ -9,25 +9,29 @@ public class ExcelÅrsrapport
 {
     [ExcelColumn(Name = "Orgnummer", Index = 0, Width = 15)]
     public int Orgnummer { get; set; }
-    [ExcelColumn(Name = "Antall Ansatte", Index = 1, Width = 30)]
+    [ExcelColumn(Name = "Målbedrift", Index = 1, Width = 30)]
+    public string? Målbedrift { get; set; }
+    [ExcelColumn(Name = "Antall Ansatte", Index = 2, Width = 30)]
     public int? AntallAnsatte { get; set; }
-    [ExcelColumn(Name = "Driftsresultat", Index = 2, Width = 30)]
+    [ExcelColumn(Name = "Rapportår", Index = 3, Width = 15)]
+    public int? Rapportår { get; set; }
+    [ExcelColumn(Name = "Driftsresultat", Index = 4, Width = 30)]
     public decimal? DriftsResultat { get; set; }
-    [ExcelColumn(Name = "Sum Driftsintekter", Index = 3, Width = 30)]
+    [ExcelColumn(Name = "Sum Driftsintekter", Index = 5, Width = 30)]
     public decimal? SumDriftsIntekter { get; set; }
-    [ExcelColumn(Name = "Sum Innskutt Egenkapital", Index = 4, Width = 30)]
+    [ExcelColumn(Name = "Sum Innskutt Egenkapital", Index = 6, Width = 30)]
     public decimal? SumInnskuttEgenkapital { get; set; }
-    [ExcelColumn(Name = "Delta Innskutt Egenkapital", Index = 5, Width = 30)]
+    [ExcelColumn(Name = "Delta Innskutt Egenkapital", Index = 7, Width = 30)]
     public decimal? DeltaInskuttEgenkapital { get; set; }
-    [ExcelColumn(Name = "Ordinært Resultat", Index = 6, Width = 30)]
+    [ExcelColumn(Name = "Ordinært Resultat", Index = 8, Width = 30)]
     public decimal? OrdinærtResultat { get; set; }
-    [ExcelColumn(Name = "Post Addresse", Index = 7, Width = 35)]
+    [ExcelColumn(Name = "Post Addresse", Index = 9, Width = 35)]
     public required string PostAddresse { get; set; }
-    [ExcelColumn(Name = "Post Kode", Index = 8, Width = 15)]
+    [ExcelColumn(Name = "Post Kode", Index = 10, Width = 15)]
     public required string PostKode { get; set; }
-    [ExcelColumn(Name = "Antall Shares Vis", Index = 9, Width = 30)]
+    [ExcelColumn(Name = "Antall Shares Vis", Index = 11, Width = 30)]
     public decimal? AntallSharesVis { get; set; }
-    [ExcelColumn(Name = "Prosent Andel Shares Vis", Index = 10, Width = 30)]
+    [ExcelColumn(Name = "Prosent Andel Shares Vis", Index = 12, Width = 30)]
     public required string ProsentAndelSharesVis { get; set; }
     public static List<ExcelÅrsrapport> GetExportValues(List<Årsrapport> Data)
     {
@@ -37,8 +41,10 @@ public class ExcelÅrsrapport
             ExcelÅrsrapport convertedValue = new ExcelÅrsrapport()
             {
                 Orgnummer = value.Orgnummer,
+                Målbedrift = value.Målbedrift,
                 AntallAnsatte = value.AntallAnsatte,
-                DriftsResultat = value.DriftsResultat,   
+                Rapportår = value.Rapportår,
+                DriftsResultat = value.DriftsResultat,
                 SumDriftsIntekter = value.SumDriftsIntekter,
                 SumInnskuttEgenkapital = value.SumInskuttEgenkapital,
                 DeltaInskuttEgenkapital = value.DeltaInskuttEgenkapital,
