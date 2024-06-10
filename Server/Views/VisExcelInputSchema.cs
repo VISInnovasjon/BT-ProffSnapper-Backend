@@ -71,36 +71,46 @@ public class CompactedVisBedriftData
     {
         foreach (var company in data)
         {
-            using (var context = new BtdbContext(options))
+
+            try
             {
-                try
+                var companyData = new BedriftInfo
                 {
-                    var companyData = new BedriftInfo
-                    {
-                        Orgnummer = company.Orgnummer,
-                        Bransje = company.Bransje
-                    };
+                    Orgnummer = company.Orgnummer,
+                    Bransje = company.Bransje
+                };
+                using (var context = new BtdbContext(options))
+                {
                     context.BedriftInfos.Add(companyData);
                     context.SaveChanges();
-                    var bedriftId = companyData.BedriftId;
-                    for (int i = 0; i < company.RapportÅr.Count; i++)
+                }
+                var bedriftId = companyData.BedriftId;
+                /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
+                var årFaseOversikt = new Dictionary<int, string>();
+                for (int i = 0; i < company.RapportÅr.Count; i++)
+                {
+                    årFaseOversikt[company.RapportÅr[i]] = company.Faser[i];
+                }
+                foreach (var pair in årFaseOversikt)
+                {
+                    var faseData = new OversiktBedriftFaseStatus
                     {
-                        var faseData = new OversiktBedriftFaseStatus
-                        {
-                            Fase = company.Faser[i],
-                            Rapportår = company.RapportÅr[i],
-                            BedriftId = bedriftId
-                        };
+                        Fase = pair.Value,
+                        Rapportår = pair.Key,
+                        BedriftId = bedriftId
+                    };
+                    using (var context = new BtdbContext(options))
+                    {
                         context.OversiktBedriftFaseStatuses.Add(faseData);
                         context.SaveChanges();
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
         }
     }
     public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)

@@ -420,8 +420,6 @@ C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\Loc
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\LocalData\response918734597.json
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\LocalData\response918738398.json
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\LocalData\response918794565.json
-C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\Util\ProffJsonSchema.json
-C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\Util\ProffReturnExamle.Json
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\Server.exe
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\Server.deps.json
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\Server.runtimeconfig.json
@@ -518,3 +516,5 @@ C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\sco
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\Server.csproj.CopyComplete
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\Server.genruntimeconfig.cache
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\ref\Server.dll
+C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\LocalData\ProffJsonSchema.json
+C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\LocalData\ProffReturnExamle.Json

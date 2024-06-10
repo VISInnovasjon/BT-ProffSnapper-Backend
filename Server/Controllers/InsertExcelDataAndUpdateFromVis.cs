@@ -73,7 +73,7 @@ public class ExcelTestController : ControllerBase
                     Console.WriteLine($"Adding {param.Name} to DB");
                     try
                     {
-                        param.InsertToDataBase();
+                        param.InsertToDataBase(dbOptions);
                     }
                     catch (Exception ex)
                     {
