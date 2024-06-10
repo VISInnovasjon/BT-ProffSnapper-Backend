@@ -85,42 +85,43 @@ public class ReturnStructure
         using (var context = new BtdbContext(options))
         {
             bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == int.Parse(CompanyId)).BedriftId;
-        }
-        new UpdateNameStructure(
-                    Name, PreviousNames?.Count == 0 ? null : PreviousNames
-                ).InsertIntoDatabase(options, bedriftId);
-        new InsertGenerellInfoStructure(
-            ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
-        ).InsertToDataBase(options, bedriftId);
-        foreach (var announcement in Announcements)
-        {
-            new InsertKunngjøringStructure(
-                announcement
-            ).InsertToDataBase(options, bedriftId);
-        }
-        foreach (var account in CompanyAccounts)
-        {
-            new ØkoDataSqlStructure(
-                account
-            ).InsertIntoDatabase(options, bedriftId);
-        }
-        foreach (var person in PersonRoles)
-        {
-            if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
-            else
+            new UpdateNameStructure(
+                        Name, PreviousNames?.Count == 0 ? null : PreviousNames
+                    ).InsertIntoDatabase(context, bedriftId);
+            new InsertGenerellInfoStructure(
+                ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
+            ).InsertToDataBase(context, bedriftId);
+            foreach (var announcement in Announcements)
             {
-                new InsertBedriftLederInfoStructure(
-                    ShareholdersLastUpdatedDate, person
-                ).InsertToDataBase(options, bedriftId);
+                new InsertKunngjøringStructure(
+                    announcement
+                ).InsertToDataBase(context, bedriftId);
             }
-        }
+            foreach (var account in CompanyAccounts)
+            {
+                new ØkoDataSqlStructure(
+                    account
+                ).InsertIntoDatabase(context, bedriftId);
+            }
+            foreach (var person in PersonRoles)
+            {
+                if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
+                else
+                {
+                    new InsertBedriftLederInfoStructure(
+                        ShareholdersLastUpdatedDate, person
+                    ).InsertToDataBase(context, bedriftId);
+                }
+            }
 
-        if (Shareholders != null) foreach (var shareholder in Shareholders)
-            {
-                new InsertShareholderStructure(
-                    ShareholdersLastUpdatedDate, shareholder
-                ).InsertIntoDatabase(options, bedriftId);
-            }
+            if (Shareholders != null) foreach (var shareholder in Shareholders)
+                {
+                    new InsertShareholderStructure(
+                        ShareholdersLastUpdatedDate, shareholder
+                    ).InsertIntoDatabase(context, bedriftId);
+                }
+            context.SaveChanges();
+        }
     }
 }
 
@@ -146,24 +147,20 @@ public class ØkoDataSqlStructure
         }
 
     }
-    public void InsertIntoDatabase(DbContextOptions<BtdbContext> options, int bedriftId)
+    public void InsertIntoDatabase(BtdbContext context, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext(options))
+            for (int i = 0; i < Kodenavn.Count; i++)
             {
-                for (int i = 0; i < Kodenavn.Count; i++)
+                var ØkoData = new ÅrligØkonomiskDatum
                 {
-                    var ØkoData = new ÅrligØkonomiskDatum
-                    {
-                        BedriftId = bedriftId,
-                        ØkoKode = Kodenavn[i],
-                        ØkoVerdi = Kodeverdier[i],
-                        Rapportår = År
-                    };
-                    context.ÅrligØkonomiskData.Add(ØkoData);
-                    context.SaveChanges();
-                }
+                    BedriftId = bedriftId,
+                    ØkoKode = Kodenavn[i],
+                    ØkoVerdi = Kodeverdier[i],
+                    Rapportår = År
+                };
+                context.ÅrligØkonomiskData.Add(ØkoData);
             }
         }
         catch (Exception ex)
@@ -182,17 +179,14 @@ public class UpdateNameStructure
         Navn = Name;
         if (PreviousNames != null) this.TidligereNavn = PreviousNames;
     }
-    public void InsertIntoDatabase(DbContextOptions<BtdbContext> options, int bedriftId)
+    public void InsertIntoDatabase(BtdbContext context, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext(options))
-            {
-                var bedriftInfo = context.BedriftInfos.Single(b => b.BedriftId == bedriftId);
-                bedriftInfo.Målbedrift = Navn;
-                if (TidligereNavn != null && TidligereNavn.Count > 0) bedriftInfo.Navneliste = TidligereNavn;
-                context.SaveChanges();
-            }
+
+            var bedriftInfo = context.BedriftInfos.Single(b => b.BedriftId == bedriftId);
+            bedriftInfo.Målbedrift = Navn;
+            if (TidligereNavn != null && TidligereNavn.Count > 0) bedriftInfo.Navneliste = TidligereNavn;
         }
         catch (Exception ex)
         {
@@ -226,26 +220,22 @@ public class InsertShareholderStructure
         if (!string.IsNullOrEmpty(info.FirstName)) Fornavn = info.FirstName;
         if (!string.IsNullOrEmpty(info.LastName)) Etternavn = info.LastName;
     }
-    public void InsertIntoDatabase(DbContextOptions<BtdbContext> options, int bedriftId)
+    public void InsertIntoDatabase(BtdbContext context, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext(options))
+            var shareholder = new BedriftShareholderInfo
             {
-                var shareholder = new BedriftShareholderInfo
-                {
-                    BedriftId = bedriftId,
-                    Rapportår = År,
-                    ShareholderBedriftId = ShareholderBId,
-                    ShareholderFornavn = Fornavn,
-                    ShareholderEtternavn = Etternavn,
-                    Sharetype = InputType,
-                    Navn = InputNavn,
-                    AntalShares = AntallShares
-                };
-                context.BedriftShareholderInfos.Add(shareholder);
-                context.SaveChanges();
-            }
+                BedriftId = bedriftId,
+                Rapportår = År,
+                ShareholderBedriftId = ShareholderBId,
+                ShareholderFornavn = Fornavn,
+                ShareholderEtternavn = Etternavn,
+                Sharetype = InputType,
+                Navn = InputNavn,
+                AntalShares = AntallShares
+            };
+            context.BedriftShareholderInfos.Add(shareholder);
         }
         catch (Exception ex)
         {
@@ -271,23 +261,20 @@ public class InsertKunngjøringStructure
         InputType = kunngjøring.Type;
         Inputdesc = kunngjøring.Text;
     }
-    public void InsertToDataBase(DbContextOptions<BtdbContext> options, int bedriftId)
+    public void InsertToDataBase(BtdbContext context, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext(options))
+
+            var announcement = new BedriftKunngjøringer
             {
-                var announcement = new BedriftKunngjøringer
-                {
-                    BedriftId = bedriftId,
-                    Dato = InputDato,
-                    KunngjøringId = InputId,
-                    Kunngjøringstekst = Inputdesc,
-                    Kunngjøringstype = InputType
-                };
-                context.BedriftKunngjøringers.Add(announcement);
-                context.SaveChanges();
-            }
+                BedriftId = bedriftId,
+                Dato = InputDato,
+                KunngjøringId = InputId,
+                Kunngjøringstekst = Inputdesc,
+                Kunngjøringstype = InputType
+            };
+            context.BedriftKunngjøringers.Add(announcement);
         }
         catch (Exception ex)
         {
@@ -321,26 +308,22 @@ public class InsertGenerellInfoStructure
         InputPostKode = string.IsNullOrEmpty(post.ZipCode) ? "Mangler PostKode" : post.ZipCode;
         InputPostAddresse = post.AddressLine;
     }
-    public void InsertToDataBase(DbContextOptions<BtdbContext> options, int bedriftId)
+    public void InsertToDataBase(BtdbContext context, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext(options))
+            var genInfo = new GenerellÅrligBedriftInfo
             {
-                var genInfo = new GenerellÅrligBedriftInfo
-                {
-                    BedriftId = bedriftId,
-                    Landsdel = InputLandsdel,
-                    Fylke = InputFylke,
-                    Kommune = InputKommune,
-                    PostAddresse = InputPostAddresse,
-                    PostKode = InputPostKode,
-                    Rapportår = År,
-                    AntallAnsatte = InputAntallAnsatte
-                };
-                context.GenerellÅrligBedriftInfos.Add(genInfo);
-                context.SaveChanges();
-            }
+                BedriftId = bedriftId,
+                Landsdel = InputLandsdel,
+                Fylke = InputFylke,
+                Kommune = InputKommune,
+                PostAddresse = InputPostAddresse,
+                PostKode = InputPostKode,
+                Rapportår = År,
+                AntallAnsatte = InputAntallAnsatte
+            };
+            context.GenerellÅrligBedriftInfos.Add(genInfo);
         }
         catch (Exception ex)
         {
@@ -368,24 +351,20 @@ public class InsertBedriftLederInfoStructure
         InputTittel = person.Title;
         InputTittelKode = person.TitleCode;
     }
-    public void InsertToDataBase(DbContextOptions<BtdbContext> options, int bedriftId)
+    public void InsertToDataBase(BtdbContext context, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext(options))
+            var leder = new BedriftLederOversikt
             {
-                var leder = new BedriftLederOversikt
-                {
-                    BedriftId = bedriftId,
-                    Navn = InputNavn,
-                    Fødselsdag = InputFødselÅr,
-                    Tittel = InputTittel,
-                    Tittelkode = InputTittelKode,
-                    Rapportår = År
-                };
-                context.BedriftLederOversikts.Add(leder);
-                context.SaveChanges();
-            }
+                BedriftId = bedriftId,
+                Navn = InputNavn,
+                Fødselsdag = InputFødselÅr,
+                Tittel = InputTittel,
+                Tittelkode = InputTittelKode,
+                Rapportår = År
+            };
+            context.BedriftLederOversikts.Add(leder);
         }
         catch (Exception ex)
         {

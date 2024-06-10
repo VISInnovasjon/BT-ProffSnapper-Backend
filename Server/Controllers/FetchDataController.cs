@@ -23,7 +23,6 @@ public class QueryHandler : ControllerBase
         using (var _context = new BtdbContext(options))
             try
             {
-                Console.WriteLine(_context.Database.CanConnect());
                 var FinalDict = new Dictionary<string, List<YearDataGroup>>{
                 {"avg", FetchYearlyData(_context)}
             };
