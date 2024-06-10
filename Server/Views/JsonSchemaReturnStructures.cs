@@ -32,3 +32,8 @@ public class ExtractedEcoCodeValues
         Description = desc;
     }
 }
+public class YearDataGroup
+{
+    public int Year { get; set; }
+    public Dictionary<string, ExtractedEcoCodeValues>? values { get; set; }
+}

@@ -1,8 +1,8 @@
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Server.Models;
 using MiniExcelLibs;
+using Microsoft.EntityFrameworkCore;
 using Server.Views;
 using Microsoft.AspNetCore.Http.HttpResults;
 namespace Server.Controllers;
@@ -33,20 +33,19 @@ public class GenÅrsRapport : ControllerBase
             orgNrs = rows.Select(row => row.Orgnummer).ToList();
         }
         string now = DateTime.Now.Date.ToShortDateString();
-        Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        Response.Headers.Append("Content-Disposition", $"attachement; filename=\"aarsrapport{now}.xlsx\"");
-        using (var context = new BtdbContext(options))
+        List<Årsrapport> dataList;
+        using (var _context = new BtdbContext(options))
         {
-            var dataList = context.Årsrapports.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
-            if (dataList != null)
-            {
-                List<ExcelÅrsrapport> Årsrapportdata = ExcelÅrsrapport.GetExportValues(dataList);
-                var memStream = new MemoryStream();
-                await memStream.SaveAsAsync(Årsrapportdata);
-                memStream.Seek(0, SeekOrigin.Begin);
-                return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"aarsrapport{now}.xlsx");
-            };
+            dataList = _context.Årsrapports.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
+        }
+        List<ExcelÅrsrapport> Årsrapportdata = ExcelÅrsrapport.GetExportValues(dataList);
+        if (dataList == null || !dataList.Any())
+        {
             return TypedResults.NotFound();
         }
+        var memStream = new MemoryStream();
+        await memStream.SaveAsAsync(Årsrapportdata);
+        memStream.Seek(0, SeekOrigin.Begin);
+        return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"aarsrapport{now}.xlsx");
     }
 }

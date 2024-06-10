@@ -1,5 +1,7 @@
 
 namespace Server.Models;
+
+using Microsoft.EntityFrameworkCore;
 using Util;
 
 
@@ -77,48 +79,47 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public void InsertToDataBase()
+    public void InsertToDataBase(DbContextOptions<BtdbContext> options)
     {
-        UpdateNameStructure nameStructure = new(
-                    CompanyId, Name, PreviousNames?.Count == 0 ? null : PreviousNames
-                );
-        nameStructure.InsertIntoDatabase();
-        InsertGenerellInfoStructure infoStructure = new(
-            CompanyId, ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
-        );
-        infoStructure.InsertToDataBase();
+        int bedriftId;
+        using (var context = new BtdbContext(options))
+        {
+            bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == int.Parse(CompanyId)).BedriftId;
+        }
+        new UpdateNameStructure(
+                    Name, PreviousNames?.Count == 0 ? null : PreviousNames
+                ).InsertIntoDatabase(options, bedriftId);
+        new InsertGenerellInfoStructure(
+            ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
+        ).InsertToDataBase(options, bedriftId);
         foreach (var announcement in Announcements)
         {
-            InsertKunngjøringStructure kunngjøringStructure = new(
-                CompanyId, announcement
-            );
-            kunngjøringStructure.InsertToDataBase();
+            new InsertKunngjøringStructure(
+                announcement
+            ).InsertToDataBase(options, bedriftId);
         }
         foreach (var account in CompanyAccounts)
         {
-            ØkoDataSqlStructure økoData = new(
-                CompanyId, account
-            );
-            økoData.InsertIntoDatabase();
+            new ØkoDataSqlStructure(
+                account
+            ).InsertIntoDatabase(options, bedriftId);
         }
         foreach (var person in PersonRoles)
         {
             if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
             else
             {
-                InsertBedriftLederInfoStructure bedriftLeder = new(
-                    CompanyId, ShareholdersLastUpdatedDate, person
-                );
-                bedriftLeder.InsertToDataBase();
+                new InsertBedriftLederInfoStructure(
+                    ShareholdersLastUpdatedDate, person
+                ).InsertToDataBase(options, bedriftId);
             }
         }
 
         if (Shareholders != null) foreach (var shareholder in Shareholders)
             {
-                InsertShareholderStructure shareholderStructure = new(
-                    CompanyId, ShareholdersLastUpdatedDate, shareholder
-                );
-                shareholderStructure.InsertIntoDatabase();
+                new InsertShareholderStructure(
+                    ShareholdersLastUpdatedDate, shareholder
+                ).InsertIntoDatabase(options, bedriftId);
             }
     }
 }
@@ -129,32 +130,28 @@ public class ØkoDataSqlStructure
     public int År { get; set; }
     public List<string> Kodenavn { get; set; }
     public List<decimal> Kodeverdier { get; set; }
-    public ØkoDataSqlStructure(string CompanyId, AccountsInfo accounts)
+    public ØkoDataSqlStructure(AccountsInfo accounts)
     {
-        List<string> Codes = new();
-        List<decimal> Values = new();
         int TempOutput;
-        bool ParsingNr = int.TryParse(CompanyId, out TempOutput);
-        if (!ParsingNr) throw new ArgumentException($"Could not parse {CompanyId} to an integer.");
-        OrgNr = TempOutput;
+        bool ParsingNr;
         ParsingNr = int.TryParse(accounts.Year, out TempOutput);
         if (!ParsingNr) throw new ArgumentException($"Could not parse {accounts.Year} to an integer.");
         År = TempOutput;
+        Kodenavn = new();
+        Kodeverdier = new();
         for (int i = 0; i < accounts.Accounts.Count; i++)
         {
-            Codes.Add(accounts.Accounts[i].Code);
-            Values.Add(decimal.Parse(accounts.Accounts[i].Amount));
+            Kodenavn.Add(accounts.Accounts[i].Code);
+            Kodeverdier.Add(decimal.Parse(accounts.Accounts[i].Amount));
         }
-        Kodeverdier = accounts.Accounts.Select(a => decimal.Parse(a.Amount)).ToList();
-        Kodenavn = accounts.Accounts.Select(a => a.Code).ToList();
+
     }
-    public void InsertIntoDatabase()
+    public void InsertIntoDatabase(DbContextOptions<BtdbContext> options, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext())
+            using (var context = new BtdbContext(options))
             {
-                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
                 for (int i = 0; i < Kodenavn.Count; i++)
                 {
                     var ØkoData = new ÅrligØkonomiskDatum
@@ -164,6 +161,7 @@ public class ØkoDataSqlStructure
                         ØkoVerdi = Kodeverdier[i],
                         Rapportår = År
                     };
+                    context.ÅrligØkonomiskData.Add(ØkoData);
                     context.SaveChanges();
                 }
             }
@@ -179,22 +177,18 @@ public class UpdateNameStructure
     public string Navn { get; set; }
     public int OrgNr { get; set; }
     public List<string>? TidligereNavn { get; set; }
-    public UpdateNameStructure(string CompanyId, string Name, List<string>? PreviousNames = null)
+    public UpdateNameStructure(string Name, List<string>? PreviousNames = null)
     {
         Navn = Name;
         if (PreviousNames != null) this.TidligereNavn = PreviousNames;
-        int output;
-        bool parseSuccess = int.TryParse(CompanyId, out output);
-        if (!parseSuccess) throw new ArgumentException($"Failed to parse {CompanyId} to integer");
-        OrgNr = output;
     }
-    public void InsertIntoDatabase()
+    public void InsertIntoDatabase(DbContextOptions<BtdbContext> options, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext())
+            using (var context = new BtdbContext(options))
             {
-                var bedriftInfo = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr);
+                var bedriftInfo = context.BedriftInfos.Single(b => b.BedriftId == bedriftId);
                 bedriftInfo.Målbedrift = Navn;
                 if (TidligereNavn != null && TidligereNavn.Count > 0) bedriftInfo.Navneliste = TidligereNavn;
                 context.SaveChanges();
@@ -216,14 +210,11 @@ public class InsertShareholderStructure
     public string? ShareholderBId { get; set; }
     public string? Fornavn { get; set; }
     public string? Etternavn { get; set; }
-    public InsertShareholderStructure(string CompanyId, string UpdatedYear, ShareHolderInfo info)
+    public InsertShareholderStructure(string UpdatedYear, ShareHolderInfo info)
     {
         int output;
 
         bool parseSuccess;
-        parseSuccess = int.TryParse(CompanyId, out output);
-        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} to integer");
-        OrgNr = output;
         parseSuccess = int.TryParse(UpdatedYear, out output);
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdatedYear} to integer");
         År = output;
@@ -235,13 +226,12 @@ public class InsertShareholderStructure
         if (!string.IsNullOrEmpty(info.FirstName)) Fornavn = info.FirstName;
         if (!string.IsNullOrEmpty(info.LastName)) Etternavn = info.LastName;
     }
-    public void InsertIntoDatabase()
+    public void InsertIntoDatabase(DbContextOptions<BtdbContext> options, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext())
+            using (var context = new BtdbContext(options))
             {
-                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
                 var shareholder = new BedriftShareholderInfo
                 {
                     BedriftId = bedriftId,
@@ -270,14 +260,10 @@ public class InsertKunngjøringStructure
     public DateOnly? InputDato { get; set; }
     public string Inputdesc { get; set; }
     public string InputType { get; set; }
-    public InsertKunngjøringStructure(string CompanyId, Announcement kunngjøring)
+    public InsertKunngjøringStructure(Announcement kunngjøring)
     {
-        int output;
         long lOutput;
         bool parseSuccess;
-        parseSuccess = int.TryParse(CompanyId, out output);
-        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} to integer");
-        OrgNr = output;
         parseSuccess = long.TryParse(kunngjøring.Id, out lOutput);
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {kunngjøring.Id} to BigInt");
         InputId = lOutput;
@@ -285,13 +271,12 @@ public class InsertKunngjøringStructure
         InputType = kunngjøring.Type;
         Inputdesc = kunngjøring.Text;
     }
-    public void InsertToDataBase()
+    public void InsertToDataBase(DbContextOptions<BtdbContext> options, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext())
+            using (var context = new BtdbContext(options))
             {
-                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
                 var announcement = new BedriftKunngjøringer
                 {
                     BedriftId = bedriftId,
@@ -320,13 +305,10 @@ public class InsertGenerellInfoStructure
     public string InputPostKode { get; set; }
     public string InputPostAddresse { get; set; }
     public int? InputAntallAnsatte { get; set; }
-    public InsertGenerellInfoStructure(string CompanyId, string UpdateYear, LocationInfo location, PostalInfo post, string? NumberOfEmployees = null)
+    public InsertGenerellInfoStructure(string UpdateYear, LocationInfo location, PostalInfo post, string? NumberOfEmployees = null)
     {
         int output;
         bool parseSuccess;
-        parseSuccess = int.TryParse(CompanyId, out output);
-        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} to Integer");
-        OrgNr = output;
         parseSuccess = int.TryParse(UpdateYear, out output);
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdateYear} to Integer");
         År = output;
@@ -339,13 +321,12 @@ public class InsertGenerellInfoStructure
         InputPostKode = string.IsNullOrEmpty(post.ZipCode) ? "Mangler PostKode" : post.ZipCode;
         InputPostAddresse = post.AddressLine;
     }
-    public void InsertToDataBase()
+    public void InsertToDataBase(DbContextOptions<BtdbContext> options, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext())
+            using (var context = new BtdbContext(options))
             {
-                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
                 var genInfo = new GenerellÅrligBedriftInfo
                 {
                     BedriftId = bedriftId,
@@ -375,14 +356,11 @@ public class InsertBedriftLederInfoStructure
     public string InputTittel { get; set; }
     public string InputTittelKode { get; set; }
     public DateOnly? InputFødselÅr { get; set; }
-    public InsertBedriftLederInfoStructure(string CompanyId, string UpdateYear, PersonRole person)
+    public InsertBedriftLederInfoStructure(string UpdateYear, PersonRole person)
     {
         int output;
         bool parseSuccess;
-        parseSuccess = int.TryParse(CompanyId, out output);
-        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {CompanyId} into Integer");
-        OrgNr = output;
-        parseSuccess = int.TryParse(CompanyId, out output);
+        parseSuccess = int.TryParse(UpdateYear, out output);
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdateYear} into Integer");
         År = output;
         InputNavn = person.Name;
@@ -390,13 +368,12 @@ public class InsertBedriftLederInfoStructure
         InputTittel = person.Title;
         InputTittelKode = person.TitleCode;
     }
-    public void InsertToDataBase()
+    public void InsertToDataBase(DbContextOptions<BtdbContext> options, int bedriftId)
     {
         try
         {
-            using (var context = new BtdbContext())
+            using (var context = new BtdbContext(options))
             {
-                var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == OrgNr).BedriftId;
                 var leder = new BedriftLederOversikt
                 {
                     BedriftId = bedriftId,
