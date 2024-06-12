@@ -90,7 +90,7 @@ public partial class BtdbContext : DbContext
 
         modelBuilder.Entity<BedriftLederOversikt>(entity =>
         {
-            entity.HasKey(e => new { e.BedriftId, e.Tittelkode, e.Rapportår }).HasName("bedrift_leder_oversikt_pkey");
+            entity.HasKey(e => new { e.BedriftId, e.Tittelkode, e.Rapportår, e.Fødselsdag }).HasName("bedrift_leder_oversikt_pkey");
 
             entity.ToTable("bedrift_leder_oversikt");
 

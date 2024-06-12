@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Server.Models;
 using Server.Views;
-using Microsoft.EntityFrameworkCore;
 
 namespace Server.Controllers;
 
@@ -13,37 +12,40 @@ namespace Server.Controllers;
 [Route("query")]
 public class QueryHandler : ControllerBase
 {
-    private readonly DbContextOptions<BtdbContext> options = new DbContextOptionsBuilder<BtdbContext>().UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").Options;
+    private readonly BtdbContext _context;
+    public QueryHandler(BtdbContext context)
+    {
+        _context = context;
+    }
 
     [HttpGet("getall")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult FetchAll()
     {
-        using (var _context = new BtdbContext(options))
-            try
-            {
-                var FinalDict = new Dictionary<string, List<YearDataGroup>>{
-                {"avg", FetchYearlyData(_context)}
+        try
+        {
+            var FinalDict = new Dictionary<string, List<YearDataGroup>>{
+                {"Total Gjennomsnitt", FetchYearlyData(_context)}
             };
-                /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. */
-                AddGroupedData(FinalDict, _context.DataSortertEtterFases.ToList(), b => b.Fase);
-                AddGroupedData(FinalDict, _context.DataSortertEtterBransjes.ToList(), b => b.Bransje);
-                AddGroupedData(FinalDict, _context.DataSortertEtterAldersGruppes.ToList(), b => b.AldersGruppe);
-                var JsonString = JsonSerializer.Serialize(FinalDict);
-                return Ok(JsonString);
+            /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. */
+            AddGroupedData(FinalDict, _context.DataSortertEtterFases.ToList(), b => b.Fase);
+            AddGroupedData(FinalDict, _context.DataSortertEtterBransjes.ToList(), b => b.Bransje);
+            AddGroupedData(FinalDict, _context.DataSortertEtterAldersGruppes.ToList(), b => b.AldersGruppe);
+            var JsonString = JsonSerializer.Serialize(FinalDict);
+            return Ok(JsonString);
 
-            }
-            catch (Exception ex)
+        }
+        catch (Exception ex)
+        {
+            var error = new
             {
-                var error = new
-                {
-                    Message = "An Error Occured.",
-                    Details = ex.Message + " " + ex.Data.ToString()
+                Message = "An Error Occured.",
+                Details = ex.Message + " " + ex.Data.ToString()
 
-                };
-                return BadRequest(error);
-            }
+            };
+            return BadRequest(error);
+        }
     }
     private List<YearDataGroup> FetchYearlyData(BtdbContext _context)
     {
@@ -75,6 +77,7 @@ public class QueryHandler : ControllerBase
             }
         }
     }
+
     private List<YearDataGroup> FetchGroupData<T>(List<T> dataList)
     {
         var groupedData = dataList

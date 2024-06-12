@@ -67,49 +67,49 @@ public class CompactedVisBedriftData
         }
         return CleanData;
     }
-    public static void AddListToDb(List<CompactedVisBedriftData> data, DbContextOptions<BtdbContext> options)
+    public static void AddListToDb(List<CompactedVisBedriftData> data, BtdbContext context)
     {
-        using (var context = new BtdbContext(options))
+        List<BedriftInfo> refreshList = context.BedriftInfos.AsNoTracking().ToList();
+        foreach (var item in refreshList)
         {
-            foreach (var company in data)
+            context.Entry(item).Reload();
+        }
+        foreach (var company in data)
+        {
+            try
             {
-
-                try
+                var companyData = new BedriftInfo
                 {
-                    var companyData = new BedriftInfo
-                    {
-                        Orgnummer = company.Orgnummer,
-                        Bransje = company.Bransje
-                    };
+                    Orgnummer = company.Orgnummer,
+                    Bransje = company.Bransje
+                };
 
-                    context.BedriftInfos.Add(companyData);
-                    context.SaveChanges();
-                    var bedriftId = companyData.BedriftId;
-                    /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
-                    var årFaseOversikt = new Dictionary<int, string>();
-                    for (int i = 0; i < company.RapportÅr.Count; i++)
-                    {
-                        årFaseOversikt[company.RapportÅr[i]] = company.Faser[i];
-                    }
-                    foreach (var pair in årFaseOversikt)
-                    {
-                        var faseData = new OversiktBedriftFaseStatus
-                        {
-                            Fase = pair.Value,
-                            Rapportår = pair.Key,
-                            BedriftId = bedriftId
-                        };
-                        context.OversiktBedriftFaseStatuses.Add(faseData);
-                    }
-
+                context.BedriftInfos.Add(companyData);
+                context.SaveChanges();
+                var bedriftId = companyData.BedriftId;
+                /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
+                var årFaseOversikt = new Dictionary<int, string>();
+                for (int i = 0; i < company.RapportÅr.Count; i++)
+                {
+                    årFaseOversikt[company.RapportÅr[i]] = company.Faser[i];
                 }
-                catch (Exception ex)
+                foreach (var pair in årFaseOversikt)
                 {
-                    Console.WriteLine(ex.Message);
+                    var faseData = new OversiktBedriftFaseStatus
+                    {
+                        Fase = pair.Value,
+                        Rapportår = pair.Key,
+                        BedriftId = bedriftId
+                    };
+                    context.OversiktBedriftFaseStatuses.Add(faseData);
                 }
 
             }
-            context.SaveChanges();
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+
         }
     }
     public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)

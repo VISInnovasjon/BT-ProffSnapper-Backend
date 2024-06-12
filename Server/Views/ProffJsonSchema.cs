@@ -1,7 +1,6 @@
 
 namespace Server.Models;
 
-using Microsoft.EntityFrameworkCore;
 using Util;
 
 
@@ -79,49 +78,45 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public void InsertToDataBase(DbContextOptions<BtdbContext> options)
+    public void InsertToDataBase(BtdbContext context)
     {
         int bedriftId;
-        using (var context = new BtdbContext(options))
+        bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == int.Parse(CompanyId)).BedriftId;
+        new UpdateNameStructure(
+                    Name, PreviousNames?.Count == 0 ? null : PreviousNames
+                ).InsertIntoDatabase(context, bedriftId);
+        new InsertGenerellInfoStructure(
+            ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
+        ).InsertToDataBase(context, bedriftId);
+        foreach (var announcement in Announcements)
         {
-            bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == int.Parse(CompanyId)).BedriftId;
-            new UpdateNameStructure(
-                        Name, PreviousNames?.Count == 0 ? null : PreviousNames
-                    ).InsertIntoDatabase(context, bedriftId);
-            new InsertGenerellInfoStructure(
-                ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
+            new InsertKunngjøringStructure(
+                announcement
             ).InsertToDataBase(context, bedriftId);
-            foreach (var announcement in Announcements)
+        }
+        foreach (var account in CompanyAccounts)
+        {
+            new ØkoDataSqlStructure(
+                account
+            ).InsertIntoDatabase(context, bedriftId);
+        }
+        foreach (var person in PersonRoles)
+        {
+            if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
+            else
             {
-                new InsertKunngjøringStructure(
-                    announcement
+                new InsertBedriftLederInfoStructure(
+                    ShareholdersLastUpdatedDate, person
                 ).InsertToDataBase(context, bedriftId);
             }
-            foreach (var account in CompanyAccounts)
+        }
+
+        if (Shareholders != null) foreach (var shareholder in Shareholders)
             {
-                new ØkoDataSqlStructure(
-                    account
+                new InsertShareholderStructure(
+                    ShareholdersLastUpdatedDate, shareholder
                 ).InsertIntoDatabase(context, bedriftId);
             }
-            foreach (var person in PersonRoles)
-            {
-                if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
-                else
-                {
-                    new InsertBedriftLederInfoStructure(
-                        ShareholdersLastUpdatedDate, person
-                    ).InsertToDataBase(context, bedriftId);
-                }
-            }
-
-            if (Shareholders != null) foreach (var shareholder in Shareholders)
-                {
-                    new InsertShareholderStructure(
-                        ShareholdersLastUpdatedDate, shareholder
-                    ).InsertIntoDatabase(context, bedriftId);
-                }
-            context.SaveChanges();
-        }
     }
 }
 
@@ -177,7 +172,7 @@ public class UpdateNameStructure
     public UpdateNameStructure(string Name, List<string>? PreviousNames = null)
     {
         Navn = Name;
-        if (PreviousNames != null) this.TidligereNavn = PreviousNames;
+        if (PreviousNames != null) TidligereNavn = PreviousNames;
     }
     public void InsertIntoDatabase(BtdbContext context, int bedriftId)
     {

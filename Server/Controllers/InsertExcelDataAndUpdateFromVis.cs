@@ -9,7 +9,11 @@ namespace Server.Controllers;
 [Route("/updatedb")]
 public class ExcelTestController : ControllerBase
 {
-    private readonly DbContextOptions<BtdbContext> dbOptions = new DbContextOptionsBuilder<BtdbContext>().UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").Options;
+    private readonly BtdbContext _context;
+    public ExcelTestController(BtdbContext context)
+    {
+        _context = context;
+    }
     private readonly JsonSerializerOptions jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -46,9 +50,9 @@ public class ExcelTestController : ControllerBase
                 }
 
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                CompactedVisBedriftData.AddListToDb(compactData, dbOptions);
+                CompactedVisBedriftData.AddListToDb(compactData, _context);
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
-                List<ReturnStructure> paramStructures = new();
+                List<ReturnStructure> paramStructures = [];
                 string contentPath = "./LocalData";
                 ReturnStructure? Data = null;
                 foreach (string filename in Directory.GetFiles(contentPath, "*.json"))
@@ -73,20 +77,26 @@ public class ExcelTestController : ControllerBase
                     Console.WriteLine($"Adding {param.Name} to DB");
                     try
                     {
-                        param.InsertToDataBase(dbOptions);
+                        param.InsertToDataBase(_context);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
                     }
                 }
+                try
+                {
+                    _context.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
                 Console.WriteLine("Insert Complete, updating delta.");
                 try
                 {
-                    using (var context = new BtdbContext(dbOptions))
-                    {
-                        context.Database.ExecuteSqlRaw("SELECT update_delta()");
-                    }
+                    _context.Database.ExecuteSqlRaw("SELECT update_delta()");
+
                 }
                 catch (Exception ex)
                 {
@@ -104,58 +114,3 @@ public class ExcelTestController : ControllerBase
     }
 }
 
-
-
-
-
-/* TEST KODE */
-/* ReturnStructure returnStructure = TestJsonStream.ParseJsonStream();
-                UpdateNameStructure nameStructure = new(
-                    returnStructure.CompanyId, returnStructure.Name, returnStructure.PreviousNames.Count == 0 ? null : returnStructure.PreviousNames
-                );
-                nameStructure.InsertIntoDatabase();
-                InsertGenerellInfoStructure infoStructure = new(
-                    returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, returnStructure.Location, returnStructure.PostalAddress, returnStructure.NumberOfEmployees ?? null
-                );
-                infoStructure.InsertToDataBase();
-                foreach (var announcement in returnStructure.Announcements)
-                {
-                    InsertKunngjøringStructure kunngjøringStructure = new(
-                        returnStructure.CompanyId, announcement
-                    );
-                    kunngjøringStructure.InsertToDataBase();
-                }
-                foreach (var account in returnStructure.CompanyAccounts)
-                {
-                    ØkoDataSqlStructure økoData = new(
-                        returnStructure.CompanyId, account
-                    );
-                    økoData.InsertIntoDatabase();
-                }
-                foreach (var person in returnStructure.PersonRoles)
-                {
-                    if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
-                    else
-                    {
-                        InsertBedriftLederInfoStructure bedriftLeder = new(
-                            returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, person
-                        );
-                        bedriftLeder.InsertToDataBase();
-                    }
-                }
-                foreach (var shareholder in returnStructure.Shareholders)
-                {
-                    InsertShareholderStructure shareholderStructure = new(
-                        returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, shareholder
-                    );
-                    shareholderStructure.InsertIntoDatabase();
-                }
-                try
-                {
-                    Database.Query("SELECT update_delta()", reader => { });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
- */
