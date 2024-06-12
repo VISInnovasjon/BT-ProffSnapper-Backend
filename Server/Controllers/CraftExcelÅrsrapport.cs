@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Server.Models;
 using MiniExcelLibs;
-using Microsoft.EntityFrameworkCore;
 using Server.Views;
 using Microsoft.AspNetCore.Http.HttpResults;
 namespace Server.Controllers;
@@ -11,7 +10,11 @@ namespace Server.Controllers;
 [Route("årsrapport")]
 public class GenÅrsRapport : ControllerBase
 {
-    private readonly DbContextOptions<BtdbContext> options = new DbContextOptionsBuilder<BtdbContext>().UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").Options;
+    private BtdbContext _context;
+    public GenÅrsRapport(BtdbContext context)
+    {
+        _context = context;
+    }
     [HttpPost("get")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -26,7 +29,7 @@ public class GenÅrsRapport : ControllerBase
         {
             throw new BadHttpRequestException("Only xslx files are supported currently");
         }
-        List<int> orgNrs = new();
+        List<int> orgNrs = [];
         using (var stream = file.OpenReadStream())
         {
             var rows = await stream.QueryAsync<ExcelOrgNrOnly>();
@@ -34,12 +37,9 @@ public class GenÅrsRapport : ControllerBase
         }
         string now = DateTime.Now.Date.ToShortDateString();
         List<Årsrapport> dataList;
-        using (var _context = new BtdbContext(options))
-        {
-            dataList = _context.Årsrapports.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
-        }
+        dataList = _context.Årsrapports.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
         List<ExcelÅrsrapport> Årsrapportdata = ExcelÅrsrapport.GetExportValues(dataList);
-        if (dataList == null || !dataList.Any())
+        if (dataList == null || dataList.Count == 0)
         {
             return TypedResults.NotFound();
         }
