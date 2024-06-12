@@ -2,8 +2,10 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
+using MiniExcelLibs;
+using Server.Views;
 namespace Server.Controllers;
-/* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray); */
+/* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); */
 
 [ApiController]
 [Route("/updatedb")]
@@ -22,6 +24,7 @@ public class ExcelTestController : ControllerBase
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromForm] IFormFile file)
+
     {
         if (file == null || file.Length == 0)
         {
@@ -32,6 +35,11 @@ public class ExcelTestController : ControllerBase
         if (extension != ".xlsx")
         {
             return BadRequest("Invalid Fileformat. Please upload an Excel file");
+        }
+        List<BedriftInfo> refreshList = _context.BedriftInfos.AsNoTracking().ToList();
+        foreach (var item in refreshList)
+        {
+            _context.Entry(item).Reload();
         }
         try
         {
@@ -50,8 +58,23 @@ public class ExcelTestController : ControllerBase
                 }
 
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                CompactedVisBedriftData.AddListToDb(compactData, _context);
+
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
+
+                List<int> DbOrgNrArrays = _context.BedriftInfos.Select(b => b.Orgnummer).ToList();
+
+                List<int> NonDuplicateOrgNrs = orgNrArray.Except(DbOrgNrArrays).ToList();
+
+                List<int> DuplicateOrgNrs = orgNrArray.Intersect(DbOrgNrArrays).ToList();
+
+                List<CompactedVisBedriftData> NonDuplicateData = compactData.Where(data => NonDuplicateOrgNrs.Contains(data.Orgnummer)).ToList();
+
+                List<CompactedVisBedriftData> DuplicateData = compactData.Where(data => DuplicateOrgNrs.Contains(data.Orgnummer)).ToList();
+
+                if (NonDuplicateData.Count > 0) CompactedVisBedriftData.AddListToDb(NonDuplicateData, _context);
+
+                if (DuplicateData.Count > 0) CompactedVisBedriftData.UpdateFaseStatus(DuplicateData, _context);
+
                 List<ReturnStructure> paramStructures = [];
                 string contentPath = "./LocalData";
                 ReturnStructure? Data = null;
@@ -112,5 +135,52 @@ public class ExcelTestController : ControllerBase
         }
 
     }
+    [HttpPost("deletedata")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Delete([FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file uploaded");
+
+        }
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (extension != ".xlsx")
+        {
+            return BadRequest("Invalid Fileformat. Please upload an Excel file");
+        }
+        List<int> orgNrs = [];
+        using (var stream = file.OpenReadStream())
+        {
+            try
+            {
+                {
+                    var rows = await stream.QueryAsync<ExcelOrgNrOnly>();
+                    orgNrs = rows.Select(row => row.Orgnummer).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error reading the file: {ex.Message}");
+            }
+        }
+        var entriesToDelete = _context.BedriftInfos.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
+        if (entriesToDelete.Count == 0)
+        {
+            return NotFound("Could not find any Organisation Numbers corresponding to the file.");
+        }
+        _context.BedriftInfos.RemoveRange(entriesToDelete);
+        try
+        {
+            _context.SaveChanges();
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An Error Occured while deleting: {ex.Message}");
+        }
+    }
 }
+
 

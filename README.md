@@ -320,14 +320,17 @@ Vi trenger endepunkt for følgende systemer:
    Dette laget må bruker passe gjennom for å få komme til de neste endepunktene. Her må vi passe på å ungå at en potensiell bruker kan snike seg rundt layeret å få tilgang til de andre lagene uten authorisering.
    dette vil være /, men vil passe deg ned til /:uid, som så vil passe deg ned til hvorenn du skulle ønske. Siden dette er et internt system kan potensielt dette samkjøres med frontend, hvis frontend og backend deler samme routing.
 
-2. Query
-   Her gjør bruker queries til databasen. Her må vi finne beste måten å gjennomføre dette på. Vi har som mål å ta i bruk URL req query systemet til dette. Dette vil være et /GET med queryparams.
+2. query/getall
+   Her aggrigerer databasen sammen gjennomsnittsdata for forskjellige faktorer og leverer en datapakke som frontend bruker i graf.</br> Det blir aggrigert basert på forskjellige views.</br> For å lage en ny aggrigering lager man en ny view i databasen, og sender den sammen med resten ved å adde den i AddGroupedData() Method i FetchDataController.
 
-3. Update
-   Dette vil være en /POST som skal extracte ut data fra et excel ark, og poste data fra excel arket med rett struktur til databasen.
+3. updatedb
+   Her har vi to endepunkter:
 
-4. ÅrsRapport
-   Dette endepunktet vil levere ut en årsrapport fil for ønskede organisasjonsnr.
+   - newdata: Dette endepunktet tar inn et excel ark med data fra VIS, som blir lagret i databasen.</br> Hvis den ser at den allerede har grunndata fra organisasjonsnummerene, prøver den å lagre data om årlig fase for hver bedrift i steden.</br> Hvis den ser at nye bedrifter blir lagt inn, henter den også data om disse fra PROFF api.</br> De andre blir oppdatert gjennom CRON jobb.
+   - deletedata: Dette endepunktet tar inn et excel ark med organisasjonsnummere under en kollonne som heter Orgnummer,</br> og prøver å slette all data om organisasjonene fra databasen basert på disse.
+
+4. ÅrsRapport/get
+   Dette endepunktet tar inn en excel fil med organisasjonsnummer, under en kollone Orgnummer.</br> Og leverer en ferdig utfylt årsrapport for disse bedriftene så lenge dataen eksisterer.</br> Tomme celler er data som ikke finnes enda.
 
 <br/>
 
@@ -434,6 +437,7 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
 
 1. Årsrapport.
    Denne viewen er laget for å hjelpe med generering av årsrapporter.<br>
+
 ```sql
    SELECT b.orgnummer,
    g.antall_ansatte,
@@ -481,7 +485,9 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
        WHERE s.bedrift_id = b.bedrift_id AND s."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1) AND s.shareholder_bedrift_id::text = '987753153'::text) shareholder_data ON true;
    Denne joiner sammen alle verdier ønsket i en årsrapport, og kan queries etter bestemte organisasjoner. <br>
 ```
+
 2. Gjennomsnittsverdier:
+
 ```sql
     SELECT "ø"."rapportår",
      "ø"."øko_kode",
@@ -494,8 +500,9 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
    GROUP BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
    ORDER BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
 ```
-Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br>
-3. Data_sortert_etter_fase:
+
+Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br> 3. Data_sortert_etter_fase:
+
 ```sql
 	 SELECT f.fase,
   "ø"."rapportår",
@@ -518,7 +525,7 @@ SELECT b.bransje,
 "ø"."rapportår",
 "ø"."øko_kode",
 l.kode_beskrivelse,
-avg("ø"."øko_verdi") AS "avg*øko*verdi",
+avg("ø"."øko_verdi") AS "avg_øko_verdi",
 avg("ø".delta) AS avg_delta
 FROM bedrift_info b
 JOIN "årlig*økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
@@ -548,16 +555,13 @@ JOIN bedrift_leder_oversikt a ON b_1.bedrift_id = a.bedrift_id
 ), aldersgrupper AS (
 SELECT lederalder.bedrift_id,
 CASE
-WHEN lederalder.alder >= 10::double precision AND lederalder.alder <= 19::double precision THEN '10-20'::text
-WHEN lederalder.alder >= 20::double precision AND lederalder.alder <= 29::double precision THEN '20-29'::text
+WHEN lederalder.alder >= 18::double precision AND lederalder.alder <= 29::double precision THEN '18-29'::text
 WHEN lederalder.alder >= 30::double precision AND lederalder.alder <= 39::double precision THEN '30-39'::text
 WHEN lederalder.alder >= 40::double precision AND lederalder.alder <= 49::double precision THEN '40-49'::text
 WHEN lederalder.alder >= 50::double precision AND lederalder.alder <= 59::double precision THEN '50-59'::text
 WHEN lederalder.alder >= 60::double precision AND lederalder.alder <= 69::double precision THEN '60-69'::text
 WHEN lederalder.alder >= 70::double precision AND lederalder.alder <= 79::double precision THEN '70-79'::text
-WHEN lederalder.alder >= 80::double precision AND lederalder.alder <= 89::double precision THEN '80-89'::text
-WHEN lederalder.alder >= 90::double precision AND lederalder.alder <= 99::double precision THEN '90-99'::text
-ELSE '100+'::text
+ELSE '80+'::text
 END AS alders_gruppe
 FROM lederalder
 )
@@ -576,4 +580,3 @@ GROUP BY "ø"."rapportår", ag.alders_gruppe, "ø"."øko_kode", l.kode_beskrivel
 ```
 
 Leverer gjennomsnitsverdier, men sorterer basert på alder av enten Daglig Leder eller Styreleder.<br>
-

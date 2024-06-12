@@ -155,7 +155,7 @@ public class ØkoDataSqlStructure
                     ØkoVerdi = Kodeverdier[i],
                     Rapportår = År
                 };
-                context.ÅrligØkonomiskData.Add(ØkoData);
+                if (!Entity.Exists(ØkoData, context)) context.ÅrligØkonomiskData.Add(ØkoData);
             }
         }
         catch (Exception ex)
@@ -230,7 +230,7 @@ public class InsertShareholderStructure
                 Navn = InputNavn,
                 AntalShares = AntallShares
             };
-            context.BedriftShareholderInfos.Add(shareholder);
+            if (!Entity.Exists(shareholder, context)) context.BedriftShareholderInfos.Add(shareholder);
         }
         catch (Exception ex)
         {
@@ -269,7 +269,7 @@ public class InsertKunngjøringStructure
                 Kunngjøringstekst = Inputdesc,
                 Kunngjøringstype = InputType
             };
-            context.BedriftKunngjøringers.Add(announcement);
+            if (!Entity.Exists(announcement, context)) context.BedriftKunngjøringers.Add(announcement);
         }
         catch (Exception ex)
         {
@@ -318,7 +318,7 @@ public class InsertGenerellInfoStructure
                 Rapportår = År,
                 AntallAnsatte = InputAntallAnsatte
             };
-            context.GenerellÅrligBedriftInfos.Add(genInfo);
+            if (!Entity.Exists(genInfo, context)) context.GenerellÅrligBedriftInfos.Add(genInfo);
         }
         catch (Exception ex)
         {
@@ -359,7 +359,7 @@ public class InsertBedriftLederInfoStructure
                 Tittelkode = InputTittelKode,
                 Rapportår = År
             };
-            context.BedriftLederOversikts.Add(leder);
+            if (!Entity.Exists(leder, context)) context.BedriftLederOversikts.Add(leder);
         }
         catch (Exception ex)
         {

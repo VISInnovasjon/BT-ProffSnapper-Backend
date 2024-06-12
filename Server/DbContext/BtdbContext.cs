@@ -84,7 +84,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftKunngjøringers)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("bedrift_kunngjøringer_bedrift_id_fkey");
         });
 
@@ -109,7 +109,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftLederOversikts)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("bedrift_leder_oversikt_bedrift_id_fkey");
         });
 
@@ -145,7 +145,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftShareholderInfos)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("bedrift_shareholder_info_bedrift_id_fkey");
         });
 
@@ -176,7 +176,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.GenerellÅrligBedriftInfos)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("generell_årlig_bedrift_info_bedrift_id_fkey");
         });
 
@@ -194,7 +194,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.OversiktBedriftFaseStatuses)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("oversikt_bedrift_fase_lokasjon_pr_år_bedrift_id_fkey");
         });
 
@@ -219,7 +219,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.ÅrligØkonomiskData)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("årlig_økonomisk_data_bedrift_id_fkey");
         });
 
