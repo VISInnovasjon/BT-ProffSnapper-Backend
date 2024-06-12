@@ -43,7 +43,7 @@ public class CompactedVisBedriftData
 
     public static List<CompactedVisBedriftData> ListOfCompactedVisExcelSheet(List<RawVisBedriftData> data)
     {
-        List<CompactedVisBedriftData> CleanData = new List<CompactedVisBedriftData>();
+        List<CompactedVisBedriftData> CleanData = [];
         for (int i = 0; i < data.Count; i++)
         {
             if (CleanData.Count > 0 && CleanData.Last().Orgnummer == data[i].Orgnummer)
@@ -57,11 +57,9 @@ public class CompactedVisBedriftData
                 {
                     Bransje = data[i].Bransje,
                     Orgnummer = data[i].Orgnummer,
-                    RapportÅr = new List<int>(),
-                    Faser = new List<string>(),
+                    RapportÅr = [data[i].RapportÅr],
+                    Faser = [data[i].Fase ?? "Fase Missing"],
                 };
-                cleanExcelData.RapportÅr.Add(data[i].RapportÅr);
-                cleanExcelData.Faser.Add(data[i].Fase ?? "Fase Missing");
                 CleanData.Add(cleanExcelData);
             }
         }
@@ -69,11 +67,6 @@ public class CompactedVisBedriftData
     }
     public static void AddListToDb(List<CompactedVisBedriftData> data, BtdbContext context)
     {
-        List<BedriftInfo> refreshList = context.BedriftInfos.AsNoTracking().ToList();
-        foreach (var item in refreshList)
-        {
-            context.Entry(item).Reload();
-        }
         foreach (var company in data)
         {
             try
@@ -110,6 +103,29 @@ public class CompactedVisBedriftData
                 Console.WriteLine(ex.Message);
             }
 
+        }
+    }
+    public static void UpdateFaseStatus(List<CompactedVisBedriftData> data, BtdbContext context)
+    {
+        foreach (var company in data)
+        {
+            var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == company.Orgnummer).BedriftId;
+            /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
+            var årFaseOversikt = new Dictionary<int, string>();
+            for (int i = 0; i < company.RapportÅr.Count; i++)
+            {
+                årFaseOversikt[company.RapportÅr[i]] = company.Faser[i];
+            }
+            foreach (var pair in årFaseOversikt)
+            {
+                var faseData = new OversiktBedriftFaseStatus
+                {
+                    Fase = pair.Value,
+                    Rapportår = pair.Key,
+                    BedriftId = bedriftId
+                };
+                if (!context.OversiktBedriftFaseStatuses.Any(b => b.Rapportår == faseData.Rapportår && b.BedriftId == faseData.BedriftId && b.Fase == faseData.Fase)) context.OversiktBedriftFaseStatuses.Add(faseData);
+            }
         }
     }
     public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)
