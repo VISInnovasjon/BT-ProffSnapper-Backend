@@ -10,13 +10,9 @@ namespace Server.Controllers;
 
 [ApiController]
 [Route("query")]
-public class QueryHandler : ControllerBase
+public class QueryHandler(BtdbContext context) : ControllerBase
 {
-    private readonly BtdbContext _context;
-    public QueryHandler(BtdbContext context)
-    {
-        _context = context;
-    }
+    private readonly BtdbContext _context = context;
 
     [HttpGet("getall")]
     [ProducesResponseType(StatusCodes.Status200OK)]

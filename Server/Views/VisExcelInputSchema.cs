@@ -8,6 +8,7 @@ public class RawVisBedriftData
     public int Orgnummer { get; set; }
     public string? Fase { get; set; }
     public string? Bransje { get; set; }
+    public int KvinneligGrunder { get; set; }
     public static async Task<List<RawVisBedriftData>> ListFromVisExcelSheet(Stream stream, string excelSheetName)
     {
 
@@ -40,6 +41,7 @@ public class CompactedVisBedriftData
     public int Orgnummer { get; set; }
     public required List<string> Faser { get; set; }
     public string? Bransje { get; set; }
+    public int KvinneligGrunder { get; set; }
 
     public static List<CompactedVisBedriftData> ListOfCompactedVisExcelSheet(List<RawVisBedriftData> data)
     {
@@ -57,6 +59,7 @@ public class CompactedVisBedriftData
                 {
                     Bransje = data[i].Bransje,
                     Orgnummer = data[i].Orgnummer,
+                    KvinneligGrunder = data[i].KvinneligGrunder,
                     RapportÅr = [data[i].RapportÅr],
                     Faser = [data[i].Fase ?? "Fase Missing"],
                 };
@@ -74,7 +77,8 @@ public class CompactedVisBedriftData
                 var companyData = new BedriftInfo
                 {
                     Orgnummer = company.Orgnummer,
-                    Bransje = company.Bransje
+                    Bransje = company.Bransje,
+                    KvinneligGrunder = company.KvinneligGrunder == 1
                 };
 
                 context.BedriftInfos.Add(companyData);
