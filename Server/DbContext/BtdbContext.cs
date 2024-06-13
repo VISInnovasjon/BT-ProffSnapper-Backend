@@ -65,6 +65,7 @@ public partial class BtdbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying[]")
                 .HasColumnType("character varying(255)[]")
                 .HasColumnName("navneliste");
+            entity.Property(e => e.KvinneligGrunder).HasColumnName("kvinnelig_grunder").HasDefaultValue(false);
             entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
         });
 
@@ -292,6 +293,8 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.AntallSharesVis).HasColumnName("antall_shares_vis");
             entity.Property(e => e.DeltaInskuttEgenkapital).HasColumnName("delta_innskutt_egenkapital");
             entity.Property(e => e.DriftsResultat).HasColumnName("driftsresultat");
+            entity.Property(e => e.LønnTrygdPensjon).HasColumnName("lønn_trygd_pensjon");
+            entity.Property(e => e.SumEgenkapital).HasColumnName("sum_egenkapital");
             entity.Property(e => e.OrdinærtResultat).HasColumnName("ordinært_resultat");
             entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
             entity.Property(e => e.PostAddresse).HasColumnName("post_addresse");

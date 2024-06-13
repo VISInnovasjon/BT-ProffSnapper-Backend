@@ -8,13 +8,10 @@ namespace Server.Controllers;
 
 [ApiController]
 [Route("årsrapport")]
-public class GenÅrsRapport : ControllerBase
+public class GenÅrsRapport(BtdbContext context) : ControllerBase
 {
-    private BtdbContext _context;
-    public GenÅrsRapport(BtdbContext context)
-    {
-        _context = context;
-    }
+    private readonly BtdbContext _context = context;
+
     [HttpPost("get")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

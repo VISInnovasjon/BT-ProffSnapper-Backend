@@ -9,13 +9,9 @@ namespace Server.Controllers;
 
 [ApiController]
 [Route("/updatedb")]
-public class ExcelTestController : ControllerBase
+public class ExcelTestController(BtdbContext context) : ControllerBase
 {
-    private readonly BtdbContext _context;
-    public ExcelTestController(BtdbContext context)
-    {
-        _context = context;
-    }
+    private readonly BtdbContext _context = context;
     private readonly JsonSerializerOptions jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase

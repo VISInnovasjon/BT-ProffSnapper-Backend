@@ -19,19 +19,23 @@ public class ExcelÅrsrapport
     public decimal? DriftsResultat { get; set; }
     [ExcelColumn(Name = "Sum Driftsintekter", Index = 5, Width = 30)]
     public decimal? SumDriftsIntekter { get; set; }
-    [ExcelColumn(Name = "Sum Innskutt Egenkapital", Index = 6, Width = 30)]
+    [ExcelColumn(Name = "Sum Egenkapital", Index = 6, Width = 30)]
+    public decimal? SumEgenkapital { get; set; }
+    [ExcelColumn(Name = "Sum Innskutt Egenkapital", Index = 7, Width = 30)]
     public decimal? SumInnskuttEgenkapital { get; set; }
-    [ExcelColumn(Name = "Delta Innskutt Egenkapital", Index = 7, Width = 30)]
+    [ExcelColumn(Name = "Delta Innskutt Egenkapital", Index = 8, Width = 30)]
     public decimal? DeltaInskuttEgenkapital { get; set; }
-    [ExcelColumn(Name = "Ordinært Resultat", Index = 8, Width = 30)]
+    [ExcelColumn(Name = "Ordinært Resultat", Index = 9, Width = 30)]
     public decimal? OrdinærtResultat { get; set; }
-    [ExcelColumn(Name = "Post Addresse", Index = 9, Width = 35)]
+    [ExcelColumn(Name = "Lønn/Trygd/Pensjon", Index = 10, Width = 35)]
+    public decimal? LønnTrygdPensjon { get; set; }
+    [ExcelColumn(Name = "Post Addresse", Index = 11, Width = 35)]
     public required string PostAddresse { get; set; }
-    [ExcelColumn(Name = "Post Kode", Index = 10, Width = 15)]
+    [ExcelColumn(Name = "Post Kode", Index = 12, Width = 15)]
     public required string PostKode { get; set; }
-    [ExcelColumn(Name = "Antall Shares Vis", Index = 11, Width = 30)]
+    [ExcelColumn(Name = "Antall Shares Vis", Index = 13, Width = 30)]
     public decimal? AntallSharesVis { get; set; }
-    [ExcelColumn(Name = "Prosent Andel Shares Vis", Index = 12, Width = 30)]
+    [ExcelColumn(Name = "Prosent Andel Shares Vis", Index = 14, Width = 30)]
     public required string ProsentAndelSharesVis { get; set; }
     public static List<ExcelÅrsrapport> GetExportValues(List<Årsrapport> Data)
     {
@@ -45,10 +49,12 @@ public class ExcelÅrsrapport
                 AntallAnsatte = value.AntallAnsatte,
                 Rapportår = value.Rapportår,
                 DriftsResultat = value.DriftsResultat,
+                SumEgenkapital = value.SumEgenkapital,
                 SumDriftsIntekter = value.SumDriftsIntekter,
                 SumInnskuttEgenkapital = value.SumInskuttEgenkapital,
                 DeltaInskuttEgenkapital = value.DeltaInskuttEgenkapital,
                 OrdinærtResultat = value.OrdinærtResultat,
+                LønnTrygdPensjon = value.LønnTrygdPensjon,
                 PostAddresse = !string.IsNullOrEmpty(value.PostAddresse) ? value.PostAddresse : "Data Mangler",
                 PostKode = !string.IsNullOrEmpty(value.PostKode) ? value.PostKode : "Data Mangler",
                 AntallSharesVis = value.AntallSharesVis,
