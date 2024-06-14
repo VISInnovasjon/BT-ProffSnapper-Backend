@@ -516,5 +516,3 @@ C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\sco
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\Server.csproj.CopyComplete
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\Server.genruntimeconfig.cache
 C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\obj\Debug\net8.0\ref\Server.dll
-C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\LocalData\ProffJsonSchema.json
-C:\Users\John Ellingsen\Documents\BT-entity-framwork\Server\bin\Debug\net8.0\LocalData\ProffReturnExamle.Json

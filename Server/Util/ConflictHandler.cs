@@ -1,54 +1,56 @@
 namespace Util;
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Server.Models;
 public class ConflictHandler
 {
-    /* Wild lamda function to handle duplication errors in incoming data from outside api.
-
-   This takes in your dbContext, the entity that caused a dbUpdateException, a list of primarykeys for the entity, and a list of keys if you want to update the existing data with the new data. 
-
-   You can leave equalityKeys as an empty list or leave it out entirely if you don't want to update conflicting data.   */
-    public static void HandleConflicts<T>(BtdbContext context, T entity, List<string> primaryKeys, List<string>? equalityKeys) where T : class
+    /// <summary>
+    /// Creates a lamdafunction to find and update values in a potential duplicate tracked by EF.
+    /// </summary>
+    ///<param name="context">
+    ///Database Context
+    ///</param>
+    ///<param name="entity">
+    ///An entity that potentially caused a DbUpdateException
+    ///</param>
+    ///<param name="primaryKeys">
+    ///A list of property names representing the primary keys of the entity in EF
+    ///</param>
+    ///<param name="equalityKeys">
+    ///A list of property names representing the keys that should potentially be updated in an existing entity
+    ///</param>
+    ///<exception cref="NullReferenceException">
+    ///If it fails to create a a Lamda predicate based on the primary keys in question on class T
+    ///</exception>
+    public static async Task HandleConflicts<T>(BtdbContext context, T entity, List<string> primaryKeys, List<string>? equalityKeys) where T : class
     {
-        /* If we don't add any equality keys we don't want to change the existing data, so we return, not bothering to change anything. */
         if (equalityKeys == null || equalityKeys.Count == 0) return;
-        /* We begin by setting up an equality lamda expression so we can find the conflicting entity 
-        In this first part we define our comparisonparameter. We can call it whatever, but we call it x. Then we say it's of type T, the same class as our entity.
-        
-        we then define our predicate. */
+        context.Entry(entity).State = EntityState.Detached;
         var parameter = Expression.Parameter(typeof(T), "x");
         Expression? predicate = null;
-        /* We begin looping through each of our primary keys. */
         foreach (var key in primaryKeys)
         {
-            /* we get the property expression f.ex. x.Id. */
             var property = Expression.Property(parameter, key);
-            /* We then get the value it's supposed to be equal to, if we follow the above example it would be entity.Id */
             var value = Expression.Constant(typeof(T)?.GetProperty(key)?.GetValue(entity));
-            /* Here we define the equality expression, which if we follow the above example would be x.Id == entity.Id */
             var equals = Expression.Equal(property, value);
-            /* Here we add the equality expression to our predicate. */
             predicate = predicate == null ? equals : Expression.AndAlso(predicate, equals);
         }
-        /* If we could not build a predicate for our lamda function for whatever reason. We throw an error  */
         if (predicate == null) throw new NullReferenceException("Could not build predicate for the lamda function.");
-        /* This leaves us with a function defining all equality expressions in our lamda function
-        and allows us to find an entity in our EF core setup that shares primary keys with our conflicting entity.  */
         var lamda = Expression.Lambda<Func<T, bool>>(predicate, parameter);
-        var existingEntity = context.Set<T>().SingleOrDefault(lamda);
-        /* If none entity is found we throw an error, something else has gone wrong with the search. and it's not a conflict in entities. */
+        var existingEntity = await context.Set<T>().SingleOrDefaultAsync(lamda);
         if (existingEntity == null)
         {
             try
             {
-                context.Set<T>().Add(entity);
+                await context.Set<T>().AddAsync(entity);
+                await context.SaveChangesAsync();
+                return;
             }
-            catch (Exception secondEx)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Something else than duplicate data happened, {secondEx.Message}");
+                Console.WriteLine($"Something else than duplicate data happened, {ex.Message}");
             }
         }
-        /* Here we update our existing entity with the new values in the conflicting entity. */
         foreach (var key in equalityKeys)
         {
             var propInfo = typeof(T).GetProperty(key);
@@ -58,6 +60,7 @@ public class ConflictHandler
                 try
                 {
                     propInfo.SetValue(existingEntity, typeof(T)?.GetProperty(key)?.GetValue(entity));
+
                 }
                 catch (Exception ex)
                 {
@@ -65,7 +68,7 @@ public class ConflictHandler
                 }
             }
         }
-        /* At the end we return the updated entity.  */
+        await context.SaveChangesAsync();
         return;
     }
 }
