@@ -96,20 +96,12 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
                     Console.WriteLine($"Adding {param.Name} to DB");
                     try
                     {
-                        param.InsertToDataBase(_context);
+                        await param.InsertIntoDatabase(_context);
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine(ex.Message);
                     }
-                }
-                try
-                {
-                    _context.SaveChanges();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
                 }
                 Console.WriteLine("Insert Complete, updating delta.");
                 try

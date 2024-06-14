@@ -1,6 +1,8 @@
 using Server.Models;
 namespace Util;
 
+
+/* Denne er byttet ut med ConflictHandler */
 public class Entity
 {
     public static bool Exists<T>(T entity, BtdbContext context) where T : class

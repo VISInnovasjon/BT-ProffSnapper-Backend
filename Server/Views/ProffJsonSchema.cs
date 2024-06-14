@@ -78,19 +78,20 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public void InsertToDataBase(BtdbContext context)
+    public async Task InsertIntoDatabase(BtdbContext context)
     {
         int bedriftId;
         bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == int.Parse(CompanyId)).BedriftId;
         new UpdateNameStructure(
                     Name, PreviousNames?.Count == 0 ? null : PreviousNames
-                ).InsertIntoDatabase(context, bedriftId);
+                ).CraftDbValues(context, bedriftId);
         var genInfo = new InsertGenerellInfoStructure(
             ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
-        ).InsertToDataBase(bedriftId);
+        ).CraftDbValues(bedriftId);
         try
         {
-            context.GenerellÅrligBedriftInfos.Add(genInfo);
+            await context.GenerellÅrligBedriftInfos.AddAsync(genInfo);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException ex)
         {
@@ -111,33 +112,35 @@ public class ReturnStructure
         {
             var newKunn = new InsertKunngjøringStructure(
                 announcement
-            ).InsertToDataBase(bedriftId);
+            ).CraftDbValues(bedriftId);
         }
         try
         {
-            context.BedriftKunngjøringers.AddRange(kunnList);
+            await context.BedriftKunngjøringers.AddRangeAsync(kunnList);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException)
         {
             foreach (var item in kunnList)
             {
-                ConflictHandler.HandleConflicts(context, item, ["BedriftId", "KunngjøringsId"], ["Dato", "KunngjøringsText", "KunngjøringsType"]);
+                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "KunngjøringsId"], ["Dato", "KunngjøringsText", "KunngjøringsType"]);
             }
         }
         foreach (var account in CompanyAccounts)
         {
             var økoList = new ØkoDataSqlStructure(
                 account
-            ).InsertIntoDatabase(bedriftId);
+            ).CraftDbValues(bedriftId);
             try
             {
-                context.ÅrligØkonomiskData.AddRange(økoList);
+                await context.ÅrligØkonomiskData.AddRangeAsync(økoList);
+                await context.SaveChangesAsync();
             }
             catch (DbUpdateException)
             {
                 foreach (var item in økoList)
                 {
-                    ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "ØkoKode"], ["ØkoVerdi"]);
+                    await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "ØkoKode"], ["ØkoVerdi"]);
                 }
             }
         }
@@ -149,19 +152,20 @@ public class ReturnStructure
             {
                 var newLede = new InsertBedriftLederInfoStructure(
                     ShareholdersLastUpdatedDate, person
-                ).InsertToDataBase(bedriftId);
+                ).CraftDbValues(bedriftId);
                 ledeList.Add(newLede);
             }
         }
         try
         {
-            context.BedriftLederOversikts.AddRange(ledeList);
+            await context.BedriftLederOversikts.AddRangeAsync(ledeList);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException)
         {
             foreach (var item in ledeList)
             {
-                ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "TittelKode", "Fødselsdag"], ["Navn", "Tittel"]);
+                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Tittelkode"], ["Navn", "Tittel", "Fødselsdag"]);
             }
         }
         List<BedriftShareholderInfo> shareList = [];
@@ -169,18 +173,19 @@ public class ReturnStructure
             {
                 var newShareholder = new InsertShareholderStructure(
                     ShareholdersLastUpdatedDate, shareholder
-                ).InsertIntoDatabase(bedriftId);
+                ).CraftDbValues(bedriftId);
                 shareList.Add(newShareholder);
             }
         try
         {
-            context.BedriftShareholderInfos.AddRange(shareList);
+            await context.BedriftShareholderInfos.AddRangeAsync(shareList);
+            await context.SaveChangesAsync();
         }
         catch (DbUpdateException)
         {
             foreach (var item in shareList)
             {
-                ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Navn"], ["AntalShares", "ShareholderBedriftId", "ShareholderFornavn", "ShareholderEtternavn", "Sharetype"]);
+                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Navn"], ["AntalShares", "ShareholderBedriftId", "ShareholderFornavn", "ShareholderEtternavn", "Sharetype"]);
             }
         }
     }
@@ -207,7 +212,7 @@ public class ØkoDataSqlStructure
         }
 
     }
-    public List<ÅrligØkonomiskDatum> InsertIntoDatabase(int bedriftId)
+    public List<ÅrligØkonomiskDatum> CraftDbValues(int bedriftId)
     {
         try
         {
@@ -241,7 +246,7 @@ public class UpdateNameStructure
         Navn = Name;
         if (PreviousNames != null) TidligereNavn = PreviousNames;
     }
-    public void InsertIntoDatabase(BtdbContext context, int bedriftId)
+    public void CraftDbValues(BtdbContext context, int bedriftId)
     {
         try
         {
@@ -280,7 +285,7 @@ public class InsertShareholderStructure
         if (!string.IsNullOrEmpty(info.FirstName)) Fornavn = info.FirstName;
         if (!string.IsNullOrEmpty(info.LastName)) Etternavn = info.LastName;
     }
-    public BedriftShareholderInfo InsertIntoDatabase(int bedriftId)
+    public BedriftShareholderInfo CraftDbValues(int bedriftId)
     {
         try
         {
@@ -320,7 +325,7 @@ public class InsertKunngjøringStructure
         InputType = kunngjøring.Type;
         Inputdesc = kunngjøring.Text;
     }
-    public BedriftKunngjøringer InsertToDataBase(int bedriftId)
+    public BedriftKunngjøringer CraftDbValues(int bedriftId)
     {
         try
         {
@@ -366,7 +371,7 @@ public class InsertGenerellInfoStructure
         InputPostKode = string.IsNullOrEmpty(post.ZipCode) ? "Mangler PostKode" : post.ZipCode;
         InputPostAddresse = post.AddressLine;
     }
-    public GenerellÅrligBedriftInfo InsertToDataBase(int bedriftId)
+    public GenerellÅrligBedriftInfo CraftDbValues(int bedriftId)
     {
         try
         {
@@ -408,7 +413,7 @@ public class InsertBedriftLederInfoStructure
         InputTittel = person.Title;
         InputTittelKode = person.TitleCode;
     }
-    public BedriftLederOversikt InsertToDataBase(int bedriftId)
+    public BedriftLederOversikt CraftDbValues(int bedriftId)
     {
         try
         {
