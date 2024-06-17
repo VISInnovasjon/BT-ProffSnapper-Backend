@@ -1,8 +1,6 @@
 
 using MiniExcelLibs.Attributes;
 using Server.Models;
-
-
 namespace Server.Views;
 
 public class ExcelÅrsrapport

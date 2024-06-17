@@ -272,7 +272,7 @@ For å gjennomføre dette trenger vi følgende komponenter:
 | Link           | `<Link/>`         | Håndterer routing internt i siden                          | none                            | Ja, react base component               |
 | Input: radial  | `<Radial/>`       | Radial knapp for veksling mellom funksjonalitet            | none                            | Kanskje                                |
 | Input: Button  | `<Button/>`       | Knapp for generell funksjonalitet.                         | none                            | Kanskje                                |
-| Graf           | `<BarChart/> `    | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
+| Graf           | `<LineChart/> `   | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
 | Tabell         | `<Table/>`        | Tabell for å vise deler av datasett på en strukturert måte | Bygget opp av `<tr>` components | Ja, usikker hvilken som skal bli brukt |
 | AutoComplete   | `<AutoComplete/>` | Komponent som slår sammen dropdown med et søkbart felt.    | Liste eller array av options.   | Ja, hentet fra mui                     |
 
@@ -336,7 +336,9 @@ Vi trenger endepunkt for følgende systemer:
 
 ### Micro Services
 
-En Cronjob skal være kjørende på serveren som en gang i året gjør calls til /Changes endepunktet til PROFF for å finne ny data for alle organisasjonsnr i databasen. Den vil så hente data for hvert ORGNR med oppdatert data.
+En Cronjob skal være kjørende på serveren som en gang i året gjør calls til /Changes endepunktet til PROFF for å finne ny data for alle organisasjonsnr i databasen. Den vil så hente data for hvert ORGNR med oppdatert data.<br/>
+Den henter alle organisasjonsnr fra databasen som fremdeles er aktiv, og skjekker de opp mot Proff Change Endpoint.<br/>
+Er det skjedd endringer henter den nye verdier for gjeldene bedriftene. <br/>
 
 <br/>
 

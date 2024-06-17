@@ -1,7 +1,9 @@
 
-namespace Server.Models;
+namespace Server.Views;
 using Microsoft.EntityFrameworkCore;
 using Server.Util;
+using Server.Models;
+using Server.Context;
 
 
 
@@ -73,6 +75,7 @@ public class ReturnStructure
     public required string Name { get; set; }
     /* Rollekoder vi er ute etter fra PROFF er DAGL, eller LEDE hvis DAGL ikke er tilgjengelig. */
     public required List<PersonRole> PersonRoles { get; set; }
+    public string? LiquidationDate { get; set; }
     public required List<Announcement> Announcements { get; set; }
     public required List<AccountsInfo> CompanyAccounts { get; set; }
     public List<ShareHolderInfo>? Shareholders { get; set; }
@@ -82,8 +85,10 @@ public class ReturnStructure
     {
         int bedriftId;
         bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == int.Parse(CompanyId)).BedriftId;
+        bool result = false;
+        if (LiquidationDate != null && !string.IsNullOrEmpty(LiquidationDate)) result = true;
         new UpdateNameStructure(
-                    Name, PreviousNames?.Count == 0 ? null : PreviousNames
+                    Name, result, PreviousNames?.Count == 0 ? null : PreviousNames
                 ).CraftDbValues(context, bedriftId);
         var genInfo = new InsertGenerellInfoStructure(
             ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
@@ -240,11 +245,13 @@ public class UpdateNameStructure
 {
     public string Navn { get; set; }
     public int OrgNr { get; set; }
+    public bool Likvidert { get; set; }
     public List<string>? TidligereNavn { get; set; }
-    public UpdateNameStructure(string Name, List<string>? PreviousNames = null)
+    public UpdateNameStructure(string Name, bool isLiquidated, List<string>? PreviousNames = null)
     {
         Navn = Name;
         if (PreviousNames != null) TidligereNavn = PreviousNames;
+        Likvidert = isLiquidated;
     }
     public void CraftDbValues(BtdbContext context, int bedriftId)
     {
@@ -253,6 +260,7 @@ public class UpdateNameStructure
 
             var bedriftInfo = context.BedriftInfos.Single(b => b.BedriftId == bedriftId);
             bedriftInfo.Målbedrift = Navn;
+            bedriftInfo.Likvidert = Likvidert;
             if (TidligereNavn != null && TidligereNavn.Count > 0) bedriftInfo.Navneliste = TidligereNavn;
         }
         catch (Exception ex)

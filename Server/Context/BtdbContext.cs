@@ -1,7 +1,8 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
+using Server.Models;
 
-namespace Server.Models;
+namespace Server.Context;
 
 public partial class BtdbContext : DbContext
 {
@@ -65,6 +66,7 @@ public partial class BtdbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying[]")
                 .HasColumnType("character varying(255)[]")
                 .HasColumnName("navneliste");
+            entity.Property(e=>e.Likvidert).HasColumnName("likvidert").HasDefaultValue(false);
             entity.Property(e => e.KvinneligGrunder).HasColumnName("kvinnelig_grunder").HasDefaultValue(false);
             entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
         });
