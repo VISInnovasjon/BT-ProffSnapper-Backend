@@ -1,6 +1,7 @@
 using MiniExcelLibs;
-using Microsoft.EntityFrameworkCore;
-namespace Server.Models;
+using Server.Context;
+using Server.Models;
+namespace Server.Views;
 
 public class RawVisBedriftData
 {

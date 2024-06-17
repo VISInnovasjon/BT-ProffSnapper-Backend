@@ -1,5 +1,5 @@
 namespace Server.Util;
-using Server.Models;
+using Server.Views;
 using System.Text.Json;
 
 public class FetchProffData

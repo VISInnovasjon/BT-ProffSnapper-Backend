@@ -2,7 +2,7 @@
 
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using Server.Models;
+using Server.Context;
 using Server.Views;
 
 namespace Server.Controllers;
