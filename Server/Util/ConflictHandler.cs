@@ -1,4 +1,4 @@
-namespace Util;
+namespace Server.Util;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
@@ -22,10 +22,10 @@ public class ConflictHandler
     ///<exception cref="NullReferenceException">
     ///If it fails to create a a Lamda predicate based on the primary keys in question on class T
     ///</exception>
-    public static async Task HandleConflicts<T>(BtdbContext context, T entity, List<string> primaryKeys, List<string>? equalityKeys) where T : class
+    public static async Task HandleConflicts<T>(BtdbContext context, T entity, List<string>? primaryKeys = null, List<string>? equalityKeys = null) where T : class
     {
-        if (equalityKeys == null || equalityKeys.Count == 0) return;
         context.Entry(entity).State = EntityState.Detached;
+        if (equalityKeys == null || equalityKeys.Count == 0 || primaryKeys == null) return;
         var parameter = Expression.Parameter(typeof(T), "x");
         Expression? predicate = null;
         foreach (var key in primaryKeys)
@@ -37,18 +37,21 @@ public class ConflictHandler
         }
         if (predicate == null) throw new NullReferenceException("Could not build predicate for the lamda function.");
         var lamda = Expression.Lambda<Func<T, bool>>(predicate, parameter);
-        var existingEntity = await context.Set<T>().SingleOrDefaultAsync(lamda);
+        var existingEntity = context.ChangeTracker.Entries<T>().FirstOrDefault(e => lamda.Compile()(e.Entity))?.Entity;
+        existingEntity ??= await context.Set<T>().SingleOrDefaultAsync(lamda);
         if (existingEntity == null)
         {
             try
             {
                 await context.Set<T>().AddAsync(entity);
+                DetachUnwantedEntities(context, entity);
                 await context.SaveChangesAsync();
                 return;
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex)
             {
-                Console.WriteLine($"Something else than duplicate data happened, {ex.Message}");
+                await HandleConflicts(context, entity);
+                throw new Exception($"Failed to update reference, detatching entity: {ex.Message}");
             }
         }
         foreach (var key in equalityKeys)
@@ -65,10 +68,27 @@ public class ConflictHandler
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Something went wrong setting property {key} in {entity}, {ex.Message}");
+                    throw;
                 }
             }
         }
-        await context.SaveChangesAsync();
-        return;
+        try
+        {
+            DetachUnwantedEntities(context, existingEntity);
+            await context.SaveChangesAsync();
+            return;
+        }
+        catch (DbUpdateException ex)
+        {
+            throw new Exception($"Failed to update reference: {ex.Message}");
+        }
+    }
+    private static void DetachUnwantedEntities<T>(BtdbContext context, T entity) where T : class
+    {
+        var entries = context.ChangeTracker.Entries().Where(e => e.Entity != entity && e.State != EntityState.Detached).ToList();
+        foreach (var entry in entries)
+        {
+            entry.State = EntityState.Detached;
+        }
     }
 }

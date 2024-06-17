@@ -1,4 +1,4 @@
-namespace Util;
+namespace Server.Util;
 
 
 public class DateCorrector
