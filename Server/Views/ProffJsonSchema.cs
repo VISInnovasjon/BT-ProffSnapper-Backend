@@ -1,7 +1,7 @@
 
 namespace Server.Models;
 using Microsoft.EntityFrameworkCore;
-using Util;
+using Server.Util;
 
 
 
@@ -95,17 +95,8 @@ public class ReturnStructure
         }
         catch (DbUpdateException ex)
         {
-            var existingEntity = context.GenerellÅrligBedriftInfos.SingleOrDefault(b => b.BedriftId == genInfo.BedriftId && b.Rapportår == genInfo.Rapportår);
-            if (existingEntity == null) Console.WriteLine($"No entity found, some other error occured {ex.Message}");
-            else
-            {
-                existingEntity.AntallAnsatte = genInfo.AntallAnsatte;
-                existingEntity.Fylke = genInfo.Fylke;
-                existingEntity.Kommune = genInfo.Kommune;
-                existingEntity.Landsdel = genInfo.Landsdel;
-                existingEntity.PostAddresse = genInfo.PostAddresse;
-                existingEntity.PostKode = genInfo.PostKode;
-            }
+            Console.WriteLine($"DbUpdateException occured: {ex.Message}");
+            await ConflictHandler.HandleConflicts(context, genInfo, ["BedriftId", "Rapportår"], ["AntallAnsatte", "Fylke", "Kommune", "Landsdel", "PostAddresse", "PostKode"]);
         }
         List<BedriftKunngjøringer> kunnList = [];
         foreach (var announcement in Announcements)
@@ -119,11 +110,12 @@ public class ReturnStructure
             await context.BedriftKunngjøringers.AddRangeAsync(kunnList);
             await context.SaveChangesAsync();
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             foreach (var item in kunnList)
             {
-                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "KunngjøringsId"], ["Dato", "KunngjøringsText", "KunngjøringsType"]);
+                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "KunngjøringId"], ["Dato", "Kunngjøringstekst", "Kunngjøringstype"]);
             }
         }
         foreach (var account in CompanyAccounts)
@@ -136,8 +128,9 @@ public class ReturnStructure
                 await context.ÅrligØkonomiskData.AddRangeAsync(økoList);
                 await context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
+                Console.WriteLine($"DbUpdateException occured: {ex.Message}");
                 foreach (var item in økoList)
                 {
                     await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "ØkoKode"], ["ØkoVerdi"]);
@@ -145,24 +138,30 @@ public class ReturnStructure
             }
         }
         List<BedriftLederOversikt> ledeList = [];
+        Dictionary<string, PersonRole> valuePairs = [];
         foreach (var person in PersonRoles)
         {
             if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
             else
             {
-                var newLede = new InsertBedriftLederInfoStructure(
-                    ShareholdersLastUpdatedDate, person
-                ).CraftDbValues(bedriftId);
-                ledeList.Add(newLede);
+                valuePairs[person.TitleCode] = person;
             }
+        }
+        foreach (var pair in valuePairs)
+        {
+            var newLede = new InsertBedriftLederInfoStructure(
+                ShareholdersLastUpdatedDate, pair.Value
+            ).CraftDbValues(bedriftId);
+            ledeList.Add(newLede);
         }
         try
         {
             await context.BedriftLederOversikts.AddRangeAsync(ledeList);
             await context.SaveChangesAsync();
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             foreach (var item in ledeList)
             {
                 await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Tittelkode"], ["Navn", "Tittel", "Fødselsdag"]);
@@ -181,8 +180,9 @@ public class ReturnStructure
             await context.BedriftShareholderInfos.AddRangeAsync(shareList);
             await context.SaveChangesAsync();
         }
-        catch (DbUpdateException)
+        catch (DbUpdateException ex)
         {
+            Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             foreach (var item in shareList)
             {
                 await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Navn"], ["AntalShares", "ShareholderBedriftId", "ShareholderFornavn", "ShareholderEtternavn", "Sharetype"]);

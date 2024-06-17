@@ -1,4 +1,4 @@
-namespace Util;
+namespace Server.Util;
 using Server.Models;
 using System.Text.Json;
 
