@@ -501,10 +501,9 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
       JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
    GROUP BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
    ORDER BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
-```
 
-Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br> 3. Data_sortert_etter_fase:
-
+Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br>
+3. Data_sortert_etter_fase:
 ```sql
 	 SELECT f.fase,
   "ø"."rapportår",
