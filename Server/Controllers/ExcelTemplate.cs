@@ -8,6 +8,10 @@ namespace Server.Controllers;
 [Route("template")]
 public class ExcelTemplateMaker : ControllerBase
 {
+    ///<summary>
+    ///Generates a template on how to set up excel spreadsheet for orgnumbers.
+    ///</summary>
+    ///<returns>Excel Template File</returns>
     [HttpGet("orgnummer")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -27,6 +31,10 @@ public class ExcelTemplateMaker : ControllerBase
             return TypedResults.NotFound();
         }
     }
+    ///<summary>
+    ///Generates a template on how to set up excel spreadsheet for updating DB with new entries.
+    ///</summary>
+    ///<returns>Excel Template File</returns>
     [HttpGet("dbupdate")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]

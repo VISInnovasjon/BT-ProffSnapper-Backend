@@ -66,7 +66,7 @@ public partial class BtdbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying[]")
                 .HasColumnType("character varying(255)[]")
                 .HasColumnName("navneliste");
-            entity.Property(e=>e.Likvidert).HasColumnName("likvidert").HasDefaultValue(false);
+            entity.Property(e => e.Likvidert).HasColumnName("likvidert").HasDefaultValue(false);
             entity.Property(e => e.KvinneligGrunder).HasColumnName("kvinnelig_grunder").HasDefaultValue(false);
             entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
         });
@@ -288,7 +288,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
             entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
             entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
-            entity.Property(e=>e.AvgAkkumulert).HasColumnName("avg_akkumulert");
+            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
         });
         modelBuilder.Entity<Årsrapport>(entity =>
         {

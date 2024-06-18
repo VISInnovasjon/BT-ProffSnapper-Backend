@@ -1,5 +1,5 @@
 
-using System.Security.Cryptography.X509Certificates;
+
 using MiniExcelLibs.Attributes;
 using Server.Models;
 namespace Server.Views;
@@ -38,10 +38,10 @@ public class ExcelÅrsrapport
     public required string ProsentAndelSharesVis { get; set; }
     public static List<ExcelÅrsrapport> GetExportValues(List<Årsrapport> Data)
     {
-        List<ExcelÅrsrapport> exportValues = new List<ExcelÅrsrapport>();
+        List<ExcelÅrsrapport> exportValues = [];
         foreach (var value in Data)
         {
-            ExcelÅrsrapport convertedValue = new ExcelÅrsrapport()
+            ExcelÅrsrapport convertedValue = new()
             {
                 Orgnummer = value.Orgnummer,
                 Målbedrift = value.Målbedrift,

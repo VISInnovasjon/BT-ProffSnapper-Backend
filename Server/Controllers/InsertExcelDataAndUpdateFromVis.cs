@@ -17,6 +17,13 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    ///<summary>
+    ///Posts new data to database based on Excel spreadsheet.
+    ///Then updates the DB with data from other apis based on new entries from excel spreadsheet. 
+    ///</summary>
+    ///<param name="file">Excel spreadsheed following dbupdateTemplate</param>
+    ///<returns> OK or Bad Request on missing, or error prone file</returns>
     [HttpPost("newdata")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
