@@ -1,5 +1,5 @@
-namespace Util;
-using Server.Models;
+namespace Server.Util;
+using Server.Views;
 using System.Text.Json;
 
 public class FetchProffData
@@ -12,7 +12,7 @@ public class FetchProffData
             throw new ArgumentNullException("Could not fetch token from Environment.");
         string baseUrl = "https://api.proff.no/api/companies/register/NO/";
         string url;
-        List<ReturnStructure> ReturnValues = new();
+        List<ReturnStructure> ReturnValues = [];
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase

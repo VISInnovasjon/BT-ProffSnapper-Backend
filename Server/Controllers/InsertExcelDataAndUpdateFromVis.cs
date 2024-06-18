@@ -2,22 +2,33 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
+using Server.Context;
+using MiniExcelLibs;
+using Server.Views;
 namespace Server.Controllers;
-/* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(orgNrArray); */
+/* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); */
 
 [ApiController]
 [Route("/updatedb")]
-public class ExcelTestController : ControllerBase
+public class ExcelTestController(BtdbContext context) : ControllerBase
 {
-    private readonly DbContextOptions<BtdbContext> dbOptions = new DbContextOptionsBuilder<BtdbContext>().UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").Options;
+    private readonly BtdbContext _context = context;
     private readonly JsonSerializerOptions jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
+
+    ///<summary>
+    ///Posts new data to database based on Excel spreadsheet.
+    ///Then updates the DB with data from other apis based on new entries from excel spreadsheet. 
+    ///</summary>
+    ///<param name="file">Excel spreadsheed following dbupdateTemplate</param>
+    ///<returns> OK or Bad Request on missing, or error prone file</returns>
     [HttpPost("newdata")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromForm] IFormFile file)
+
     {
         if (file == null || file.Length == 0)
         {
@@ -28,6 +39,11 @@ public class ExcelTestController : ControllerBase
         if (extension != ".xlsx")
         {
             return BadRequest("Invalid Fileformat. Please upload an Excel file");
+        }
+        List<BedriftInfo> refreshList = _context.BedriftInfos.AsNoTracking().ToList();
+        foreach (var item in refreshList)
+        {
+            _context.Entry(item).Reload();
         }
         try
         {
@@ -46,9 +62,24 @@ public class ExcelTestController : ControllerBase
                 }
 
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
-                CompactedVisBedriftData.AddListToDb(compactData, dbOptions);
+
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
-                List<ReturnStructure> paramStructures = new();
+
+                List<int> DbOrgNrArrays = _context.BedriftInfos.Select(b => b.Orgnummer).ToList();
+
+                List<int> NonDuplicateOrgNrs = orgNrArray.Except(DbOrgNrArrays).ToList();
+
+                List<int> DuplicateOrgNrs = orgNrArray.Intersect(DbOrgNrArrays).ToList();
+
+                List<CompactedVisBedriftData> NonDuplicateData = compactData.Where(data => NonDuplicateOrgNrs.Contains(data.Orgnummer)).ToList();
+
+                List<CompactedVisBedriftData> DuplicateData = compactData.Where(data => DuplicateOrgNrs.Contains(data.Orgnummer)).ToList();
+
+                if (NonDuplicateData.Count > 0) CompactedVisBedriftData.AddListToDb(NonDuplicateData, _context);
+
+                if (DuplicateData.Count > 0) CompactedVisBedriftData.UpdateFaseStatus(DuplicateData, _context);
+
+                List<ReturnStructure> paramStructures = [];
                 string contentPath = "./LocalData";
                 ReturnStructure? Data = null;
                 foreach (string filename in Directory.GetFiles(contentPath, "*.json"))
@@ -73,7 +104,7 @@ public class ExcelTestController : ControllerBase
                     Console.WriteLine($"Adding {param.Name} to DB");
                     try
                     {
-                        param.InsertToDataBase();
+                        await param.InsertIntoDatabase(_context);
                     }
                     catch (Exception ex)
                     {
@@ -83,10 +114,8 @@ public class ExcelTestController : ControllerBase
                 Console.WriteLine("Insert Complete, updating delta.");
                 try
                 {
-                    using (var context = new BtdbContext(dbOptions))
-                    {
-                        context.Database.ExecuteSqlRaw("SELECT update_delta()");
-                    }
+                    _context.Database.ExecuteSqlRaw("SELECT update_delta()");
+
                 }
                 catch (Exception ex)
                 {
@@ -102,60 +131,52 @@ public class ExcelTestController : ControllerBase
         }
 
     }
+    [HttpPost("deletedata")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Delete([FromForm] IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest("No file uploaded");
+
+        }
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (extension != ".xlsx")
+        {
+            return BadRequest("Invalid Fileformat. Please upload an Excel file");
+        }
+        List<int> orgNrs = [];
+        using (var stream = file.OpenReadStream())
+        {
+            try
+            {
+                {
+                    var rows = await stream.QueryAsync<ExcelOrgNrOnly>();
+                    orgNrs = rows.Select(row => row.Orgnummer).ToList();
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Error reading the file: {ex.Message}");
+            }
+        }
+        var entriesToDelete = _context.BedriftInfos.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
+        if (entriesToDelete.Count == 0)
+        {
+            return NotFound("Could not find any Organisation Numbers corresponding to the file.");
+        }
+        _context.BedriftInfos.RemoveRange(entriesToDelete);
+        try
+        {
+            _context.SaveChanges();
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"An Error Occured while deleting: {ex.Message}");
+        }
+    }
 }
 
 
-
-
-
-/* TEST KODE */
-/* ReturnStructure returnStructure = TestJsonStream.ParseJsonStream();
-                UpdateNameStructure nameStructure = new(
-                    returnStructure.CompanyId, returnStructure.Name, returnStructure.PreviousNames.Count == 0 ? null : returnStructure.PreviousNames
-                );
-                nameStructure.InsertIntoDatabase();
-                InsertGenerellInfoStructure infoStructure = new(
-                    returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, returnStructure.Location, returnStructure.PostalAddress, returnStructure.NumberOfEmployees ?? null
-                );
-                infoStructure.InsertToDataBase();
-                foreach (var announcement in returnStructure.Announcements)
-                {
-                    InsertKunngjøringStructure kunngjøringStructure = new(
-                        returnStructure.CompanyId, announcement
-                    );
-                    kunngjøringStructure.InsertToDataBase();
-                }
-                foreach (var account in returnStructure.CompanyAccounts)
-                {
-                    ØkoDataSqlStructure økoData = new(
-                        returnStructure.CompanyId, account
-                    );
-                    økoData.InsertIntoDatabase();
-                }
-                foreach (var person in returnStructure.PersonRoles)
-                {
-                    if (person.TitleCode != "DAGL" && person.TitleCode != "LEDE") continue;
-                    else
-                    {
-                        InsertBedriftLederInfoStructure bedriftLeder = new(
-                            returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, person
-                        );
-                        bedriftLeder.InsertToDataBase();
-                    }
-                }
-                foreach (var shareholder in returnStructure.Shareholders)
-                {
-                    InsertShareholderStructure shareholderStructure = new(
-                        returnStructure.CompanyId, returnStructure.ShareholdersLastUpdatedDate, shareholder
-                    );
-                    shareholderStructure.InsertIntoDatabase();
-                }
-                try
-                {
-                    Database.Query("SELECT update_delta()", reader => { });
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
- */

@@ -1,7 +1,8 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
+using Server.Models;
 
-namespace Server.Models;
+namespace Server.Context;
 
 public partial class BtdbContext : DbContext
 {
@@ -65,6 +66,8 @@ public partial class BtdbContext : DbContext
                 .HasDefaultValueSql("NULL::character varying[]")
                 .HasColumnType("character varying(255)[]")
                 .HasColumnName("navneliste");
+            entity.Property(e => e.Likvidert).HasColumnName("likvidert").HasDefaultValue(false);
+            entity.Property(e => e.KvinneligGrunder).HasColumnName("kvinnelig_grunder").HasDefaultValue(false);
             entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
         });
 
@@ -84,7 +87,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftKunngjøringers)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("bedrift_kunngjøringer_bedrift_id_fkey");
         });
 
@@ -109,7 +112,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftLederOversikts)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("bedrift_leder_oversikt_bedrift_id_fkey");
         });
 
@@ -145,7 +148,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftShareholderInfos)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("bedrift_shareholder_info_bedrift_id_fkey");
         });
 
@@ -176,7 +179,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.GenerellÅrligBedriftInfos)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("generell_årlig_bedrift_info_bedrift_id_fkey");
         });
 
@@ -194,7 +197,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.OversiktBedriftFaseStatuses)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("oversikt_bedrift_fase_lokasjon_pr_år_bedrift_id_fkey");
         });
 
@@ -219,7 +222,7 @@ public partial class BtdbContext : DbContext
 
             entity.HasOne(d => d.Bedrift).WithMany(p => p.ÅrligØkonomiskData)
                 .HasForeignKey(d => d.BedriftId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
+                .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("årlig_økonomisk_data_bedrift_id_fkey");
         });
 
@@ -245,6 +248,7 @@ public partial class BtdbContext : DbContext
                 entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
                 entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
                 entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+                entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
 
             }
         );
@@ -259,6 +263,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
             entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
             entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
         });
         modelBuilder.Entity<DataSortertEtterFase>(entity =>
         {
@@ -271,6 +276,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
             entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
             entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
         });
         modelBuilder.Entity<GjennomsnittVerdier>(entity =>
         {
@@ -282,6 +288,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
             entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
             entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
         });
         modelBuilder.Entity<Årsrapport>(entity =>
         {
@@ -292,6 +299,8 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.AntallSharesVis).HasColumnName("antall_shares_vis");
             entity.Property(e => e.DeltaInskuttEgenkapital).HasColumnName("delta_innskutt_egenkapital");
             entity.Property(e => e.DriftsResultat).HasColumnName("driftsresultat");
+            entity.Property(e => e.LønnTrygdPensjon).HasColumnName("lønn_trygd_pensjon");
+            entity.Property(e => e.SumEgenkapital).HasColumnName("sum_egenkapital");
             entity.Property(e => e.OrdinærtResultat).HasColumnName("ordinært_resultat");
             entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
             entity.Property(e => e.PostAddresse).HasColumnName("post_addresse");
@@ -299,6 +308,8 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.SharesProsent).HasColumnName("shares_prosent");
             entity.Property(e => e.SumDriftsIntekter).HasColumnName("sum_drifts_intekter");
             entity.Property(e => e.SumInskuttEgenkapital).HasColumnName("sum_innskutt_egenkapital");
+            entity.Property(e => e.Målbedrift).HasColumnName("målbedrift");
+            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
         });
 
 

@@ -1,17 +1,22 @@
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Server.Models;
 using MiniExcelLibs;
 using Server.Views;
+using Server.Context;
 using Microsoft.AspNetCore.Http.HttpResults;
 namespace Server.Controllers;
 
 [ApiController]
 [Route("årsrapport")]
-public class GenÅrsRapport : ControllerBase
+public class GenÅrsRapport(BtdbContext context) : ControllerBase
 {
-    private readonly DbContextOptions<BtdbContext> options = new DbContextOptionsBuilder<BtdbContext>().UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").Options;
+    private readonly BtdbContext _context = context;
+    ///<summary>
+    ///Takes in an excel file of orgnumbers and generates reports on each.
+    ///</summary>
+    ///<param name="file">Excel http FileStream</param>
+    ///<returns> Excel filestream with reports, or 404 not found</returns>
     [HttpPost("get")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -26,27 +31,23 @@ public class GenÅrsRapport : ControllerBase
         {
             throw new BadHttpRequestException("Only xslx files are supported currently");
         }
-        List<int> orgNrs = new();
+        List<int> orgNrs = [];
         using (var stream = file.OpenReadStream())
         {
             var rows = await stream.QueryAsync<ExcelOrgNrOnly>();
             orgNrs = rows.Select(row => row.Orgnummer).ToList();
         }
         string now = DateTime.Now.Date.ToShortDateString();
-        Response.ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        Response.Headers.Append("Content-Disposition", $"attachement; filename=\"aarsrapport{now}.xlsx\"");
-        using (var context = new BtdbContext(options))
+        List<Årsrapport> dataList;
+        dataList = _context.Årsrapports.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
+        List<ExcelÅrsrapport> Årsrapportdata = ExcelÅrsrapport.GetExportValues(dataList);
+        if (dataList == null || dataList.Count == 0)
         {
-            var dataList = context.Årsrapports.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
-            if (dataList != null)
-            {
-                List<ExcelÅrsrapport> Årsrapportdata = ExcelÅrsrapport.GetExportValues(dataList);
-                var memStream = new MemoryStream();
-                await memStream.SaveAsAsync(Årsrapportdata);
-                memStream.Seek(0, SeekOrigin.Begin);
-                return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"aarsrapport{now}.xlsx");
-            };
             return TypedResults.NotFound();
         }
+        var memStream = new MemoryStream();
+        await memStream.SaveAsAsync(Årsrapportdata);
+        memStream.Seek(0, SeekOrigin.Begin);
+        return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"aarsrapport{now}.xlsx");
     }
 }

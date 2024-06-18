@@ -13,6 +13,8 @@ public partial class BedriftInfo
     public string? Bransje { get; set; }
 
     public string? Beskrivelse { get; set; }
+    public bool? KvinneligGrunder { get; set; }
+    public bool? Likvidert { get; set; }
 
     public List<string>? Navneliste { get; set; }
 

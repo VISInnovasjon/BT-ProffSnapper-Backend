@@ -6,3 +6,5 @@ helperJSON/
 ProffJsonSchema.json
 ProffReturnExamle.json
 LocalData/
+Server/obj
+Server/bin

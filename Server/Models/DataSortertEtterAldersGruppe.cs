@@ -8,4 +8,5 @@ public class DataSortertEtterAldersGruppe
     public string? KodeBeskrivelse { get; set; }
     public decimal AvgØkoVerdi { get; set; }
     public decimal AvgDelta { get; set; }
+    public decimal AvgAkkumulert { get; set; }
 }

@@ -272,7 +272,7 @@ For å gjennomføre dette trenger vi følgende komponenter:
 | Link           | `<Link/>`         | Håndterer routing internt i siden                          | none                            | Ja, react base component               |
 | Input: radial  | `<Radial/>`       | Radial knapp for veksling mellom funksjonalitet            | none                            | Kanskje                                |
 | Input: Button  | `<Button/>`       | Knapp for generell funksjonalitet.                         | none                            | Kanskje                                |
-| Graf           | `<BarChart/> `    | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
+| Graf           | `<LineChart/> `   | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
 | Tabell         | `<Table/>`        | Tabell for å vise deler av datasett på en strukturert måte | Bygget opp av `<tr>` components | Ja, usikker hvilken som skal bli brukt |
 | AutoComplete   | `<AutoComplete/>` | Komponent som slår sammen dropdown med et søkbart felt.    | Liste eller array av options.   | Ja, hentet fra mui                     |
 
@@ -320,20 +320,25 @@ Vi trenger endepunkt for følgende systemer:
    Dette laget må bruker passe gjennom for å få komme til de neste endepunktene. Her må vi passe på å ungå at en potensiell bruker kan snike seg rundt layeret å få tilgang til de andre lagene uten authorisering.
    dette vil være /, men vil passe deg ned til /:uid, som så vil passe deg ned til hvorenn du skulle ønske. Siden dette er et internt system kan potensielt dette samkjøres med frontend, hvis frontend og backend deler samme routing.
 
-2. Query
-   Her gjør bruker queries til databasen. Her må vi finne beste måten å gjennomføre dette på. Vi har som mål å ta i bruk URL req query systemet til dette. Dette vil være et /GET med queryparams.
+2. query/getall
+   Her aggrigerer databasen sammen gjennomsnittsdata for forskjellige faktorer og leverer en datapakke som frontend bruker i graf.</br> Det blir aggrigert basert på forskjellige views.</br> For å lage en ny aggrigering lager man en ny view i databasen, og sender den sammen med resten ved å adde den i AddGroupedData() Method i FetchDataController.
 
-3. Update
-   Dette vil være en /POST som skal extracte ut data fra et excel ark, og poste data fra excel arket med rett struktur til databasen.
+3. updatedb
+   Her har vi to endepunkter:
 
-4. ÅrsRapport
-   Dette endepunktet vil levere ut en årsrapport fil for ønskede organisasjonsnr.
+   - newdata: Dette endepunktet tar inn et excel ark med data fra VIS, som blir lagret i databasen.</br> Hvis den ser at den allerede har grunndata fra organisasjonsnummerene, prøver den å lagre data om årlig fase for hver bedrift i steden.</br> Hvis den ser at nye bedrifter blir lagt inn, henter den også data om disse fra PROFF api.</br> De andre blir oppdatert gjennom CRON jobb.
+   - deletedata: Dette endepunktet tar inn et excel ark med organisasjonsnummere under en kollonne som heter Orgnummer,</br> og prøver å slette all data om organisasjonene fra databasen basert på disse.
+
+4. ÅrsRapport/get
+   Dette endepunktet tar inn en excel fil med organisasjonsnummer, under en kollone Orgnummer.</br> Og leverer en ferdig utfylt årsrapport for disse bedriftene så lenge dataen eksisterer.</br> Tomme celler er data som ikke finnes enda.
 
 <br/>
 
 ### Micro Services
 
-En Cronjob skal være kjørende på serveren som en gang i året gjør calls til /Changes endepunktet til PROFF for å finne ny data for alle organisasjonsnr i databasen. Den vil så hente data for hvert ORGNR med oppdatert data.
+En Cronjob skal være kjørende på serveren som en gang i året gjør calls til /Changes endepunktet til PROFF for å finne ny data for alle organisasjonsnr i databasen. Den vil så hente data for hvert ORGNR med oppdatert data.<br/>
+Den henter alle organisasjonsnr fra databasen som fremdeles er aktiv, og skjekker de opp mot Proff Change Endpoint.<br/>
+Er det skjedd endringer henter den nye verdier for gjeldene bedriftene. <br/>
 
 <br/>
 
@@ -434,21 +439,22 @@ For å simplifisere queries er det laget følgende views på databasen:<br>
 
 1. Årsrapport.
    Denne viewen er laget for å hjelpe med generering av årsrapporter.<br>
+
 ```sql
- SELECT b.orgnummer,
- g.antall_ansatte,
- "øk_data".driftsresultat,
- "øk_data".sum_drifts_intekter,
- "øk_data".sum_innskutt_egenkapital,
- "øk_data".delta_innskutt_egenkapital,
- "øk_data"."ordinært_resultat",
- g.post_addresse,
- g.post_kode,
- shareholder_data.antal_shares AS antall_shares_vis,
- shareholder_data.sharetype AS shares_prosent
-FROM bedrift_info b
-  JOIN "generell_årlig_bedrift_info" g ON b.bedrift_id = g.bedrift_id AND g."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)
-  LEFT JOIN LATERAL ( SELECT max(
+   SELECT b.orgnummer,
+   g.antall_ansatte,
+   "øk_data".driftsresultat,
+   "øk_data".sum_drifts_intekter,
+   "øk_data".sum_innskutt_egenkapital,
+   "øk_data".delta_innskutt_egenkapital,
+   "øk_data"."ordinært_resultat",
+   g.post_addresse,
+   g.post_kode,
+   shareholder_data.antal_shares AS antall_shares_vis,
+   shareholder_data.sharetype AS shares_prosent
+   FROM bedrift_info b
+   JOIN "generell_årlig_bedrift_info" g ON b.bedrift_id = g.bedrift_id AND g."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)
+   LEFT JOIN LATERAL ( SELECT max(
              CASE
                  WHEN "ø"."øko_kode"::text = 'DR'::text THEN "ø"."øko_verdi"
                  ELSE NULL::numeric
@@ -475,14 +481,16 @@ FROM bedrift_info b
              END) AS "ordinært_resultat"
         FROM "årlig_økonomisk_data" "ø"
        WHERE "ø".bedrift_id = b.bedrift_id AND "ø"."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)) "øk_data" ON true
-  LEFT JOIN LATERAL ( SELECT s.antal_shares,
+   LEFT JOIN LATERAL ( SELECT s.antal_shares,
          s.sharetype
         FROM bedrift_shareholder_info s
        WHERE s.bedrift_id = b.bedrift_id AND s."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1) AND s.shareholder_bedrift_id::text = '987753153'::text) shareholder_data ON true;
-```
    Denne joiner sammen alle verdier ønsket i en årsrapport, og kan queries etter bestemte organisasjoner. <br>
+```
+
 2. Gjennomsnittsverdier:
-   ```sql
+
+```sql
     SELECT "ø"."rapportår",
      "ø"."øko_kode",
      l.kode_beskrivelse,
@@ -493,7 +501,7 @@ FROM bedrift_info b
       JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
    GROUP BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
    ORDER BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
-```
+
 Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br>
 3. Data_sortert_etter_fase:
 ```sql
@@ -518,7 +526,7 @@ SELECT b.bransje,
 "ø"."rapportår",
 "ø"."øko_kode",
 l.kode_beskrivelse,
-avg("ø"."øko_verdi") AS "avg*øko*verdi",
+avg("ø"."øko_verdi") AS "avg_øko_verdi",
 avg("ø".delta) AS avg_delta
 FROM bedrift_info b
 JOIN "årlig*økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
@@ -528,7 +536,8 @@ ORDER BY b.bransje, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
 
 ```
 
-Leverer ut gjennomsnittsdata, sortert etter bransje. <br> 5. Data*sortert_etter_aldersgruppe:
+Leverer ut gjennomsnittsdata, sortert etter bransje. <br> 5. Data\*sortert_etter_aldersgruppe:
+
 ```sql
 WITH lederalder AS (
 SELECT b_1.bedrift_id,
@@ -547,16 +556,13 @@ JOIN bedrift_leder_oversikt a ON b_1.bedrift_id = a.bedrift_id
 ), aldersgrupper AS (
 SELECT lederalder.bedrift_id,
 CASE
-WHEN lederalder.alder >= 10::double precision AND lederalder.alder <= 19::double precision THEN '10-20'::text
-WHEN lederalder.alder >= 20::double precision AND lederalder.alder <= 29::double precision THEN '20-29'::text
+WHEN lederalder.alder >= 18::double precision AND lederalder.alder <= 29::double precision THEN '18-29'::text
 WHEN lederalder.alder >= 30::double precision AND lederalder.alder <= 39::double precision THEN '30-39'::text
 WHEN lederalder.alder >= 40::double precision AND lederalder.alder <= 49::double precision THEN '40-49'::text
 WHEN lederalder.alder >= 50::double precision AND lederalder.alder <= 59::double precision THEN '50-59'::text
 WHEN lederalder.alder >= 60::double precision AND lederalder.alder <= 69::double precision THEN '60-69'::text
 WHEN lederalder.alder >= 70::double precision AND lederalder.alder <= 79::double precision THEN '70-79'::text
-WHEN lederalder.alder >= 80::double precision AND lederalder.alder <= 89::double precision THEN '80-89'::text
-WHEN lederalder.alder >= 90::double precision AND lederalder.alder <= 99::double precision THEN '90-99'::text
-ELSE '100+'::text
+ELSE '80+'::text
 END AS alders_gruppe
 FROM lederalder
 )
