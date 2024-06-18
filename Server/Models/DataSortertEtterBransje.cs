@@ -9,4 +9,5 @@ public class DataSortertEtterBransje
     public decimal AvgØkoVerdi { get; set; }
     public decimal AvgDelta { get; set; }
     public string? ØkoKode { get; set; }
+    public decimal AvgAkkumulert { get; set; }
 }

@@ -248,6 +248,7 @@ public partial class BtdbContext : DbContext
                 entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
                 entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
                 entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+                entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
 
             }
         );
@@ -262,6 +263,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
             entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
             entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
         });
         modelBuilder.Entity<DataSortertEtterFase>(entity =>
         {
@@ -274,6 +276,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
             entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
             entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
         });
         modelBuilder.Entity<GjennomsnittVerdier>(entity =>
         {
@@ -285,6 +288,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
             entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
             entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
+            entity.Property(e=>e.AvgAkkumulert).HasColumnName("avg_akkumulert");
         });
         modelBuilder.Entity<Årsrapport>(entity =>
         {
