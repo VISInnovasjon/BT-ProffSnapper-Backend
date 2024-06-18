@@ -12,7 +12,11 @@ namespace Server.Controllers;
 public class GenÅrsRapport(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
-
+    ///<summary>
+    ///Takes in an excel file of orgnumbers and generates reports on each.
+    ///</summary>
+    ///<param name="file">Excel http FileStream</param>
+    ///<returns> Excel filestream with reports, or 404 not found</returns>
     [HttpPost("get")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

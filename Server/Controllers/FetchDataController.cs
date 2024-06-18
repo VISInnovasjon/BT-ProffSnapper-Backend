@@ -13,7 +13,10 @@ namespace Server.Controllers;
 public class QueryHandler(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
-
+    ///<summary>
+    ///Accumulates all grouped data used by graph from database.
+    ///</summary>
+    ///<returns>Json object of all accumulated data grouped by keys</returns>
     [HttpGet("getall")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
