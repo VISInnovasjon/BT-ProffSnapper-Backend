@@ -215,6 +215,9 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Delta)
                 .HasDefaultValueSql("(0)::numeric")
                 .HasColumnName("delta");
+            entity.Property(e => e.Akkumulert)
+                .HasDefaultValueSql("(0)::numeric")
+                .HasColumnName("akkumulert");
             entity.Property(e => e.ØkoVerdi)
                 .HasPrecision(16, 4)
                 .HasDefaultValueSql("NULL::numeric")
