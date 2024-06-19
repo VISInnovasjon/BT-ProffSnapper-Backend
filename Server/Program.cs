@@ -1,7 +1,7 @@
 using dotenv.net;
 using Microsoft.EntityFrameworkCore;
 using Server.Context;
-using Server.Util;
+using Server.BackgroundServices;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
