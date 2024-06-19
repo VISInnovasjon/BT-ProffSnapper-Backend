@@ -1,6 +1,6 @@
 /* WIP */
 
-namespace Server.Util;
+namespace Server.BackgroundServices;
 using Server.Context;
 using Server.Views;
 using Microsoft.EntityFrameworkCore;
