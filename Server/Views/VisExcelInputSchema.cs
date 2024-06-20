@@ -75,16 +75,16 @@ public class CompactedVisBedriftData
         {
             try
             {
-                var companyData = new BedriftInfo
+                var companyData = new CompanyInfo
                 {
-                    Orgnummer = company.Orgnummer,
-                    Bransje = company.Bransje,
-                    KvinneligGrunder = company.KvinneligGrunder == 1
+                    Orgnumber = company.Orgnummer,
+                    Branch = company.Bransje,
+                    FemaleEntrepreneur = company.KvinneligGrunder == 1
                 };
 
-                context.BedriftInfos.Add(companyData);
+                context.CompanyInfos.Add(companyData);
                 context.SaveChanges();
-                var bedriftId = companyData.BedriftId;
+                var companyId = companyData.CompanyId;
                 /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
                 var årFaseOversikt = new Dictionary<int, string>();
                 for (int i = 0; i < company.RapportÅr.Count; i++)
@@ -93,13 +93,13 @@ public class CompactedVisBedriftData
                 }
                 foreach (var pair in årFaseOversikt)
                 {
-                    var faseData = new OversiktBedriftFaseStatus
+                    var faseData = new CompanyPhaseStatusOverview
                     {
-                        Fase = pair.Value,
-                        Rapportår = pair.Key,
-                        BedriftId = bedriftId
+                        Phase = pair.Value,
+                        Year = pair.Key,
+                        CompanyId = companyId
                     };
-                    context.OversiktBedriftFaseStatuses.Add(faseData);
+                    context.CompanyPhaseStatusOverviews.Add(faseData);
                 }
 
             }
@@ -114,7 +114,7 @@ public class CompactedVisBedriftData
     {
         foreach (var company in data)
         {
-            var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == company.Orgnummer).BedriftId;
+            var companyId = context.CompanyInfos.Single(b => b.Orgnumber == company.Orgnummer).CompanyId;
             /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
             var årFaseOversikt = new Dictionary<int, string>();
             for (int i = 0; i < company.RapportÅr.Count; i++)
@@ -123,13 +123,13 @@ public class CompactedVisBedriftData
             }
             foreach (var pair in årFaseOversikt)
             {
-                var faseData = new OversiktBedriftFaseStatus
+                var faseData = new CompanyPhaseStatusOverview
                 {
-                    Fase = pair.Value,
-                    Rapportår = pair.Key,
-                    BedriftId = bedriftId
+                    Phase = pair.Value,
+                    Year = pair.Key,
+                    CompanyId = companyId
                 };
-                if (!context.OversiktBedriftFaseStatuses.Any(b => b.Rapportår == faseData.Rapportår && b.BedriftId == faseData.BedriftId && b.Fase == faseData.Fase)) context.OversiktBedriftFaseStatuses.Add(faseData);
+                if (!context.CompanyPhaseStatusOverviews.Any(b => b.Year == faseData.Year && b.CompanyId == faseData.CompanyId && b.Phase == faseData.Phase)) context.CompanyPhaseStatusOverviews.Add(faseData);
             }
         }
     }

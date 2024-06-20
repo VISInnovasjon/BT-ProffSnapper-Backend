@@ -10,7 +10,7 @@ namespace Server.Controllers;
 
 [ApiController]
 [Route("/updatedb")]
-public class ExcelTestController(BtdbContext context) : ControllerBase
+public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
     private readonly JsonSerializerOptions jsonOptions = new()
@@ -40,7 +40,7 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
         {
             return BadRequest("Invalid Fileformat. Please upload an Excel file");
         }
-        List<BedriftInfo> refreshList = _context.BedriftInfos.AsNoTracking().ToList();
+        List<CompanyInfo> refreshList = _context.CompanyInfos.AsNoTracking().ToList();
         foreach (var item in refreshList)
         {
             _context.Entry(item).Reload();
@@ -65,7 +65,7 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
 
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
 
-                List<int> DbOrgNrArrays = _context.BedriftInfos.Select(b => b.Orgnummer).ToList();
+                List<int> DbOrgNrArrays = _context.CompanyInfos.Select(b => b.Orgnumber).ToList();
 
                 List<int> NonDuplicateOrgNrs = orgNrArray.Except(DbOrgNrArrays).ToList();
 
@@ -161,12 +161,12 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
                 return BadRequest($"Error reading the file: {ex.Message}");
             }
         }
-        var entriesToDelete = _context.BedriftInfos.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
+        var entriesToDelete = _context.CompanyInfos.Where(b => orgNrs.Contains(b.Orgnumber)).ToList();
         if (entriesToDelete.Count == 0)
         {
             return NotFound("Could not find any Organisation Numbers corresponding to the file.");
         }
-        _context.BedriftInfos.RemoveRange(entriesToDelete);
+        _context.CompanyInfos.RemoveRange(entriesToDelete);
         try
         {
             _context.SaveChanges();

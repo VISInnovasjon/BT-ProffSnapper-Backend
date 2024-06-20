@@ -24,14 +24,14 @@ public class TableDataController : ControllerBase
     public async Task<IActionResult> SendTableData([FromQuery] QueryParams query)
     {
         if (string.IsNullOrEmpty(query.EcoCode)) return BadRequest("Missing EcoCode");
-        List<Models.ÅrligØkonomiskDatum>? topPerformers = null;
+        List<Models.CompanyEconomicDataPrYear>? topPerformers = null;
         try
         {
-            topPerformers = await _context.ÅrligØkonomiskData
-                                    .Where(p => p.ØkoKode == query.EcoCode && p.Rapportår == DateTime.Now.Year - 2)
-                                    .OrderByDescending(p => p.Akkumulert)
+            topPerformers = await _context.CompanyEconomicDataPrYears
+                                    .Where(p => p.EcoCode == query.EcoCode && p.Year == DateTime.Now.Year - 2)
+                                    .OrderByDescending(p => p.Accumulated)
                                     .Take(20)
-                                    .Include(p => p.Bedrift)
+                                    .Include(p => p.Company)
                                     .ToListAsync();
             if (topPerformers == null) return NotFound();
         }
@@ -45,14 +45,14 @@ public class TableDataController : ControllerBase
         {
             dataList.Add(new()
             {
-                Name = performer.Bedrift.Målbedrift,
-                OrgNumber = performer.Bedrift.Orgnummer,
-                Branch = performer.Bedrift.Bransje,
-                Value = performer.ØkoVerdi,
-                Delta = performer.Delta,
-                Accumulated = performer.Akkumulert,
-                ValidYear = performer.Rapportår,
-                EcoCode = performer.ØkoKode
+                Name = performer.Company.CompanyName,
+                OrgNumber = performer.Company.Orgnumber,
+                Branch = performer.Company.Branch,
+                Value = performer.EcoValue / 1000,
+                Delta = performer.Delta / 1000,
+                Accumulated = performer.Accumulated / 1000,
+                ValidYear = performer.Year,
+                EcoCode = performer.EcoCode
             });
         }
         try

@@ -1,5 +1,7 @@
 namespace Server.Models;
 
+
+/* This is left in norwegian for now since it's so tied to the Excel spreadsheet. Keeps the names consistant across code. */
 public class Årsrapport
 {
     public int Orgnummer { get; set; }
