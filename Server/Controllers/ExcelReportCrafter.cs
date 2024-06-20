@@ -17,7 +17,7 @@ public class GenÅrsRapport(BtdbContext context) : ControllerBase
     ///</summary>
     ///<param name="file">Excel http FileStream</param>
     ///<returns> Excel filestream with reports, or 404 not found</returns>
-    [HttpPost("get")]
+    [HttpPost]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<Results<FileStreamHttpResult, NotFound>> ExportExcel([FromForm] IFormFile file)
