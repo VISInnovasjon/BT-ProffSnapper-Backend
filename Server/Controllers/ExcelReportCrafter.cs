@@ -10,7 +10,7 @@ namespace Server.Controllers;
 
 [ApiController]
 [Route("yearlyreport")]
-public class GenÅrsRapport(BtdbContext context) : ControllerBase
+public class GenYearlyReport(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
     ///<summary>
