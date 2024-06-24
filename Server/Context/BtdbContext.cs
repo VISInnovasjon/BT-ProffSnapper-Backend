@@ -34,7 +34,6 @@ public partial class BtdbContext : DbContext
     public virtual DbSet<DataSortedByCompanyBranch> DataSortedByCompanyBranches { get; set; }
     public virtual DbSet<DataSortedByPhase> DataSortedByPhases { get; set; }
     public virtual DbSet<AverageValues> AverageValues { get; set; }
-    public virtual DbSet<Årsrapport> Årsrapports { get; set; }
     public virtual DbSet<FullView> FullViews { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -295,27 +294,6 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
             entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
-        });
-        modelBuilder.Entity<Årsrapport>(entity =>
-        {
-            entity
-                .ToView("årsrapport")
-                .HasNoKey();
-            entity.Property(e => e.AntallAnsatte).HasColumnName("antall_ansatte");
-            entity.Property(e => e.AntallSharesVis).HasColumnName("antall_shares_vis");
-            entity.Property(e => e.DeltaInskuttEgenkapital).HasColumnName("delta_innskutt_egenkapital");
-            entity.Property(e => e.DriftsResultat).HasColumnName("driftsresultat");
-            entity.Property(e => e.LønnTrygdPensjon).HasColumnName("lønn_trygd_pensjon");
-            entity.Property(e => e.SumEgenkapital).HasColumnName("sum_egenkapital");
-            entity.Property(e => e.OrdinærtResultat).HasColumnName("ordinært_resultat");
-            entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
-            entity.Property(e => e.PostAddresse).HasColumnName("post_addresse");
-            entity.Property(e => e.PostKode).HasColumnName("post_kode");
-            entity.Property(e => e.SharesProsent).HasColumnName("shares_prosent");
-            entity.Property(e => e.SumDriftsIntekter).HasColumnName("sum_drifts_intekter");
-            entity.Property(e => e.SumInskuttEgenkapital).HasColumnName("sum_innskutt_egenkapital");
-            entity.Property(e => e.Målbedrift).HasColumnName("målbedrift");
-            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
         });
         modelBuilder.Entity<FullView>(entity =>
         {
