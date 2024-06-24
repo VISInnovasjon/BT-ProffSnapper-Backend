@@ -9,4 +9,5 @@ public class DataSortedByLeaderAge
     public decimal AvgEcoValue { get; set; }
     public decimal AvgDelta { get; set; }
     public decimal TotalAccumulated { get; set; }
+    public int UniqueCompanyCount { get; set; }
 }

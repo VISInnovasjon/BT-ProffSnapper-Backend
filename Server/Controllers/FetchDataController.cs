@@ -58,7 +58,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
                 values = g.ToDictionary(
                     b => b.EcoCode ?? "Code Missing",
                     b => new ExtractedEcoCodeValues(
-                        b.AvgEcoValue, b.AvgDelta, b.TotalAccumulated, b.CodeDescription
+                        b.AvgEcoValue, b.AvgDelta, b.TotalAccumulated, b.UniqueCompanyCount, b.CodeDescription
                     )
                 )
             }).ToList();
@@ -90,6 +90,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
                             (decimal)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "AvgEcoValue"),
                             (decimal)GetPropertyValue(b, "AvgDelta"),
                             (decimal)GetPropertyValue(b, "TotalAccumulated"),
+                            (int)GetPropertyValue(b, "UniqueCompanyCount"),
                             (string)GetPropertyValue(b, "CodeDescription")
                         )
                     )

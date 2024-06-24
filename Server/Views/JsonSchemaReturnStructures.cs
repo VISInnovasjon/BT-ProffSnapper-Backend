@@ -1,4 +1,6 @@
 
+using System.Security.Cryptography.X509Certificates;
+
 namespace Server.Views;
 
 public class Values
@@ -22,15 +24,17 @@ public class ExtractedEcoCodeValues
     public decimal Value { get; set; }
     public decimal Delta { get; set; }
     public decimal Accumulated { get; set; }
+    public int UniqueCompanyCount { get; set; }
     public string? Description { get; set; }
     public ExtractedEcoCodeValues(
-        decimal value, decimal delta, decimal acc, string? desc
+        decimal value, decimal delta, decimal acc, int count, string? desc
     )
     {
         Value = value;
         Delta = delta;
         Accumulated = acc;
         Description = desc;
+        UniqueCompanyCount = count;
     }
 }
 public class YearDataGroup

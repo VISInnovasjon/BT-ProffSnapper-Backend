@@ -10,4 +10,5 @@ public class DataSortedByCompanyBranch
     public decimal AvgDelta { get; set; }
     public string? EcoCode { get; set; }
     public decimal TotalAccumulated { get; set; }
+    public int UniqueCompanyCount { get; set; }
 }

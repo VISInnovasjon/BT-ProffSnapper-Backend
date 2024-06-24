@@ -5,10 +5,11 @@ using MiniExcelLibs;
 using Server.Views;
 using Server.Context;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("årsrapport")]
+[Route("yearlyreport")]
 public class GenÅrsRapport(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
@@ -37,17 +38,42 @@ public class GenÅrsRapport(BtdbContext context) : ControllerBase
             var rows = await stream.QueryAsync<ExcelOrgNrOnly>();
             orgNrs = rows.Select(row => row.Orgnummer).ToList();
         }
-        string now = DateTime.Now.Date.ToShortDateString();
-        List<Årsrapport> dataList;
-        dataList = _context.Årsrapports.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
-        List<ExcelÅrsrapport> Årsrapportdata = ExcelÅrsrapport.GetExportValues(dataList);
-        if (dataList == null || dataList.Count == 0)
+        var now = DateOnly.FromDateTime(DateTime.Now);
+        var companyIds = _context.CompanyInfos.Where(p => orgNrs.Contains(p.Orgnumber)).Select(p => p.CompanyId).ToList();
+        var viewList = _context.FullViews.Where(p => p.Year == DateTime.Now.Year - 1 && orgNrs.Contains(p.Orgnumber)).ToList();
+        var announcementList = await _context.CompanyAnnouncements
+                                        .Where(p => p.Date.HasValue && p.Date.Value.Year == DateTime.Now.Year - 1 && companyIds.Contains(p.CompanyId))
+                                        .Include(p => p.Company)
+                                        .ToListAsync();
+        List<AnnouncementTable> tableList = [];
+        foreach (var announcement in announcementList)
+        {
+            tableList.Add(
+                new()
+                {
+                    Orgnumber = announcement.Company.Orgnumber,
+                    Name = announcement.Company.CompanyName,
+                    Id = announcement.AnnouncementId,
+                    Type = announcement.AnnouncementType,
+                    Description = announcement.AnnouncementText,
+                    Date = announcement.Date
+                }
+            );
+        }
+        var ExcelSheets = new Dictionary<string, object>()
+        {
+            ["Annonseringer"] = tableList,
+            ["Bedrift Info"] = viewList
+        };
+        if (viewList == null || viewList.Count == 0 || tableList == null || tableList.Count == 0)
         {
             return TypedResults.NotFound();
         }
         var memStream = new MemoryStream();
-        await memStream.SaveAsAsync(Årsrapportdata);
+        Console.WriteLine("saving to stream");
+        await memStream.SaveAsAsync(ExcelSheets);
+        Console.WriteLine("save completed");
         memStream.Seek(0, SeekOrigin.Begin);
-        return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"aarsrapport{now}.xlsx");
+        return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"YearlyReport{now}.xlsx");
     }
 }

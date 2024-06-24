@@ -20,11 +20,11 @@ public class FullView
     [ExcelColumn(Name = "Kode beskrivelse", Index = 7, Width = 20)]
     public string? CodeDescription { get; set; }
     [ExcelColumn(Name = "Verdi", Index = 8, Width = 15)]
-    public decimal EcoValue { get; set; }
+    public decimal? EcoValue { get; set; }
     [ExcelColumn(Name = "Delta", Index = 9, Width = 15)]
-    public decimal Delta { get; set; }
+    public decimal? Delta { get; set; }
     [ExcelColumn(Name = "Akkumulert", Index = 10, Width = 15)]
-    public decimal Accumulated { get; set; }
+    public decimal? Accumulated { get; set; }
     [ExcelColumn(Name = "Antall Ansatte", Index = 11, Width = 15)]
     public int NumberOfEmployees { get; set; }
     [ExcelColumn(Name = "Landsdel", Index = 12, Width = 20)]
