@@ -1,5 +1,6 @@
 
 
+using System.Numerics;
 using MiniExcelLibs.Attributes;
 using Server.Models;
 namespace Server.Views;
@@ -100,4 +101,19 @@ public class UpdateDbTemplate
     public string? Bransje { get; set; }
     [ExcelColumn(Name = "KvinneligGrunder", Index = 4, Width = 25)]
     public int KvinneligGrunder { get; set; }
+}
+public class AnnouncementTable
+{
+    [ExcelColumn(Name = "Orgnummer", Index = 0, Width = 15)]
+    public int Orgnumber { get; set; }
+    [ExcelColumn(Name = "Målbedrift", Index = 1, Width = 25)]
+    public string? Name { get; set; }
+    [ExcelColumn(Name = "Id", Index = 2, Width = 15)]
+    public BigInteger Id { get; set; }
+    [ExcelColumn(Name = "Dato", Index = 3, Width = 20)]
+    public DateOnly? Date { get; set; }
+    [ExcelColumn(Name = "Beskrivelse", Index = 4, Width = 20)]
+    public string? Description { get; set; }
+    [ExcelColumn(Name = "type", Index = 5, Width = 25)]
+    public string? Type { get; set; }
 }

@@ -8,4 +8,5 @@ public class AverageValues
     public decimal AvgEcoValue { get; set; }
     public decimal AvgDelta { get; set; }
     public decimal TotalAccumulated { get; set; }
+    public int UniqueCompanyCount { get; set; }
 }

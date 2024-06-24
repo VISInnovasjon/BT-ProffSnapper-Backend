@@ -251,6 +251,7 @@ public partial class BtdbContext : DbContext
                 entity.Property(e => e.Year).HasColumnName("year");
                 entity.Property(e => e.EcoCode).HasColumnName("eco_code");
                 entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+                entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
 
             }
         );
@@ -266,6 +267,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
         });
         modelBuilder.Entity<DataSortedByPhase>(entity =>
         {
@@ -279,6 +281,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
         });
         modelBuilder.Entity<AverageValues>(entity =>
         {
@@ -291,6 +294,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
         });
         modelBuilder.Entity<Årsrapport>(entity =>
         {
