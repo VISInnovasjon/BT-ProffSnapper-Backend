@@ -60,10 +60,28 @@ public class GenYearlyReport(BtdbContext context) : ControllerBase
                 }
             );
         }
+        var shareholderList = await _context.CompanyShareholderInfos.Where(p => p.Year == DateTime.Now.Year - 1 && companyIds.Contains(p.CompanyId) && p.ShareholdeCompanyId == "987753153").Include(p => p.Company).ToListAsync();
+        List<ShareHolderTable> shareTable = [];
+        foreach (var shareholder in shareholderList)
+        {
+            shareTable.Add(
+                new()
+                {
+                    Orgnumber = shareholder.Company.Orgnumber,
+                    CompanyName = shareholder.Company.CompanyName,
+                    Year = shareholder.Year,
+                    ShareholderCompanyId = shareholder.ShareholdeCompanyId,
+                    ShareholderName = shareholder.Name,
+                    NumberOfShares = shareholder.NumberOfShares,
+                    PercentageShares = shareholder.PercentageShares
+                }
+            );
+        }
         var ExcelSheets = new Dictionary<string, object>()
         {
             ["Annonseringer"] = tableList,
-            ["Bedrift Info"] = viewList
+            ["Bedrift Info"] = viewList,
+            ["Shareholder Info"] = shareTable
         };
         if (viewList == null || viewList.Count == 0 || tableList == null || tableList.Count == 0)
         {

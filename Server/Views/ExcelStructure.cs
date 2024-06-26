@@ -56,3 +56,20 @@ public class AnnouncementTable
     [ExcelColumn(Name = "type", Index = 5, Width = 25)]
     public string? Type { get; set; }
 }
+public class ShareHolderTable
+{
+    [ExcelColumn(Name = "Orgnummer", Index = 0, Width = 15)]
+    public int Orgnumber { get; set; }
+    [ExcelColumn(Name = "Målbedrift", Index = 1, Width = 25)]
+    public string? CompanyName { get; set; }
+    [ExcelColumn(Name = "År", Index = 2, Width = 15)]
+    public int Year { get; set; }
+    [ExcelColumn(Name = "Shareholder Navn", Index = 3, Width = 25)]
+    public string? ShareholderName { get; set; }
+    [ExcelColumn(Name = "Shareholder orgnummer", Index = 4, Width = 15)]
+    public string? ShareholderCompanyId { get; set; }
+    [ExcelColumn(Name = "Antall Shares", Index = 5, Width = 25)]
+    public decimal? NumberOfShares { get; set; }
+    [ExcelColumn(Name = "Antall Shares prosent", Index = 6, Width = 15)]
+    public string? PercentageShares { get; set; }
+}
