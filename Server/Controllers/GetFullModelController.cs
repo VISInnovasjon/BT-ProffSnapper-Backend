@@ -43,10 +43,28 @@ public class GetFullModelExcel : ControllerBase
                     }
                 );
             }
+            var shareholderList = await _context.CompanyShareholderInfos.Include(p => p.Company).ToListAsync();
+            List<ShareHolderTable> shareTable = [];
+            foreach (var shareholder in shareholderList)
+            {
+                shareTable.Add(
+                    new()
+                    {
+                        Orgnumber = shareholder.Company.Orgnumber,
+                        CompanyName = shareholder.Company.CompanyName,
+                        Year = shareholder.Year,
+                        ShareholderCompanyId = shareholder.ShareholdeCompanyId,
+                        ShareholderName = shareholder.Name,
+                        NumberOfShares = shareholder.NumberOfShares,
+                        PercentageShares = shareholder.PercentageShares
+                    }
+                );
+            }
             var ExcelSheets = new Dictionary<string, object>()
             {
                 ["Annonseringer"] = tableList,
-                ["Bedrift Info"] = viewList
+                ["Bedrift Info"] = viewList,
+                ["Shareholder Info"] = shareTable
             };
             if (viewList == null || viewList.Count == 0)
             {
