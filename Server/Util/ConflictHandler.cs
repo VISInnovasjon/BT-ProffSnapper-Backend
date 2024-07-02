@@ -6,6 +6,7 @@ public class ConflictHandler
 {
     /// <summary>
     /// Creates a lamdafunction to find and update values in a potential duplicate tracked by EF.
+    /// This spesifically only works when checking towards the Database, not on EF itself.
     /// </summary>
     ///<param name="context">
     ///Database Context
@@ -22,10 +23,13 @@ public class ConflictHandler
     ///<exception cref="NullReferenceException">
     ///If it fails to create a a Lamda predicate based on the primary keys in question on class T
     ///</exception>
-    public static async Task HandleConflicts<T>(BtdbContext context, T entity, List<string>? primaryKeys = null, List<string>? equalityKeys = null) where T : class
+    public static async Task HandleConflicts<T>(BtdbContext context, T entity, bool? detachOnly = false) where T : class
     {
         context.Entry(entity).State = EntityState.Detached;
-        if (equalityKeys == null || equalityKeys.Count == 0 || primaryKeys == null) return;
+        if (detachOnly == true) return;
+        var entityType = context.Model.FindEntityType(typeof(T)) ?? throw new NullReferenceException($"Could not find an entity of type {entity}");
+        var primaryKeys = entityType.FindPrimaryKey().Properties.Select(p => p.Name).ToList() ?? throw new NullReferenceException($"Could not find the primary keys of type {entity}");
+        var equalityKeys = entityType.GetProperties().Where(p => !primaryKeys.Contains(p.Name)).Select(p => p.Name).ToList();
         var parameter = Expression.Parameter(typeof(T), "x");
         Expression? predicate = null;
         foreach (var key in primaryKeys)
@@ -50,7 +54,7 @@ public class ConflictHandler
             }
             catch (DbUpdateException ex)
             {
-                await HandleConflicts(context, entity);
+                await HandleConflicts(context, entity, true);
                 throw new Exception($"Failed to update reference, detatching entity: {ex.Message}");
             }
         }
@@ -83,6 +87,13 @@ public class ConflictHandler
             throw new Exception($"Failed to update reference: {ex.Message}");
         }
     }
+    /// <summary>
+    /// This function makes sure the previous list insert doesn't cause conflicts when trying to insert a handled entity. 
+    /// Since all entities in the failed list insert also gets handled by this function it makes sure each situation is handled in order and is added one at a time. 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="context"></param>
+    /// <param name="entity"></param>
     private static void DetachUnwantedEntities<T>(BtdbContext context, T entity) where T : class
     {
         var entries = context.ChangeTracker.Entries().Where(e => e.Entity != entity && e.State != EntityState.Detached).ToList();
