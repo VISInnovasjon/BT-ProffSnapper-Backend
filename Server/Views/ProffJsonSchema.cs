@@ -101,7 +101,7 @@ public class ReturnStructure
         catch (DbUpdateException ex)
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            await ConflictHandler.HandleConflicts(context, genInfo, ["BedriftId", "Rapportår"], ["AntallAnsatte", "Fylke", "Kommune", "Landsdel", "PostAddresse", "PostKode"]);
+            await ConflictHandler.HandleConflicts(context, genInfo);
         }
         List<CompanyAnnouncement> annList = [];
         foreach (var announcement in Announcements)
@@ -119,9 +119,15 @@ public class ReturnStructure
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             foreach (var item in annList)
-            {
-                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "KunngjøringId"], ["Dato", "Kunngjøringstekst", "Kunngjøringstype"]);
-            }
+                try
+                {
+                    await ConflictHandler.HandleConflicts(context, item);
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine(innerEx.Message);
+                    continue;
+                }
         }
         foreach (var account in CompanyAccounts)
         {
@@ -137,9 +143,15 @@ public class ReturnStructure
             {
                 Console.WriteLine($"DbUpdateException occured: {ex.Message}");
                 foreach (var item in ecoList)
-                {
-                    await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "ØkoKode"], ["ØkoVerdi"]);
-                }
+                    try
+                    {
+                        await ConflictHandler.HandleConflicts(context, item);
+                    }
+                    catch (Exception innerEx)
+                    {
+                        Console.WriteLine(innerEx.Message);
+                        continue;
+                    }
             }
         }
         List<CompanyLeaderOverview> leaderList = [];
@@ -167,9 +179,15 @@ public class ReturnStructure
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             foreach (var item in leaderList)
-            {
-                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Tittelkode"], ["Navn", "Tittel", "Fødselsdag"]);
-            }
+                try
+                {
+                    await ConflictHandler.HandleConflicts(context, item);
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine(innerEx.Message);
+                    continue;
+                }
         }
         List<CompanyShareholderInfo> shareList = [];
         if (Shareholders != null) foreach (var shareholder in Shareholders)
@@ -188,7 +206,15 @@ public class ReturnStructure
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             foreach (var item in shareList)
             {
-                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Navn"], ["AntalShares", "ShareholderBedriftId", "ShareholderFornavn", "ShareholderEtternavn", "Sharetype"]);
+                try
+                {
+                    await ConflictHandler.HandleConflicts(context, item);
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine(innerEx.Message);
+                    continue;
+                }
             }
         }
     }

@@ -16,10 +16,10 @@ public class RawVisBedriftData
         var rows = await stream.QueryAsync<RawVisBedriftData>(sheetName: excelSheetName);
 
         var ensureOrgNr = rows.Where(row => row.Orgnummer != 0).ToList();
-        List<int> WrongOrgNr = new() { };
+        List<int> WrongOrgNr = [];
         foreach (var org in ensureOrgNr)
         {
-            if (org.Orgnummer.ToString().Length < 9) WrongOrgNr.Add(org.Orgnummer);
+            if (org.Orgnummer.ToString().Length < 9 || org.Orgnummer.ToString().Length > 9) WrongOrgNr.Add(org.Orgnummer);
         }
         if (WrongOrgNr.Count > 0)
         {
@@ -27,10 +27,6 @@ public class RawVisBedriftData
             throw new ArgumentOutOfRangeException($"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}");
         }
         ensureOrgNr.Sort((a, b) => a.Orgnummer.CompareTo(b.Orgnummer));
-        foreach (var orgnr in ensureOrgNr)
-        {
-            Console.WriteLine(orgnr.Orgnummer);
-        }
         return ensureOrgNr;
     }
 
@@ -135,7 +131,7 @@ public class CompactedVisBedriftData
     }
     public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)
     {
-        List<int> orgNrArray = new();
+        List<int> orgNrArray = [];
         foreach (var compactData in data)
         {
             orgNrArray.Add(compactData.Orgnummer);

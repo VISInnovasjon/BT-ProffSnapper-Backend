@@ -30,7 +30,7 @@ public class GenYearlyReport(BtdbContext context) : ControllerBase
         var extention = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (extention != ".xlsx")
         {
-            throw new BadHttpRequestException("Only xslx files are supported currently");
+            throw new BadHttpRequestException("Only xlsx files are supported currently");
         }
         List<int> orgNrs = [];
         using (var stream = file.OpenReadStream())
