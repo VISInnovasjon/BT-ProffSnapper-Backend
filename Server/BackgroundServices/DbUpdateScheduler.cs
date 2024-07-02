@@ -4,7 +4,7 @@ namespace Server.BackgroundServices;
 using Server.Context;
 using Server.Views;
 using Microsoft.EntityFrameworkCore;
-
+/* REWRITE THIS WITH AZURE FUNCTIONS IN MIND FOR QUARTERLY UPDATES. */
 public class ScheduleUpdateFromProff : BackgroundService
 {
     private readonly IServiceProvider _provider;
