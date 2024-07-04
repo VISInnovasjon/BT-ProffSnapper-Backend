@@ -9,7 +9,7 @@ namespace Server.Controllers;
 
 
 [ApiController]
-[Route("query")]
+[Route("api")]
 public class QueryHandler(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
@@ -17,7 +17,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     ///Accumulates all grouped data used by graph from database.
     ///</summary>
     ///<returns>Json object of all accumulated data grouped by keys</returns>
-    [HttpGet("getall")]
+    [HttpGet("graphdata")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public IActionResult FetchAll()

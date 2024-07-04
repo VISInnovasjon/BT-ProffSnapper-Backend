@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("tabledata")]
+[Route("api")]
 public class TableDataController : ControllerBase
 {
     private readonly BtdbContext _context;
@@ -16,7 +16,7 @@ public class TableDataController : ControllerBase
     {
         _context = context;
     }
-    [HttpGet]
+    [HttpGet("tabledata")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

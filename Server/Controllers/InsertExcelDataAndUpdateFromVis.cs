@@ -9,7 +9,7 @@ namespace Server.Controllers;
 /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); */
 
 [ApiController]
-[Route("/updatedb")]
+[Route("api")]
 public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
@@ -24,7 +24,7 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
     ///</summary>
     ///<param name="file">Excel spreadsheed following dbupdateTemplate</param>
     ///<returns> OK or Bad Request on missing, or error prone file</returns>
-    [HttpPost("newdata")]
+    [HttpPost("updatewithnewdata")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromForm] IFormFile file)
