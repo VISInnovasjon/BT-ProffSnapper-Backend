@@ -13,7 +13,7 @@ public class ExcelTemplateMaker : ControllerBase
     ///</summary>
     ///<returns>Excel Template File</returns>
     [HttpGet("orgnummertemplate")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<Results<FileStreamHttpResult, NotFound>> SendOrgNrTemplate()
     {

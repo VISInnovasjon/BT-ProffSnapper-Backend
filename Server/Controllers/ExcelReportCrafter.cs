@@ -19,8 +19,10 @@ public class GenYearlyReport(BtdbContext context) : ControllerBase
     ///<param name="file">Excel http FileStream</param>
     ///<returns> Excel filestream with reports, or 404 not found</returns>
     [HttpPost("yearlyreport")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<Results<FileStreamHttpResult, NotFound>> ExportExcel([FromForm] IFormFile file)
     {
         if (file == null || file.Length == 0)

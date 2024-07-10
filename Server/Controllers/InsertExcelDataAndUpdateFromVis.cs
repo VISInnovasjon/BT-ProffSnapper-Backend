@@ -25,8 +25,9 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
     ///<param name="file">Excel spreadsheed following dbupdateTemplate</param>
     ///<returns> OK or Bad Request on missing, or error prone file</returns>
     [HttpPost("updatewithnewdata")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromForm] IFormFile file)
 
     {
