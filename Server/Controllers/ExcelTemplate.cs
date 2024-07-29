@@ -5,15 +5,15 @@ using Server.Views;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("template")]
+[Route("api")]
 public class ExcelTemplateMaker : ControllerBase
 {
     ///<summary>
     ///Generates a template on how to set up excel spreadsheet for orgnumbers.
     ///</summary>
     ///<returns>Excel Template File</returns>
-    [HttpGet("orgnummer")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [HttpGet("orgnummertemplate")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<Results<FileStreamHttpResult, NotFound>> SendOrgNrTemplate()
     {
@@ -35,7 +35,7 @@ public class ExcelTemplateMaker : ControllerBase
     ///Generates a template on how to set up excel spreadsheet for updating DB with new entries.
     ///</summary>
     ///<returns>Excel Template File</returns>
-    [HttpGet("dbupdate")]
+    [HttpGet("dbupdatetemplate")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<Results<FileStreamHttpResult, NotFound>> SendDbUpdateTemplate()

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("yearlyreport")]
+[Route("api")]
 public class GenYearlyReport(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
@@ -18,9 +18,11 @@ public class GenYearlyReport(BtdbContext context) : ControllerBase
     ///</summary>
     ///<param name="file">Excel http FileStream</param>
     ///<returns> Excel filestream with reports, or 404 not found</returns>
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [HttpPost("yearlyreport")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<Results<FileStreamHttpResult, NotFound>> ExportExcel([FromForm] IFormFile file)
     {
         if (file == null || file.Length == 0)

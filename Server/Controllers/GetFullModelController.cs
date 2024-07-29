@@ -7,7 +7,7 @@ using Server.Views;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("fullmodel")]
+[Route("api")]
 public class GetFullModelExcel : ControllerBase
 {
     private readonly BtdbContext _context;
@@ -15,8 +15,8 @@ public class GetFullModelExcel : ControllerBase
     {
         _context = context;
     }
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [HttpGet("excelfullview")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<Results<FileStreamHttpResult, NotFound, StatusCodeHttpResult>> GetFullModel()

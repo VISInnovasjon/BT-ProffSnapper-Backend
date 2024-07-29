@@ -9,7 +9,7 @@ namespace Server.Controllers;
 /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); */
 
 [ApiController]
-[Route("/updatedb")]
+[Route("api")]
 public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
@@ -24,9 +24,10 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
     ///</summary>
     ///<param name="file">Excel spreadsheed following dbupdateTemplate</param>
     ///<returns> OK or Bad Request on missing, or error prone file</returns>
-    [HttpPost("newdata")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [HttpPost("updatewithnewdata")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromForm] IFormFile file)
 
     {
@@ -111,10 +112,11 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                         Console.WriteLine(ex.Message);
                     }
                 }
-                Console.WriteLine("Insert Complete, updating delta.");
+                Console.WriteLine("Insert Complete, updating delta and views.");
                 try
                 {
-                    _context.Database.ExecuteSqlRaw("SELECT update_delta()");
+                    await _context.Database.ExecuteSqlRawAsync("CALL update_delta()");
+                    await _context.Database.ExecuteSqlRawAsync("CALL update_views()");
 
                 }
                 catch (Exception ex)

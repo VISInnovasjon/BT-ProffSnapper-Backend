@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("tabledata")]
+[Route("api")]
 public class TableDataController : ControllerBase
 {
     private readonly BtdbContext _context;
@@ -16,8 +16,8 @@ public class TableDataController : ControllerBase
     {
         _context = context;
     }
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [HttpGet("tabledata")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -30,7 +30,6 @@ public class TableDataController : ControllerBase
             topPerformers = await _context.CompanyEconomicDataPrYears
                                     .Where(p => p.EcoCode == query.EcoCode && p.Year == DateTime.Now.Year - 2)
                                     .OrderByDescending(p => p.Accumulated)
-                                    .Take(20)
                                     .Include(p => p.Company)
                                     .ToListAsync();
             if (topPerformers == null) return NotFound();

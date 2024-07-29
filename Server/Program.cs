@@ -52,6 +52,4 @@ app.UseRouting();
 app.MapControllers();
 app.MapFallbackToFile("./index.html");
 app.UseCors("AllowAll");
-
 app.Run();
-
