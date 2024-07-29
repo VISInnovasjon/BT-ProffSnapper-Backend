@@ -3,6 +3,7 @@
 ## Index:
 
 - [Intro](#intro)
+  - [Bruk](#bruk)
   - [Produkt](#produkt)
   - [Del mål](#del-mål)
   - [Endemål](#endemål)
@@ -29,17 +30,65 @@
   - [Formål](#Formål-DATABASE)
   - [Schema](#schema)
   - [Funksjoner](#funksjoner-DATABASE)
+  - [Views](#views-DATABASE)
 
 ## Intro
 
-
-
+Dette er Prosnapper. Et verktøy for innsamling, og utregning av nøkkeltall for VIS innovasjon.<br/>
+Det er skrevet i C# med en React + VITE frontend. <br/>
+Det er en CRUD applikasjon, med excel som primærverktøy for datamanipulasjon i backend. <br/>
 <br/>
+
+### Bruk
+
+Hvordan bruke produktet:<br/>
+
+- Key figures:<br/>
+  Dette er lett tilgjengelige nøkkeltall fra datasettet.
+
+- Bruke graf:<br/>
+  1. Filter: <br/>
+     Datasettet er gruppert i forskjellige grupper som kan filtreres i via filter knappen. Foreløbig kan du filtrere data basert på bedriftleder's alder, <br/>
+     Hvilken fase bedriften har vært i, <br/>
+     og hvilke bransje bedriftene er i. <br/>
+  2. Koder: <br/>
+     Grafen viser kunn et sett med data om gangen, basert på hvilken øko-kode som er valgt. Det er tre øko-koder lett tilgjengelig: <br/>
+     Driftsresultat, <br/>
+     Omsetning, <br/>
+     og Sum Innskutt Egenkapital.<br/>
+     Andre økokoder kan finnes i dropdown meny markert med øk. koder.<br/>
+  3. Kan kan bruke Velg år slideren for å velge et start og slutt år på datasettet.
+  4. Man kan midlertidig velge vekk valgte filtre ved å trykke på de i bunn av grafen. <br/>
+     Dette vil filtrere vekk dataen fra grafen, og vise en strek over navnet i bunn av grafen.<br/>
+     For å få data tilbake er det bare å trykke på navnet igjen. <br/>
+  5. Velge datatype: <br/>
+     Man kan velge å få presentert tre forskjellige verdier i datasettet. <br/> - Gjennomsnittsverdi - Akkumulert - Gjennomsnitts endring over tid
+     Disse kan man velge mellom via radio knapper under grafen. <br/>
+- Bruke Tabell:<br/>
+  Tabellen viser bedrifter ranksjert etter høyest akkumulert verdi i gjeldene økokode.<br/>
+  Man kan søke opp og filtrere etter verdiene man selv ønsker i grafen ved å trykke på tre dotter i kollonen det gjelder. <br/>
+  Dataen i grafen er alltid for to år tilbake i tid, for å garantere at all dataen som mulig er hentet inn.<br/>
+  Man kan velge mellom å vise 5 eller 10 bedrifter om gangen. <br/>
+- Yearly Rapport:<br/>
+  Her kan man generere en årsrapport excel fil ved å laste opp en excelfil med organisasjonsnr man ønsker data om.<br/>
+  Er man usikker på oppsettet av excel arket, kan man bruke "Get Template" for å få en eksempelfil.
+- Company Flow:<br/>
+  Hovedvalg for manipulasjon av data:<br/>
+  1. Add Company Data
+     Desverre blir ikke databasen oppdatert automatisk når nye bedrifter blir tatt opp i VIS.<br/>
+     Nye bedrifter kan legges til i Add Company Data.<br/>
+     Er man usikker på hva data som skal legges til fra VIS, kan man bruke "Get Template" for å se en eksempelfil. <br/>
+  2. Delete Company data
+     Hvis man ønsker å slette en bedrift fra systemet kan det gjøres her.<br/>
+     Man laster opp en excelfil med organisasjonsnr man ønsker å slette.<br/>
+     Er man usikker på oppsettet av excelfilen, kan man bruke "Get Template".<br/>
+- Get Full View:<br/>
+  Her kan man laste ned hele datasettet i excelformat. <br/>
 
 ### Produkt
 
 Fullstack app, som skal kombinere data fra PROFF.NO, og samkjøre dette med data fra VIS. <br/>
-mth. Oppfølging av bedrifter som har vært gjennom VIS inkubasjon og/eller andre programmer.
+mth. Oppfølging av bedrifter som har vært gjennom VIS inkubasjon og/eller andre programmer. <br/>
 Hva skal produktet gjøre:
 
 1. Kobles opp mot Intern Microsoft Authentication Layer for å kunne ta i bruk eksisterende brukere.
@@ -316,31 +365,67 @@ Dette for å ha en stack som følger tett opp mot bergen stacken, dette for å g
 <br/>
 
 <h3 id="routing-API">Routing</h3>
-Vi trenger endepunkt for følgende systemer:
+Alle endepunktene til api ligger under fellesendepunktet ./API/ .<br/>
 
-1. Authorisering layer.
-   Dette laget må bruker passe gjennom for å få komme til de neste endepunktene. Her må vi passe på å ungå at en potensiell bruker kan snike seg rundt layeret å få tilgang til de andre lagene uten authorisering.
-   dette vil være /, men vil passe deg ned til /:uid, som så vil passe deg ned til hvorenn du skulle ønske. Siden dette er et internt system kan potensielt dette samkjøres med frontend, hvis frontend og backend deler samme routing.
+Liste over endepunkter i API: <br/>
 
-2. query/getall
-   Her aggrigerer databasen sammen gjennomsnittsdata for forskjellige faktorer og leverer en datapakke som frontend bruker i graf.</br> Det blir aggrigert basert på forskjellige views.</br> For å lage en ny aggrigering lager man en ny view i databasen, og sender den sammen med resten ved å adde den i AddGroupedData() Method i FetchDataController.
+1. yearlyreport:
 
-3. updatedb
-   Her har vi to endepunkter:
+   - Henter data fra yearlyreport materialized view, og leverer excelfil basert på det. <br/>
 
-   - newdata: Dette endepunktet tar inn et excel ark med data fra VIS, som blir lagret i databasen.</br> Hvis den ser at den allerede har grunndata fra organisasjonsnummerene, prøver den å lagre data om årlig fase for hver bedrift i steden.</br> Hvis den ser at nye bedrifter blir lagt inn, henter den også data om disse fra PROFF api.</br> De andre blir oppdatert gjennom CRON jobb.
-   - deletedata: Dette endepunktet tar inn et excel ark med organisasjonsnummere under en kollonne som heter Orgnummer,</br> og prøver å slette all data om organisasjonene fra databasen basert på disse.
+2. orgnummertemplate:
 
-4. ÅrsRapport/get
-   Dette endepunktet tar inn en excel fil med organisasjonsnummer, under en kollone Orgnummer.</br> Og leverer en ferdig utfylt årsrapport for disse bedriftene så lenge dataen eksisterer.</br> Tomme celler er data som ikke finnes enda.
+   - genererer excel template for orgnummer baserte operasjoner<br/>
+
+3. dbupdatetemplate:
+
+   - genererer exceltemplate for insetting av ny data til database.<br/>
+
+4. graphdata:
+
+   - genererer graphdata for frontend. Leverer i JSON format<br/>
+
+5. workyear:
+
+   - genererer tall for Årsverk Key Figure. <br/>
+
+6. workercount:
+
+   - genererer tall for Arbeidsplasser Key Figure. <br/>
+
+7. totalturnover:
+
+   - genererer tall for Omsetning Key Figure. <br/>
+
+8. companycount:
+
+   - generer tall for Antall Bedrifter Key Figure. <br/>
+
+9. excelfullview:
+
+   - genererer excel fil med fullstendig datasett fra database.<br/>
+
+10. updatewithnewdata:
+
+    - håndterer oppdatering av database med ny data fra excelark.<br/>
+
+11. deletedata:
+
+    - håndterer sletting av data basert på excelfil.<br/>
+
+12. tabledata:
+
+    - genererer data for frontend table. Leverer JSON format.<br/>
+
+13. updateonschedule:
+
+    - WIP endepunkt for å håndtere schedulert oppdatering av data via en Azure Function.<br/>
 
 <br/>
 
 ### Micro Services
 
-En Cronjob skal være kjørende på serveren som en gang i året gjør calls til /Changes endepunktet til PROFF for å finne ny data for alle organisasjonsnr i databasen. Den vil så hente data for hvert ORGNR med oppdatert data.<br/>
-Den henter alle organisasjonsnr fra databasen som fremdeles er aktiv, og skjekker de opp mot Proff Change Endpoint.<br/>
-Er det skjedd endringer henter den nye verdier for gjeldene bedriftene. <br/>
+En Azure Funksjon vil kalle updateonschedule for å automatisere innhenting av ny data fra bl.a. PROFF.
 
 <br/>
 
@@ -361,226 +446,30 @@ Databasen skal være lett, ta lite plass. Og håndtere så mye logikk den kan se
 
 ### Schema
 
-Foreløbig ide til database setup.
-
-Tabell 1.
-
-Bedrift_Info
-
-| bedrift_id (SERIAL PRIMARY KEY) | Orgnummer (INTEGER UNIQUE NOT NULL) | MålBedrift (VARCHAR(255) NOT NULL) | Bransje (VARCHAR(255) DEFAULT NULL) | Beskrivelse (VARCHAR(255) DEFAULT NULL) | NavneListe (VARCHAR(255)[]) DEFAULT NULL |
-| :------------------------------ | :---------------------------------- | :--------------------------------- | :---------------------------------- | --------------------------------------- | :--------------------------------------- |
-| 1                               | 43234324                            | Bedriften                          | IT                                  | Beste Bedrift                           | [startuppen, helt-okay-bedrift]          |
-
-Tabell 2.
-
-oversikt_bedrift_fase_status
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår, fase) |
-| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------------- |
-| 1                                                        | 2023                         | '{Alumni}'            | (1,2023, '{Alumni}')                     |
-
-Tabell 3.
-
-Årlig_økonomisk_data
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | øko_kode(VARCHAR(255) REFERENCES øko_kode_lookup(øko_kode)) | øko_verdi (NUMERIC(10,4) DEFAULT NULL) | PRIMARY KEY(bedrift_id, rapportår, øko_kode) |
-| :------------------------------------------------------- | :------------------ | :---------------------------------------------------------- | :------------------------------------- | -------------------------------------------- |
-| 1                                                        | 2023                | EK                                                          | 230.4                                  | (1,2023,EK)                                  |
-
-Denne tabellen kan potensielt partisjoneres etter BERDIFT_ID hvis den blir stor.
-
-Tabell 4.
-
-Øko_kode_lookup
-
-| øko_kode(VARCHAR(255)) | kode_beskrivelse(text) |
-| :--------------------- | :--------------------- |
-| EK                     | 'Egen Kapital'         |
-
-Tabell 5.
-
-bedrift_kunngjøringer
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | kunngjørings_id (VARCHAR(255)) | dato (VARCHAR(255)) | kunngjøringstekst (text)                | kunngjøringstype (VARCHAR(255)) | PRIMARY KEY (bedrift_id, kunngjørings_id) |
-| :------------------------------------------------------- | :----------------------------- | :------------------ | :-------------------------------------- | :------------------------------ | :---------------------------------------- |
-| 1                                                        | 2309400923498234               | "20.12.12"          | "Noe ganske stort og kult er kunngjort" | "Generell"                      | (1, 2309400923498234)                     |
-
-Tabell 6.
-
-bedrift_leder_oversikt<br>
-Her beholder vi kun info om de som er markert med Kode DAGL eller LEDE
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | tittel (VARCHAR (255)) | navn (VARCHAR(255)) | fødselsdag (VARCHAR(255)) | tittelkode (VARCHAR255) | rapportår (INTEGER) |
-| :------------------------------------------------------- | :--------------------- | :------------------ | :------------------------ | :---------------------- | :------------------ |
-| 1                                                        | Styrets Leder          | John Johnson        | "20.12.12"                | LEDE                    | 2024                |
-
-Tabell 7.
-
-bedrift_shareholder_info
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | antall_shares (INTEGER) | shareholder_bedrift_id (VARCHAR (255)DEFAULT NULL) | navn (VARCHAR(255)) | sharetype (VARCHAR(255)) | shareholder_fornavn (VARCHAR (255) DEFAULT NULL) | shareholder_etternavn (VARCHAR(255) DEFAULT NULL) |
-| :------------------------------------------------------- | :------------------ | :---------------------- | :------------------------------------------------- | :------------------ | :----------------------- | :----------------------------------------------- | :------------------------------------------------ |
-| 1                                                        | 2024                | 300000                  | null                                               | Fattern             | 50                       | null                                             | null                                              |
-
-Tabell 8.
-
-generell_årlig_bedrift_info
-
-| bedrift_id(INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår INTEGER | antall_ansatte INTEGER | landsdel (VARCHAR(255)) | fylke (VARCHAR(255)) | kommune (VARCHAR(255)) | post_kode (VARCHAR(255)) | post_adresse (VARCHAR(255)) |
-| :------------------------------------------------------ | :---------------- | :--------------------- | :---------------------- | :------------------- | :--------------------- | :----------------------- | :-------------------------- |
-| 1                                                       | 2024              | 1                      | Vestlandet              | Vestland             | Bergen                 | 5050                     | Sandefjordsvika 98          |
-
 Ferdig oppsett av database ser slik ut:<br>
-![Bilde som viser relasjonsgraf for databasen](https://i.imgur.com/21q4rG5.jpeg)
+![Bilde som viser relasjonsgraf for databasen](https://imgur.com/a/z6nvU25)
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
-Mesteparten av operasjoner mot databasen er gjort gjennom Entity Framework Core.<br>
-<br>
-For å simplifisere queries er det laget følgende views på databasen:<br>
+Databasen har to hjelpefunksjoner som blir trigget av EF core.<br/>
 
-1. Årsrapport.
-   Denne viewen er laget for å hjelpe med generering av årsrapporter.<br>
+1. Update delta:
+   Denne funksjonen oppdaterer data generert av databasen ved innsetting av ny data.<br/>
+2. Update Views:
+   Denne funksjonen oppdaterer materialized views ved innsetting av ny data.<br/>
 
-```sql
-   SELECT b.orgnummer,
-   g.antall_ansatte,
-   "øk_data".driftsresultat,
-   "øk_data".sum_drifts_intekter,
-   "øk_data".sum_innskutt_egenkapital,
-   "øk_data".delta_innskutt_egenkapital,
-   "øk_data"."ordinært_resultat",
-   g.post_addresse,
-   g.post_kode,
-   shareholder_data.antal_shares AS antall_shares_vis,
-   shareholder_data.sharetype AS shares_prosent
-   FROM bedrift_info b
-   JOIN "generell_årlig_bedrift_info" g ON b.bedrift_id = g.bedrift_id AND g."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)
-   LEFT JOIN LATERAL ( SELECT max(
-             CASE
-                 WHEN "ø"."øko_kode"::text = 'DR'::text THEN "ø"."øko_verdi"
-                 ELSE NULL::numeric
-             END) AS driftsresultat,
-         max(
-             CASE
-                 WHEN "ø"."øko_kode"::text = 'SI'::text THEN "ø"."øko_verdi"
-                 ELSE NULL::numeric
-             END) AS sum_drifts_intekter,
-         max(
-             CASE
-                 WHEN "ø"."øko_kode"::text = 'SIK'::text THEN "ø"."øko_verdi"
-                 ELSE NULL::numeric
-             END) AS sum_innskutt_egenkapital,
-         max(
-             CASE
-                 WHEN "ø"."øko_kode"::text = 'SIK'::text THEN "ø".delta
-                 ELSE NULL::numeric
-             END) AS delta_innskutt_egenkapital,
-         max(
-             CASE
-                 WHEN "ø"."øko_kode"::text = 'OR'::text THEN "ø"."øko_verdi"
-                 ELSE NULL::numeric
-             END) AS "ordinært_resultat"
-        FROM "årlig_økonomisk_data" "ø"
-       WHERE "ø".bedrift_id = b.bedrift_id AND "ø"."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1)) "øk_data" ON true
-   LEFT JOIN LATERAL ( SELECT s.antal_shares,
-         s.sharetype
-        FROM bedrift_shareholder_info s
-       WHERE s.bedrift_id = b.bedrift_id AND s."rapportår" = (EXTRACT(year FROM CURRENT_DATE)::integer - 1) AND s.shareholder_bedrift_id::text = '987753153'::text) shareholder_data ON true;
-   Denne joiner sammen alle verdier ønsket i en årsrapport, og kan queries etter bestemte organisasjoner. <br>
-```
+<h3 id="views-DATABASE">Views</h3>
+Databasen har flere materialized views for å hjelpe med rask levering av databasegenerert data.
 
-2. Gjennomsnittsverdier:
-
-```sql
-    SELECT "ø"."rapportår",
-     "ø"."øko_kode",
-     l.kode_beskrivelse,
-     avg("ø"."øko_verdi") AS "avg_øko_verdi",
-     avg("ø".delta) AS avg_delta
-    FROM bedrift_info b
-      JOIN "årlig_økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
-      JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
-   GROUP BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
-   ORDER BY "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
-```
-
-Genererer gjennomsnittsverdier for alle øko koder siden VIS var aktiv, og sorterer de etter år.<br> 3. Data_sortert_etter_fase:
-
-```sql
-	 SELECT f.fase,
-  "ø"."rapportår",
-  "ø"."øko_kode",
-  l.kode_beskrivelse,
-  avg("ø"."øko_verdi") AS "avg_øko_verdi",
-  avg("ø".delta) AS avg_delta
- FROM bedrift_info b
-   JOIN oversikt_bedrift_fase_status f ON b.bedrift_id = f.bedrift_id
-   JOIN "årlig_økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
-   JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
-GROUP BY f.fase, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
-ORDER BY f.fase, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
-```
-
-Leverer ut gjennomsnittsdata pr år, men sortert etter fase.<br> 4. Data\*sortert_etter_bransje:
-
-```sql
-SELECT b.bransje,
-"ø"."rapportår",
-"ø"."øko_kode",
-l.kode_beskrivelse,
-avg("ø"."øko_verdi") AS "avg_øko_verdi",
-avg("ø".delta) AS avg_delta
-FROM bedrift_info b
-JOIN "årlig*økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
-JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
-GROUP BY b.bransje, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse
-ORDER BY b.bransje, "ø"."rapportår", "ø"."øko_kode", l.kode_beskrivelse;
-
-```
-
-Leverer ut gjennomsnittsdata, sortert etter bransje. <br> 5. Data\*sortert_etter_aldersgruppe:
-
-```sql
-WITH lederalder AS (
-SELECT b_1.bedrift_id,
-date_part('year'::text, age(a."fødselsdag"::timestamp with time zone)) AS alder,
-COALESCE(max(
-CASE
-WHEN a.tittelkode::text = 'DAGL'::text THEN a.tittelkode
-ELSE NULL::character varying
-END::text) OVER (PARTITION BY b_1.bedrift_id), max(
-CASE
-WHEN a.tittelkode::text = 'LEDE'::text THEN a.tittelkode
-ELSE NULL::character varying
-END::text) OVER (PARTITION BY b_1.bedrift_id)) AS tittelkode
-FROM bedrift_info b_1
-JOIN bedrift_leder_oversikt a ON b_1.bedrift_id = a.bedrift_id
-), aldersgrupper AS (
-SELECT lederalder.bedrift_id,
-CASE
-WHEN lederalder.alder >= 18::double precision AND lederalder.alder <= 29::double precision THEN '18-29'::text
-WHEN lederalder.alder >= 30::double precision AND lederalder.alder <= 39::double precision THEN '30-39'::text
-WHEN lederalder.alder >= 40::double precision AND lederalder.alder <= 49::double precision THEN '40-49'::text
-WHEN lederalder.alder >= 50::double precision AND lederalder.alder <= 59::double precision THEN '50-59'::text
-WHEN lederalder.alder >= 60::double precision AND lederalder.alder <= 69::double precision THEN '60-69'::text
-WHEN lederalder.alder >= 70::double precision AND lederalder.alder <= 79::double precision THEN '70-79'::text
-ELSE '80+'::text
-END AS alders_gruppe
-FROM lederalder
-)
-SELECT "ø"."rapportår",
-ag.alders_gruppe,
-"ø"."øko_kode",
-avg("ø"."øko_verdi") AS "avg*øko*verdi",
-avg("ø".delta) AS avg_delta,
-l.kode_beskrivelse
-FROM bedrift_info b
-JOIN aldersgrupper ag ON b.bedrift_id = ag.bedrift_id
-JOIN "årlig*økonomisk_data" "ø" ON b.bedrift_id = "ø".bedrift_id AND "ø"."rapportår" >= 2014
-JOIN "øko_kode_lookup" l ON "ø"."øko_kode"::text = l."øko_kode"::text
-GROUP BY "ø"."rapportår", ag.alders_gruppe, "ø"."øko_kode", l.kode_beskrivelse;
-
-```
-
-Leverer gjennomsnitsverdier, men sorterer basert på alder av enten Daglig Leder eller Styreleder.<br>
+1. Average Values:
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, uten filter.
+2. Data Sorted By Company Branch
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, men er gruppert basert på bedriftenes bransje.
+3. Data Sorted By Leader Age
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, men er gruppert i aldergrupper basert på bedriftlederens alder.
+4. Data Sorted By Phase
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, men er gruppert basert på hvilken intern fase bedriften er i.
+5. Full View
+   Dette er et materialized view som kombinerer dataen til et dataset som passer Excel Format.
+6. Årsrapport
+   Dette er et materialized view som kombinerer dataen til et årsrapport format som passer Excel Format.
