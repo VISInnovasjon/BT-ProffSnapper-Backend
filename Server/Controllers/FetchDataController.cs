@@ -101,7 +101,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
             var TotalTurnover = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == Year - 1 || e.Year == Year - 2)).Select(e => e.TotalAccumulated).ToList();
             TotalTurnover.Reverse();
             Dictionary<string, object> Count = new(){
-                {"text", "Total Omsetning"},
+                {"text", "Akkumulert Omsetning"},
                 {"number", TotalTurnover[0]}
             };
             var JsonString = JsonSerializer.Serialize(Count);
