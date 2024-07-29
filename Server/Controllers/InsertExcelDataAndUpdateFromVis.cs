@@ -112,10 +112,11 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                         Console.WriteLine(ex.Message);
                     }
                 }
-                Console.WriteLine("Insert Complete, updating delta.");
+                Console.WriteLine("Insert Complete, updating delta and views.");
                 try
                 {
-                    _context.Database.ExecuteSqlRaw("SELECT update_delta()");
+                    await _context.Database.ExecuteSqlRawAsync("CALL update_delta()");
+                    await _context.Database.ExecuteSqlRawAsync("CALL update_views()");
 
                 }
                 catch (Exception ex)

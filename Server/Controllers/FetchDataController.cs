@@ -25,7 +25,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
         try
         {
             var FinalDict = new Dictionary<string, List<YearDataGroup>>{
-                {"Total Gjennomsnitt", FetchYearlyData(_context)}
+                {"Total", FetchYearlyData(_context)}
             };
             /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. */
             AddGroupedData(FinalDict, _context.DataSortedByPhases.ToList(), b => b.Phase);
@@ -44,6 +44,94 @@ public class QueryHandler(BtdbContext context) : ControllerBase
 
             };
             return BadRequest(error);
+        }
+    }
+    [HttpGet("workyear")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult FetchWorkYear()
+    {
+        try
+        {
+            var WorkYears = _context.CompanyEconomicDataPrYears.Count(e => e.EcoCode == "DR" && e.CompanyId != 0);
+            Dictionary<string, object> Count = new(){
+                {"text", "Årsverk"},
+                {"number", WorkYears}
+            };
+            var JsonString = JsonSerializer.Serialize(Count);
+            return Ok(JsonString);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return StatusCode(500);
+        }
+    }
+    [HttpGet("workercount")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult FetchWorkerCount()
+    {
+        try
+        {
+            var Year = DateTime.Now.Year;
+            var WorkerCount = _context.GeneralYearlyUpdatedCompanyInfos.Where(e => e.Year == Year - 1 || e.Year == Year - 2).Sum(e => e.NumberOfEmployees);
+            Dictionary<string, object> Count = new(){
+                {"text", "Arbeidsplasser"},
+                {"number", WorkerCount ?? 0}
+            };
+            var JsonString = JsonSerializer.Serialize(Count);
+            return Ok(JsonString);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return StatusCode(500);
+        }
+    }
+    [HttpGet("totalturnover")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult FetchTotalTurnover()
+    {
+        try
+        {
+            var Year = DateTime.Now.Year;
+            Console.WriteLine(Year);
+            var TotalTurnover = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == Year - 1 || e.Year == Year - 2)).Select(e => e.TotalAccumulated).ToList();
+            TotalTurnover.Reverse();
+            Dictionary<string, object> Count = new(){
+                {"text", "Total Omsetning"},
+                {"number", TotalTurnover[0]}
+            };
+            var JsonString = JsonSerializer.Serialize(Count);
+            return Ok(JsonString);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return StatusCode(500);
+        }
+    }
+    [HttpGet("companycount")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult FetchCompanyCount()
+    {
+        try
+        {
+            var CompanyCount = _context.CompanyInfos.Count(e => e.CompanyName != null);
+            Dictionary<string, object> Count = new(){
+                {"text", "Antall Bedrifter"},
+                {"number", CompanyCount}
+            };
+            var JsonString = JsonSerializer.Serialize(Count);
+            return Ok(JsonString);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return StatusCode(500);
         }
     }
     private List<YearDataGroup> FetchYearlyData(BtdbContext _context)

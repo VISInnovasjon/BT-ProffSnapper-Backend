@@ -30,7 +30,6 @@ public class TableDataController : ControllerBase
             topPerformers = await _context.CompanyEconomicDataPrYears
                                     .Where(p => p.EcoCode == query.EcoCode && p.Year == DateTime.Now.Year - 2)
                                     .OrderByDescending(p => p.Accumulated)
-                                    .Take(20)
                                     .Include(p => p.Company)
                                     .ToListAsync();
             if (topPerformers == null) return NotFound();
