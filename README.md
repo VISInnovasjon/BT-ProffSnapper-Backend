@@ -451,6 +451,7 @@ Ferdig oppsett av database ser slik ut:<br>
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
+
 Databasen har to hjelpefunksjoner som blir trigget av EF core.<br/>
 
 1. Update delta:
@@ -473,3 +474,4 @@ Databasen har flere materialized views for å hjelpe med rask levering av databa
    Dette er et materialized view som kombinerer dataen til et dataset som passer Excel Format.
 6. Årsrapport
    Dette er et materialized view som kombinerer dataen til et årsrapport format som passer Excel Format.
+
