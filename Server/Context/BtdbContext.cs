@@ -230,10 +230,11 @@ public partial class BtdbContext : DbContext
         modelBuilder.Entity<EcoCodeLookup>(entity =>
         {
             entity
-                .HasNoKey()
-                .ToTable("eco_code_lookup");
+                .ToTable("eco_kode_lookup")
+                .HasNoKey();
 
-            entity.Property(e => e.CodeDescription).HasColumnName("code_description");
+            entity.Property(e => e.Nor).HasColumnName("nor");
+            entity.Property(e => e.En).HasColumnName("en");
             entity.Property(e => e.EcoCode)
                 .HasMaxLength(255)
                 .HasColumnName("eco_code");
@@ -246,7 +247,6 @@ public partial class BtdbContext : DbContext
                 entity.Property(e => e.AgeGroup).HasColumnName("age_group");
                 entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
                 entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
-                entity.Property(e => e.CodeDescription).HasColumnName("code_description");
                 entity.Property(e => e.Year).HasColumnName("year");
                 entity.Property(e => e.EcoCode).HasColumnName("eco_code");
                 entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
@@ -262,7 +262,6 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Branch).HasColumnName("branch");
             entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
             entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
-            entity.Property(e => e.CodeDescription).HasColumnName("code_description");
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
@@ -276,7 +275,6 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Phase).HasColumnName("phase");
             entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
             entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
-            entity.Property(e => e.CodeDescription).HasColumnName("code_description");
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
@@ -289,7 +287,6 @@ public partial class BtdbContext : DbContext
                 .HasNoKey();
             entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
             entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
-            entity.Property(e => e.CodeDescription).HasColumnName("code_description");
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
@@ -303,7 +300,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Accumulated).HasColumnName("accumulated");
             entity.Property(e => e.AdressLine).HasColumnName("adress_line");
             entity.Property(e => e.Branch).HasColumnName("branch");
-            entity.Property(e => e.CodeDescription).HasColumnName("code_description");
+            entity.Property(e => e.CodeDescription).HasColumnName("nor");
             entity.Property(e => e.CompanyName).HasColumnName("company_name");
             entity.Property(e => e.CountryPart).HasColumnName("country_part");
             entity.Property(e => e.County).HasColumnName("county");

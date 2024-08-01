@@ -7,15 +7,13 @@ public class Values
     public string EcoCode { get; set; }
     public decimal Value { get; set; }
     public decimal Delta { get; set; }
-    public string? Description { get; set; }
     public Values(
-        string code, decimal value, decimal delta, string? desc
+        string code, decimal value, decimal delta
     )
     {
         EcoCode = code;
         Value = value;
         Delta = delta;
-        Description = desc;
     }
 }
 public class ExtractedEcoCodeValues
@@ -24,15 +22,13 @@ public class ExtractedEcoCodeValues
     public decimal Delta { get; set; }
     public decimal Accumulated { get; set; }
     public int UniqueCompanyCount { get; set; }
-    public string? Description { get; set; }
     public ExtractedEcoCodeValues(
-        decimal value, decimal delta, decimal acc, int count, string? desc
+        decimal value, decimal delta, decimal acc, int count
     )
     {
         Value = value;
         Delta = delta;
         Accumulated = acc;
-        Description = desc;
         UniqueCompanyCount = count;
     }
 }
