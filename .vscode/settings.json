@@ -1,0 +1,5 @@
+{
+  "appService.preDeployTask": "publish-release",
+  "appService.deploySubpath": "Server\\bin\\Release\\net8.0\\publish",
+  "appService.defaultWebAppToDeploy": "/subscriptions/433b1d2f-0cab-4d92-a6ef-c1ef04c7d682/resourceGroups/BedriftsinformasjonviaPROF/providers/Microsoft.Web/sites/VisProffSnapper"
+}

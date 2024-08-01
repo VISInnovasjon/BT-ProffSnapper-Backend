@@ -21,7 +21,7 @@ public class TableDataController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> SendTableData([FromQuery] QueryParams query)
+    public async Task<IActionResult> SendTableData([FromQuery] QueryParamsForTable query)
     {
         if (string.IsNullOrEmpty(query.EcoCode)) return BadRequest("Missing EcoCode");
         List<Models.CompanyEconomicDataPrYear>? topPerformers = null;

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Server.Context;
 using Server.Views;
+using Server.Util;
 
 namespace Server.Controllers;
 
@@ -49,13 +50,14 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [HttpGet("workyear")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchWorkYear()
+    public IActionResult FetchWorkYear([FromQuery] QueryParamsForLang query)
     {
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
         try
         {
             var WorkYears = _context.CompanyEconomicDataPrYears.Count(e => e.EcoCode == "DR" && e.CompanyId != 0);
             Dictionary<string, object> Count = new(){
-                {"text", "Årsverk"},
+                {"text", string.Equals("nor", query.Language) ? "Årsverk": "Man years"},
                 {"number", WorkYears}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -70,14 +72,15 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [HttpGet("workercount")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchWorkerCount()
+    public IActionResult FetchWorkerCount([FromQuery] QueryParamsForLang query)
     {
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
         try
         {
             var Year = DateTime.Now.Year;
             var WorkerCount = _context.GeneralYearlyUpdatedCompanyInfos.Where(e => e.Year == Year - 1 || e.Year == Year - 2).Sum(e => e.NumberOfEmployees);
             Dictionary<string, object> Count = new(){
-                {"text", "Arbeidsplasser"},
+                {"text", string.Equals("nor", query.Language) ? "Arbeidsplasser" : "Number of employees"},
                 {"number", WorkerCount ?? 0}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -92,8 +95,9 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [HttpGet("totalturnover")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchTotalTurnover()
+    public IActionResult FetchTotalTurnover([FromQuery] QueryParamsForLang query)
     {
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
         try
         {
             var Year = DateTime.Now.Year;
@@ -101,7 +105,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
             var TotalTurnover = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == Year - 1 || e.Year == Year - 2)).Select(e => e.TotalAccumulated).ToList();
             TotalTurnover.Reverse();
             Dictionary<string, object> Count = new(){
-                {"text", "Akkumulert Omsetning"},
+                {"text", string.Equals("nor", query.Language) ? "Omsetning (i tusen NOK)" : "Total Turnover (1000 NOK)"},
                 {"number", TotalTurnover[0]}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -116,13 +120,14 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [HttpGet("companycount")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchCompanyCount()
+    public IActionResult FetchCompanyCount([FromQuery] QueryParamsForLang query)
     {
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
         try
         {
             var CompanyCount = _context.CompanyInfos.Count(e => e.CompanyName != null);
             Dictionary<string, object> Count = new(){
-                {"text", "Antall Bedrifter"},
+                {"text", string.Equals("nor", query.Language) ? "Antall bedrifter":"Company count"},
                 {"number", CompanyCount}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -146,7 +151,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
                 values = g.ToDictionary(
                     b => b.EcoCode ?? "Code Missing",
                     b => new ExtractedEcoCodeValues(
-                        b.AvgEcoValue, b.AvgDelta, b.TotalAccumulated, b.UniqueCompanyCount, b.CodeDescription
+                        b.AvgEcoValue, b.AvgDelta, b.TotalAccumulated, b.UniqueCompanyCount
                     )
                 )
             }).ToList();
@@ -178,8 +183,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
                             (decimal)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "AvgEcoValue"),
                             (decimal)GetPropertyValue(b, "AvgDelta"),
                             (decimal)GetPropertyValue(b, "TotalAccumulated"),
-                            (int)GetPropertyValue(b, "UniqueCompanyCount"),
-                            (string)GetPropertyValue(b, "CodeDescription")
+                            (int)GetPropertyValue(b, "UniqueCompanyCount")
                         )
                     )
                 })
