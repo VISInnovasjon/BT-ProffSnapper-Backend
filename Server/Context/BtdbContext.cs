@@ -29,7 +29,7 @@ public partial class BtdbContext : DbContext
 
     public virtual DbSet<CompanyEconomicDataPrYear> CompanyEconomicDataPrYears { get; set; }
 
-    public virtual DbSet<EcoCodeLookup> EcoCodeLookups { get; set; }
+    public virtual DbSet<EcoKodeLookup> EcoCodeLookups { get; set; }
     public virtual DbSet<DataSortedByLeaderAge> DataSortedByLeaderAges { get; set; }
     public virtual DbSet<DataSortedByCompanyBranch> DataSortedByCompanyBranches { get; set; }
     public virtual DbSet<DataSortedByPhase> DataSortedByPhases { get; set; }
@@ -227,7 +227,7 @@ public partial class BtdbContext : DbContext
                 .HasConstraintName("company_economic_data_pr_year_company_id_fkey");
         });
 
-        modelBuilder.Entity<EcoCodeLookup>(entity =>
+        modelBuilder.Entity<EcoKodeLookup>(entity =>
         {
             entity
                 .ToTable("eco_kode_lookup")

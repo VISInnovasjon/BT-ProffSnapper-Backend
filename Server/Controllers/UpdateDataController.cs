@@ -55,24 +55,35 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> FetchEcoCodes([FromQuery] QueryParamsForLang query)
     {
-        if (string.IsNullOrEmpty(query.Language)) return BadRequest("Missing language");
-        Dictionary<string, string> EcoCodes = [];
-        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return BadRequest("Could not parse your chosen language, please use en or nor");
-        var fetchedCodes = await _context.EcoCodeLookups.ToListAsync();
-        if (fetchedCodes == null) return StatusCode(404);
-        string desc;
-        foreach (var item in fetchedCodes)
+        try
         {
-            if (query.Language == "nor") desc = item.Nor;
-            else desc = item.En;
-            EcoCodes.Add(
-                item.EcoCode, desc
-            );
+            if (string.IsNullOrEmpty(query.Language)) return BadRequest("Missing language");
+            Dictionary<string, string> EcoCodes = [];
+            if (!QueryParamsForLang.CheckQueryParams(query.Language)) return BadRequest("Could not parse your chosen language, please use en or nor");
+            var fetchedCodes = await _context.EcoCodeLookups.ToListAsync();
+            if (fetchedCodes == null) return StatusCode(500);
+            string? desc;
+            foreach (var item in fetchedCodes)
+            {
+                if (item == null) continue;
+                if (item.EcoCode == null) continue;
+                if (query.Language == "nor") desc = item.Nor;
+                else desc = item.En;
+                desc ??= "Missing Description";
+                EcoCodes.Add(
+                    item.EcoCode, desc
+                );
+            }
+            var json = JsonSerializer.Serialize(EcoCodes);
+            Console.WriteLine(json);
+            return Ok(json);
         }
-        var json = JsonSerializer.Serialize(EcoCodes);
-        return Ok(json);
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
-    [HttpPost("ecocode")]
+    [HttpPost("updateecocode")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -99,7 +110,7 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
             {
 
                 _context.EcoCodeLookups.Add(
-                    new EcoCodeLookup()
+                    new EcoKodeLookup()
                     {
                         EcoCode = pair.Key,
                         Nor = pair.Value
