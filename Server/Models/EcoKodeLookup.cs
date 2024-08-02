@@ -2,7 +2,7 @@
 
 namespace Server.Models;
 
-public partial class EcoCodeLookup
+public partial class EcoKodeLookup
 {
     public string? EcoCode { get; set; }
 

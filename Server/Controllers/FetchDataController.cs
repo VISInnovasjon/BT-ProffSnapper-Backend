@@ -20,7 +20,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     ///<returns>Json object of all accumulated data grouped by keys</returns>
     [HttpGet("graphdata")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchAll()
     {
         try
@@ -41,10 +41,10 @@ public class QueryHandler(BtdbContext context) : ControllerBase
             var error = new
             {
                 Message = "An Error Occured.",
-                Details = ex.Message + " " + ex.Data.ToString()
+                Details = ex.Message
 
             };
-            return BadRequest(error);
+            return StatusCode(500, error);
         }
     }
     [HttpGet("workyear")]
@@ -52,12 +52,12 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchWorkYear([FromQuery] QueryParamsForLang query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
         try
         {
             var WorkYears = _context.CompanyEconomicDataPrYears.Count(e => e.EcoCode == "DR" && e.CompanyId != 0);
             Dictionary<string, object> Count = new(){
-                {"text", string.Equals("nor", query.Language) ? "Årsverk": "Man years"},
+                {"text", string.Equals("nor", query.Language) ? "Årsverk": "Man-years"},
                 {"number", WorkYears}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -66,7 +66,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500);
+            return StatusCode(500, ex.Message);
         }
     }
     [HttpGet("workercount")]
@@ -74,7 +74,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchWorkerCount([FromQuery] QueryParamsForLang query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
         try
         {
             var Year = DateTime.Now.Year;
@@ -89,7 +89,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500);
+            return StatusCode(500, ex.Message);
         }
     }
     [HttpGet("totalturnover")]
@@ -97,7 +97,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchTotalTurnover([FromQuery] QueryParamsForLang query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
         try
         {
             var Year = DateTime.Now.Year;
@@ -114,7 +114,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500);
+            return StatusCode(500, ex.Message);
         }
     }
     [HttpGet("companycount")]
@@ -122,7 +122,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchCompanyCount([FromQuery] QueryParamsForLang query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500);
+        if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
         try
         {
             var CompanyCount = _context.CompanyInfos.Count(e => e.CompanyName != null);
@@ -136,7 +136,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500);
+            return StatusCode(500, ex.Message);
         }
     }
     private List<YearDataGroup> FetchYearlyData(BtdbContext _context)
