@@ -31,8 +31,7 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                return StatusCode(500);
+                return StatusCode(500, ex.Message);
             }
             Console.WriteLine("Insert Complete, updating delta.");
             try

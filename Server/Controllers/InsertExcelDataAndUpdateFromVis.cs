@@ -6,7 +6,7 @@ using Server.Context;
 using MiniExcelLibs;
 using Server.Views;
 namespace Server.Controllers;
-/* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); */
+
 
 [ApiController]
 [Route("api")]
@@ -79,7 +79,8 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                 if (NonDuplicateData.Count > 0) CompactedVisBedriftData.AddListToDb(NonDuplicateData, _context);
 
                 if (DuplicateData.Count > 0) CompactedVisBedriftData.UpdateFaseStatus(DuplicateData, _context);
-
+                /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); UNCOMMENT WHEN PROFF API IS ACTIVE*/
+                //START OF LOCAL WORKAROUND BEFORE ACCESS TO PROFF API, COMMENT OUT WHEN PROFF API ACITVE
                 List<ReturnStructure> paramStructures = [];
                 string contentPath = "./LocalData";
                 ReturnStructure? Data = null;
@@ -100,6 +101,7 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                         paramStructures.Add(Data);
                     };
                 }
+                //END OF LOCAL WORKAROUND.
                 foreach (var param in paramStructures)
                 {
                     Console.WriteLine($"Adding {param.Name} to DB");

@@ -1,6 +1,5 @@
-using Server.Views;
+
 using Server.Util;
-using Server.Models;
 using Microsoft.AspNetCore.Mvc;
 using Server.Context;
 using Microsoft.EntityFrameworkCore;
@@ -54,7 +53,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
         try
         {
-            var WorkYears = _context.CompanyEconomicDataPrYears.Select(e => e.CompanyId).Where(id => id != 0).Distinct().Count();
+            var WorkYears = _context.CompanyEconomicDataPrYears.GroupBy(e => new { e.CompanyId, e.Year }).Count();
             Dictionary<string, object> Count = new(){
                 {"text", string.Equals("nor", query.Language) ? "Årsverk": "Man-years"},
                 {"number", WorkYears}
@@ -163,6 +162,22 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         {
             var agegroups = _context.DataSortedByLeaderAges.Select(e => e.AgeGroup).Where(AgeGroup => AgeGroup != null).Distinct().ToList();
             var returnstr = JsonSerializer.Serialize(agegroups);
+            return Ok(returnstr);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
+    }
+    [HttpGet("sexes")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetSexes()
+    {
+        try
+        {
+            var sexes = _context.DataSortedByLeaderSexes.Select(e => e.Sex).Distinct().ToList();
+            var returnstr = JsonSerializer.Serialize(sexes);
             return Ok(returnstr);
         }
         catch (Exception ex)

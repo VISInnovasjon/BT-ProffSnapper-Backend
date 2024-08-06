@@ -28,10 +28,11 @@ public class QueryHandler(BtdbContext context) : ControllerBase
             var FinalDict = new Dictionary<string, List<YearDataGroup>>{
                 {"Total", FetchYearlyData(_context)}
             };
-            /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. */
+            /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. Add grouped data fungerer foreløbig kun hvis group er en string.*/
             AddGroupedData(FinalDict, _context.DataSortedByPhases.ToList(), b => b.Phase);
             AddGroupedData(FinalDict, _context.DataSortedByCompanyBranches.ToList(), b => b.Branch);
             AddGroupedData(FinalDict, _context.DataSortedByLeaderAges.ToList(), b => b.AgeGroup);
+            AddGroupedData(FinalDict, _context.DataSortedByLeaderSexes.ToList(), b => b.Sex);
             var JsonString = JsonSerializer.Serialize(FinalDict);
             return Ok(JsonString);
 
@@ -47,7 +48,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
             return StatusCode(500, error);
         }
     }
-    
+
     private List<YearDataGroup> FetchYearlyData(BtdbContext _context)
     {
         List<YearDataGroup>? groupedData;
