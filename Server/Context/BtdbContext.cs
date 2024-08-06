@@ -33,6 +33,7 @@ public partial class BtdbContext : DbContext
     public virtual DbSet<DataSortedByLeaderAge> DataSortedByLeaderAges { get; set; }
     public virtual DbSet<DataSortedByCompanyBranch> DataSortedByCompanyBranches { get; set; }
     public virtual DbSet<DataSortedByPhase> DataSortedByPhases { get; set; }
+    public virtual DbSet<DataSortedByLeaderSex> DataSortedByLeaderSexes { get; set; }
     public virtual DbSet<AverageValues> AverageValues { get; set; }
     public virtual DbSet<FullView> FullViews { get; set; }
 
@@ -273,6 +274,19 @@ public partial class BtdbContext : DbContext
                 .ToView("data_sorted_by_phase")
                 .HasNoKey();
             entity.Property(e => e.Phase).HasColumnName("phase");
+            entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
+            entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.EcoCode).HasColumnName("eco_code");
+            entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
+        });
+        modelBuilder.Entity<DataSortedByLeaderSex>(entity =>
+        {
+            entity
+                .ToView("data_sorted_by_leader_sex")
+                .HasNoKey();
+            entity.Property(e => e.Sex).HasColumnName("sex");
             entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
             entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
             entity.Property(e => e.Year).HasColumnName("year");

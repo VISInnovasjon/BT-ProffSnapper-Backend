@@ -24,13 +24,11 @@ public class FetchProffData
             {
                 try
                 {
-                    await Task.Delay(1000);
+                    await Task.Delay(100);
                     url = baseUrl + orgNr.ToString();
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    string filePath = $"./LocalData/response{orgNr}.json";
-                    await File.WriteAllTextAsync(filePath, responseBody);
                     ReturnStructure? returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
                     if (returnValue != null) ReturnValues.Add(returnValue);
                 }
