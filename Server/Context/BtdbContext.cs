@@ -300,7 +300,7 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.Accumulated).HasColumnName("accumulated");
             entity.Property(e => e.AdressLine).HasColumnName("adress_line");
             entity.Property(e => e.Branch).HasColumnName("branch");
-            entity.Property(e => e.CodeDescription).HasColumnName("nor");
+            entity.Property(e => e.CodeDescription).HasColumnName("code_description");
             entity.Property(e => e.CompanyName).HasColumnName("company_name");
             entity.Property(e => e.CountryPart).HasColumnName("country_part");
             entity.Property(e => e.County).HasColumnName("county");

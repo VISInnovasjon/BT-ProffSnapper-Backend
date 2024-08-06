@@ -1,50 +1,49 @@
-
-
-using Microsoft.AspNetCore.Mvc;
-using System.Text.Json;
-using Server.Context;
 using Server.Views;
 using Server.Util;
-
+using Server.Models;
+using Microsoft.AspNetCore.Mvc;
+using Server.Context;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 namespace Server.Controllers;
 
 
 [ApiController]
 [Route("api")]
-public class QueryHandler(BtdbContext context) : ControllerBase
+public class UiDataHandler(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
-    ///<summary>
-    ///Accumulates all grouped data used by graph from database.
-    ///</summary>
-    ///<returns>Json object of all accumulated data grouped by keys</returns>
-    [HttpGet("graphdata")]
+    [HttpGet("ecocode")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchAll()
+    public async Task<IActionResult> FetchEcoCodes([FromQuery] QueryParamsForLang query)
     {
         try
         {
-            var FinalDict = new Dictionary<string, List<YearDataGroup>>{
-                {"Total", FetchYearlyData(_context)}
-            };
-            /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. */
-            AddGroupedData(FinalDict, _context.DataSortedByPhases.ToList(), b => b.Phase);
-            AddGroupedData(FinalDict, _context.DataSortedByCompanyBranches.ToList(), b => b.Branch);
-            AddGroupedData(FinalDict, _context.DataSortedByLeaderAges.ToList(), b => b.AgeGroup);
-            var JsonString = JsonSerializer.Serialize(FinalDict);
-            return Ok(JsonString);
-
+            if (string.IsNullOrEmpty(query.Language)) return BadRequest("Missing language");
+            Dictionary<string, string> EcoCodes = [];
+            if (!QueryParamsForLang.CheckQueryParams(query.Language)) return BadRequest("Could not parse your chosen language, please use en or nor");
+            var fetchedCodes = await _context.EcoCodeLookups.ToListAsync();
+            if (fetchedCodes == null) return StatusCode(500);
+            string? desc;
+            foreach (var item in fetchedCodes)
+            {
+                if (item == null) continue;
+                if (item.EcoCode == null) continue;
+                if (query.Language == "nor") desc = item.Nor;
+                else desc = item.En;
+                desc ??= "Missing Description";
+                EcoCodes.Add(
+                    item.EcoCode, desc
+                );
+            }
+            var json = JsonSerializer.Serialize(EcoCodes);
+            return Ok(json);
         }
         catch (Exception ex)
         {
-            var error = new
-            {
-                Message = "An Error Occured.",
-                Details = ex.Message
-
-            };
-            return StatusCode(500, error);
+            return StatusCode(500, ex.Message);
         }
     }
     [HttpGet("workyear")]
@@ -55,7 +54,7 @@ public class QueryHandler(BtdbContext context) : ControllerBase
         if (!QueryParamsForLang.CheckQueryParams(query.Language)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
         try
         {
-            var WorkYears = _context.CompanyEconomicDataPrYears.Count(e => e.EcoCode == "DR" && e.CompanyId != 0);
+            var WorkYears = _context.CompanyEconomicDataPrYears.Select(e => e.CompanyId).Where(id => id != 0).Distinct().Count();
             Dictionary<string, object> Count = new(){
                 {"text", string.Equals("nor", query.Language) ? "Årsverk": "Man-years"},
                 {"number", WorkYears}
@@ -139,63 +138,52 @@ public class QueryHandler(BtdbContext context) : ControllerBase
             return StatusCode(500, ex.Message);
         }
     }
-    private List<YearDataGroup> FetchYearlyData(BtdbContext _context)
+    [HttpGet("branch")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetBrands()
     {
-        List<YearDataGroup>? groupedData;
-        var data = _context.AverageValues.ToList();
-        groupedData = data
-            .GroupBy(b => b.Year)
-            .Select(g => new YearDataGroup
-            {
-                Year = g.Key,
-                values = g.ToDictionary(
-                    b => b.EcoCode ?? "Code Missing",
-                    b => new ExtractedEcoCodeValues(
-                        b.AvgEcoValue, b.AvgDelta, b.TotalAccumulated, b.UniqueCompanyCount
-                    )
-                )
-            }).ToList();
-        return groupedData;
-    }
-    private void AddGroupedData<T>(Dictionary<string, List<YearDataGroup>> finalDict, List<T> dataList, Func<T, string?> groupSelector) where T : class
-    {
-        var groups = dataList.Select(groupSelector).Distinct().ToList();
-        foreach (var group in groups)
+        try
         {
-            if (!string.IsNullOrEmpty(group))
-            {
-                var data = dataList.Where(b => groupSelector(b) == group).ToList();
-                finalDict[group] = FetchGroupData(data);
-            }
+            var branch = _context.CompanyInfos.Select(e => e.Branch).Where(branch => branch != null).Distinct().ToList();
+            var returnstr = JsonSerializer.Serialize(branch);
+            return Ok(returnstr);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
         }
     }
-
-    private List<YearDataGroup> FetchGroupData<T>(List<T> dataList)
+    [HttpGet("agegroups")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetAgeGroups()
     {
-        var groupedData = dataList
-                .GroupBy(b => (int)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "Year"))
-                .Select(g => new YearDataGroup
-                {
-                    Year = g.Key,
-                    values = g.ToDictionary(
-                        b => (string)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "EcoCode") ?? "Code Missing",
-                          b => new ExtractedEcoCodeValues(
-                            (decimal)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "AvgEcoValue"),
-                            (decimal)GetPropertyValue(b, "AvgDelta"),
-                            (decimal)GetPropertyValue(b, "TotalAccumulated"),
-                            (int)GetPropertyValue(b, "UniqueCompanyCount")
-                        )
-                    )
-                })
-                .ToList();
-        return groupedData;
+        try
+        {
+            var agegroups = _context.DataSortedByLeaderAges.Select(e => e.AgeGroup).Where(AgeGroup => AgeGroup != null).Distinct().ToList();
+            var returnstr = JsonSerializer.Serialize(agegroups);
+            return Ok(returnstr);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
-    private object GetPropertyValue(object obj, string propertyName)
+    [HttpGet("fases")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetFases()
     {
-        var property = obj.GetType().GetProperty(propertyName) ?? throw new NullReferenceException("Missing Property");
-        return property.GetValue(obj) ?? throw new NullReferenceException("PropertyValue is null");
+        try
+        {
+            var phases = _context.CompanyPhaseStatusOverviews.Select(e => e.Phase).Where(phase => phase != null).Distinct().ToList();
+            var returnstr = JsonSerializer.Serialize(phases);
+            return Ok(returnstr);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 }
-
-
-
