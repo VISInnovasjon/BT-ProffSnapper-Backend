@@ -8,8 +8,9 @@ public class QueryParamsForTable
 public class QueryParamsForLang
 {
     public string? Language { get; set; }
-    public static bool CheckQueryParams(string? param)
+    public string? Year { get; set; }
+    public static bool CheckQueryParams(QueryParamsForLang query)
     {
-        return string.Equals(param, "en") || string.Equals(param, "nor");
+        return !string.IsNullOrEmpty(query.Language) && string.Equals(query.Language, "en") || string.Equals(query.Language, "nor") && !string.IsNullOrEmpty(query.Year);
     }
 }
