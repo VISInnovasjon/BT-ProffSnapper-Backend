@@ -384,7 +384,7 @@ public class InsertGeneralInfoStructure
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdateYear} to Integer");
         InputYear = output;
         parseSuccess = int.TryParse(NumberOfEmployees, out output);
-        if (!parseSuccess) InputNumberOfEmployees = 1;
+        if (!parseSuccess) InputNumberOfEmployees = 2;
         else InputNumberOfEmployees = output;
         InputCountryPart = location.CountryPart;
         InputCounty = location.County;
