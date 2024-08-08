@@ -19,7 +19,7 @@ public class GetFullModelExcel : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<Results<FileStreamHttpResult, NotFound, StatusCodeHttpResult>> GetFullModel()
+    public async Task<IActionResult> GetFullModel()
     {
         try
         {
@@ -68,19 +68,27 @@ public class GetFullModelExcel : ControllerBase
             };
             if (viewList == null || viewList.Count == 0)
             {
-                return TypedResults.NotFound();
+                return NotFound();
             }
             var memStream = new MemoryStream();
             Console.WriteLine("saving to stream");
             await memStream.SaveAsAsync(ExcelSheets);
             Console.WriteLine("save completed");
             memStream.Seek(0, SeekOrigin.Begin);
-            return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"FullView{now}.xlsx");
+            return File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"FullView{now}.xlsx");
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return TypedResults.StatusCode(500);
+            return StatusCode(500, new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Noe gikk galt.",
+                    "en" => "Something went wrong",
+                    _ => "Server Error"
+                }
+            });
         }
     }
 }
