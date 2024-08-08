@@ -30,6 +30,7 @@ public partial class BtdbContext : DbContext
     public virtual DbSet<CompanyEconomicDataPrYear> CompanyEconomicDataPrYears { get; set; }
 
     public virtual DbSet<EcoKodeLookup> EcoCodeLookups { get; set; }
+    public virtual DbSet<SiteText> SiteTexts { get; set; }
     public virtual DbSet<DataSortedByLeaderAge> DataSortedByLeaderAges { get; set; }
     public virtual DbSet<DataSortedByCompanyBranch> DataSortedByCompanyBranches { get; set; }
     public virtual DbSet<DataSortedByPhase> DataSortedByPhases { get; set; }
@@ -232,13 +233,22 @@ public partial class BtdbContext : DbContext
         {
             entity
                 .ToTable("eco_kode_lookup")
-                .HasNoKey();
+                .HasKey(e => new { e.EcoCode, e.Nor });
 
             entity.Property(e => e.Nor).HasColumnName("nor");
             entity.Property(e => e.En).HasColumnName("en");
             entity.Property(e => e.EcoCode)
                 .HasMaxLength(255)
                 .HasColumnName("eco_code");
+        });
+        modelBuilder.Entity<SiteText>(entity =>
+        {
+            entity
+                .ToTable("site_text")
+                .HasKey(e => e.Def);
+            entity.Property(e => e.Def).HasColumnName("def");
+            entity.Property(e => e.En).HasColumnName("en");
+            entity.Property(e => e.Nor).HasColumnName("nor");
         });
         modelBuilder.Entity<DataSortedByLeaderAge>(entity =>
             {
