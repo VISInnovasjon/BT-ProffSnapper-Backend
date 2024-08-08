@@ -2,6 +2,7 @@ using dotenv.net;
 using Microsoft.EntityFrameworkCore;
 using Server.Context;
 using Server.BackgroundServices;
+using Server.Controllers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -11,6 +12,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.WebHost.UseUrls("http://0.0.0.0");
 DotEnv.Load();
+GlobalLanguage.Language = "nor";
 builder.Services.AddDbContext<BtdbContext>(options =>
 {
     options.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").EnableDetailedErrors();

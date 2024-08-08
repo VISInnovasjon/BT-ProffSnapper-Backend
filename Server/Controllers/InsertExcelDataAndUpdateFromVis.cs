@@ -33,13 +33,29 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest("No file uploaded");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
+                    _ => "Server Error"
+                }
+            });
 
         }
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (extension != ".xlsx")
         {
-            return BadRequest("Invalid Fileformat. Please upload an Excel file");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
+                    _ => "Server Error"
+                }
+            });
         }
         List<CompanyInfo> refreshList = _context.CompanyInfos.AsNoTracking().ToList();
         foreach (var item in refreshList)
@@ -59,7 +75,10 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    return BadRequest(new
+                    {
+                        error = ex.Message
+                    });
                 }
 
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
@@ -131,7 +150,10 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
 
     }
@@ -142,13 +164,29 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest("No file uploaded");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Mangler fil.",
+                    "en" => "Missing file.",
+                    _ => "Server Error",
+                }
+            });
 
         }
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (extension != ".xlsx")
         {
-            return BadRequest("Invalid Fileformat. Please upload an Excel file");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
+                    _ => "Server Error"
+                }
+            });
         }
         List<int> orgNrs = [];
         using (var stream = file.OpenReadStream())
@@ -162,13 +200,29 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
             }
             catch (Exception ex)
             {
-                return BadRequest($"Error reading the file: {ex.Message}");
+                return BadRequest(new
+                {
+                    error = GlobalLanguage.Language switch
+                    {
+                        "nor" => $"Noe gikk galt med å lese filen {ex.Message}",
+                        "en" => $"Something went wrong reading the file {ex.Message}",
+                        _ => "Server Error"
+                    }
+                });
             }
         }
         var entriesToDelete = _context.CompanyInfos.Where(b => orgNrs.Contains(b.Orgnumber)).ToList();
         if (entriesToDelete.Count == 0)
         {
-            return NotFound("Could not find any Organisation Numbers corresponding to the file.");
+            return NotFound(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Kunne ikke finne noen organisasjoner som matchet de listede organisasjonsnummerene.",
+                    "en" => "Could not find any organisations with the listet organisation numbers",
+                    _ => "Server Error"
+                }
+            });
         }
         _context.CompanyInfos.RemoveRange(entriesToDelete);
         try
@@ -178,7 +232,15 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"An Error Occured while deleting: {ex.Message}");
+            return StatusCode(500, new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => $"Noe gikk galt ved sletting av data: {ex.Message}",
+                    "en" => $"Something went wrong deleting data: {ex.Message}",
+                    _ => "Server Error"
+                }
+            });
         }
     }
 }

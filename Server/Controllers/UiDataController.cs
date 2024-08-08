@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Server.Context;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Server.Views;
 namespace Server.Controllers;
 
 
@@ -16,22 +17,24 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> FetchEcoCodes([FromQuery] QueryParamsForLang query)
+    public async Task<IActionResult> FetchEcoCodes()
     {
         try
         {
             Dictionary<string, string> EcoCodes = [];
-            if (string.IsNullOrEmpty(query.Language)) return BadRequest("Could not parse your chosen language, please use en or nor");
             var fetchedCodes = await _context.EcoCodeLookups.ToListAsync();
-            if (fetchedCodes == null) return StatusCode(500);
+            if (fetchedCodes == null) return StatusCode(500, new
+            {
+                error = ErrorText(500)
+            });
             string? desc;
             foreach (var item in fetchedCodes)
             {
                 if (item == null) continue;
                 if (item.EcoCode == null) continue;
-                if (query.Language == "nor") desc = item.Nor;
-                else desc = item.En;
-                desc ??= "Missing Description";
+                if (string.Equals(GlobalLanguage.Language, "nor")) desc = item.Nor;
+                else if (string.Equals(GlobalLanguage.Language, "en")) desc = item.En;
+                else desc = "Missing Language";
                 EcoCodes.Add(
                     item.EcoCode, desc
                 );
@@ -41,21 +44,33 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("workyear")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchWorkYear([FromQuery] QueryParamsForLang query)
+    public IActionResult FetchWorkYear([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
+        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
+        {
+            error = ErrorText(400)
+        });
         try
         {
             int QueryYear = int.Parse(query.Year);
             var WorkYears = _context.CompanyEconomicDataPrYears.Where(e => e.Year <= QueryYear).GroupBy(e => new { e.CompanyId, e.Year }).Count();
             Dictionary<string, object> Count = new(){
-                {"text", string.Equals("nor", query.Language) ? "Antall Rapporter": "Number of Reports"},
+                {"text", GlobalLanguage.Language switch
+                {
+                    "nor" => "Antall Rapporter",
+                    "en" => "Number of reports",
+                    _ => "Missing Language",
+                }},
                 {"number", WorkYears}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -64,21 +79,33 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("workercount")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchWorkerCount([FromQuery] QueryParamsForLang query)
+    public IActionResult FetchWorkerCount([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
+        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
+        {
+            error = ErrorText(400)
+        });
         try
         {
             int Year = DateTime.Now.Year;
             var WorkerCount = _context.GeneralYearlyUpdatedCompanyInfos.Where(e => e.Year == Year - 1 || e.Year == Year - 2).Sum(e => e.NumberOfEmployees);
             Dictionary<string, object> Count = new(){
-                {"text", string.Equals("nor", query.Language) ? "Arbeidsplasser" : "Number of employees"},
+                {"text", GlobalLanguage.Language switch
+                {
+                    "nor" => "Arbeidsplasser",
+                    "en" => "Number of employees",
+                    _ => "Missing Language",
+                }},
                 {"number", WorkerCount ?? 0}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -87,22 +114,34 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("totalturnover")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchTotalTurnover([FromQuery] QueryParamsForLang query)
+    public IActionResult FetchTotalTurnover([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
+        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
+        {
+            error = ErrorText(400)
+        });
         try
         {
             var Year = int.Parse(query.Year);
             var TotalTurnover = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == Year || e.Year == Year - 1)).Select(e => e.TotalAccumulated).ToList();
             TotalTurnover.Reverse();
             Dictionary<string, object> Count = new(){
-                {"text", string.Equals("nor", query.Language) ? "Akkumulert Omsetning" : "Accumulated Turnover"},
+                {"text", GlobalLanguage.Language switch
+                {
+                    "nor" => "Akkumulert Omsetning",
+                    "en" => "Accumulated Turnover",
+                    _ => "Missing Language",
+                }},
                 {"number", TotalTurnover[0]}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -111,20 +150,32 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("companycount")]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public IActionResult FetchCompanyCount([FromQuery] QueryParamsForLang query)
+    public IActionResult FetchCompanyCount([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamsForLang.CheckQueryParams(query)) return StatusCode(500, "Missing language tag in query. Codes nor or en supported.");
+        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
+        {
+            error = ErrorText(400)
+        });
         try
         {
             var CompanyCount = _context.CompanyInfos.Count(e => e.CompanyName != null);
             Dictionary<string, object> Count = new(){
-                {"text", string.Equals("nor", query.Language) ? "Antall bedrifter":"Company count"},
+                {"text", GlobalLanguage.Language switch
+                {
+                    "nor" => "Antall bedrifter",
+                    "en" => "Number of companies",
+                    _ => "Missing Language",
+                }},
                 {"number", CompanyCount}
             };
             var JsonString = JsonSerializer.Serialize(Count);
@@ -133,7 +184,10 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("branch")]
@@ -149,7 +203,10 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("agegroups")]
@@ -165,7 +222,10 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("sexes")]
@@ -181,7 +241,10 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
     }
     [HttpGet("fases")]
@@ -197,7 +260,31 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
+    }
+    private static string ErrorText(int code)
+    {
+        switch (code)
+        {
+            case 500:
+                return GlobalLanguage.Language switch
+                {
+                    "nor" => "Noe gikk galt med å fetche fra databasen.",
+                    "en" => "Something went wrong fetching from the database",
+                    _ => "Server error",
+                };
+            case 400:
+                return GlobalLanguage.Language switch
+                {
+                    "nor" => "Mangler år i query parameter.",
+                    "en" => "Missing Year In Query Param.",
+                    _ => "Server error",
+                };
+        }
+        return "Server error";
     }
 }

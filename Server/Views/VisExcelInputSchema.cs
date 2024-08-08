@@ -1,5 +1,6 @@
 using MiniExcelLibs;
 using Server.Context;
+using Server.Controllers;
 using Server.Models;
 namespace Server.Views;
 
@@ -24,7 +25,12 @@ public class RawVisBedriftData
         if (WrongOrgNr.Count > 0)
         {
             string OrgNrs = string.Join(", ", WrongOrgNr);
-            throw new ArgumentOutOfRangeException($"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}");
+            throw new ArgumentOutOfRangeException(GlobalLanguage.Language switch
+            {
+                "nor" => $"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}",
+                "en" => $"The following orgnumbers can be miswritten, please verify and try again {OrgNrs}",
+                _ => "Server Error"
+            });
         }
         ensureOrgNr.Sort((a, b) => a.Orgnummer.CompareTo(b.Orgnummer));
         return ensureOrgNr;
