@@ -13,4 +13,8 @@ public class QueryParamsForLang
     {
         return !string.IsNullOrEmpty(query.Language) && string.Equals(query.Language, "en") || string.Equals(query.Language, "nor") && !string.IsNullOrEmpty(query.Year);
     }
+    public static bool CheckLangParamOnly(QueryParamsForLang query)
+    {
+        return !string.IsNullOrEmpty(query.Language) && string.Equals(query.Language, "en") || string.Equals(query.Language, "nor");
+    }
 }
