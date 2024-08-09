@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Server.Context;
 using Server.Util;
-using System.Security.Cryptography;
 using System.Text.Json;
 namespace Server.Controllers;
 
