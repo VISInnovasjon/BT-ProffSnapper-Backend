@@ -5,17 +5,17 @@ using Server.Views;
 namespace Server.Controllers;
 
 [ApiController]
-[Route("template")]
+[Route("api")]
 public class ExcelTemplateMaker : ControllerBase
 {
     ///<summary>
     ///Generates a template on how to set up excel spreadsheet for orgnumbers.
     ///</summary>
     ///<returns>Excel Template File</returns>
-    [HttpGet("orgnummer")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [HttpGet("orgnummertemplate")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<Results<FileStreamHttpResult, NotFound>> SendOrgNrTemplate()
+    public async Task<IActionResult> SendOrgNrTemplate()
     {
         try
         {
@@ -23,22 +23,22 @@ public class ExcelTemplateMaker : ControllerBase
             var memStream = new MemoryStream();
             await memStream.SaveAsAsync(orgTemplate);
             memStream.Seek(0, SeekOrigin.Begin);
-            return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"orgnummerTemplate.xlsx");
+            return File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"orgnummerTemplate.xlsx");
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return TypedResults.NotFound();
+            return NotFound();
         }
     }
     ///<summary>
     ///Generates a template on how to set up excel spreadsheet for updating DB with new entries.
     ///</summary>
     ///<returns>Excel Template File</returns>
-    [HttpGet("dbupdate")]
+    [HttpGet("dbupdatetemplate")]
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<Results<FileStreamHttpResult, NotFound>> SendDbUpdateTemplate()
+    public async Task<IActionResult> SendDbUpdateTemplate()
     {
         try
         {
@@ -59,12 +59,12 @@ public class ExcelTemplateMaker : ControllerBase
             var memStream = new MemoryStream();
             await memStream.SaveAsAsync(sheets);
             memStream.Seek(0, SeekOrigin.Begin);
-            return TypedResults.File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"updateDbTemplate.xlsx");
+            return File(memStream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", $"updateDbTemplate.xlsx");
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return TypedResults.NotFound();
+            return NotFound();
         }
     }
 }

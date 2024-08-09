@@ -4,12 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Server.Context;
 using Server.Views;
+using Server.Util;
 
 namespace Server.Controllers;
 
 
 [ApiController]
-[Route("query")]
+[Route("api")]
 public class QueryHandler(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
@@ -17,20 +18,21 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     ///Accumulates all grouped data used by graph from database.
     ///</summary>
     ///<returns>Json object of all accumulated data grouped by keys</returns>
-    [HttpGet("getall")]
+    [HttpGet("graphdata")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchAll()
     {
         try
         {
             var FinalDict = new Dictionary<string, List<YearDataGroup>>{
-                {"Total Gjennomsnitt", FetchYearlyData(_context)}
+                {"Total", FetchYearlyData(_context)}
             };
-            /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. */
-            AddGroupedData(FinalDict, _context.DataSortertEtterFases.ToList(), b => b.Fase);
-            AddGroupedData(FinalDict, _context.DataSortertEtterBransjes.ToList(), b => b.Bransje);
-            AddGroupedData(FinalDict, _context.DataSortertEtterAldersGruppes.ToList(), b => b.AldersGruppe);
+            /* For å legge til flere views må det bare legges til en ny AddGroupedData for hver view her. Add grouped data fungerer foreløbig kun hvis group er en string.*/
+            AddGroupedData(FinalDict, _context.DataSortedByPhases.ToList(), b => b.Phase);
+            AddGroupedData(FinalDict, _context.DataSortedByCompanyBranches.ToList(), b => b.Branch);
+            AddGroupedData(FinalDict, _context.DataSortedByLeaderAges.ToList(), b => b.AgeGroup);
+            AddGroupedData(FinalDict, _context.DataSortedByLeaderSexes.ToList(), b => b.Sex);
             var JsonString = JsonSerializer.Serialize(FinalDict);
             return Ok(JsonString);
 
@@ -40,25 +42,26 @@ public class QueryHandler(BtdbContext context) : ControllerBase
             var error = new
             {
                 Message = "An Error Occured.",
-                Details = ex.Message + " " + ex.Data.ToString()
+                Details = ex.Message
 
             };
-            return BadRequest(error);
+            return StatusCode(500, error);
         }
     }
+
     private List<YearDataGroup> FetchYearlyData(BtdbContext _context)
     {
         List<YearDataGroup>? groupedData;
-        var data = _context.GjennomsnittVerdiers.ToList();
+        var data = _context.AverageValues.ToList();
         groupedData = data
-            .GroupBy(b => b.RapportÅr)
+            .GroupBy(b => b.Year)
             .Select(g => new YearDataGroup
             {
                 Year = g.Key,
                 values = g.ToDictionary(
-                    b => b.ØkoKode ?? "Code Missing",
+                    b => b.EcoCode ?? "Code Missing",
                     b => new ExtractedEcoCodeValues(
-                        b.AvgØkoVerdi, b.AvgDelta, b.AvgAkkumulert, b.KodeBeskrivelse
+                        b.AvgEcoValue, b.AvgDelta, b.TotalAccumulated, b.UniqueCompanyCount
                     )
                 )
             }).ToList();
@@ -80,17 +83,17 @@ public class QueryHandler(BtdbContext context) : ControllerBase
     private List<YearDataGroup> FetchGroupData<T>(List<T> dataList)
     {
         var groupedData = dataList
-                .GroupBy(b => (int)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "RapportÅr"))
+                .GroupBy(b => (int)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "Year"))
                 .Select(g => new YearDataGroup
                 {
                     Year = g.Key,
                     values = g.ToDictionary(
-                        b => (string)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "ØkoKode") ?? "Kode Mangler",
+                        b => (string)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "EcoCode") ?? "Code Missing",
                           b => new ExtractedEcoCodeValues(
-                            (decimal)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "AvgØkoVerdi"),
+                            (decimal)GetPropertyValue(b ?? throw new NullReferenceException($"Missing Object Reference {b}"), "AvgEcoValue"),
                             (decimal)GetPropertyValue(b, "AvgDelta"),
-                            (decimal)GetPropertyValue(b, "AvgAkkumulert"),
-                            (string)GetPropertyValue(b, "KodeBeskrivelse")
+                            (decimal)GetPropertyValue(b, "TotalAccumulated"),
+                            (int)GetPropertyValue(b, "UniqueCompanyCount")
                         )
                     )
                 })

@@ -6,11 +6,11 @@ using Server.Context;
 using MiniExcelLibs;
 using Server.Views;
 namespace Server.Controllers;
-/* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); */
+
 
 [ApiController]
-[Route("/updatedb")]
-public class ExcelTestController(BtdbContext context) : ControllerBase
+[Route("api")]
+public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
     private readonly JsonSerializerOptions jsonOptions = new()
@@ -24,23 +24,40 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
     ///</summary>
     ///<param name="file">Excel spreadsheed following dbupdateTemplate</param>
     ///<returns> OK or Bad Request on missing, or error prone file</returns>
-    [HttpPost("newdata")]
-    [ProducesResponseType(StatusCodes.Status201Created)]
+    [HttpPost("updatewithnewdata")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> Create([FromForm] IFormFile file)
 
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest("No file uploaded");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
+                    _ => "Server Error"
+                }
+            });
 
         }
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (extension != ".xlsx")
         {
-            return BadRequest("Invalid Fileformat. Please upload an Excel file");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
+                    _ => "Server Error"
+                }
+            });
         }
-        List<BedriftInfo> refreshList = _context.BedriftInfos.AsNoTracking().ToList();
+        List<CompanyInfo> refreshList = _context.CompanyInfos.AsNoTracking().ToList();
         foreach (var item in refreshList)
         {
             _context.Entry(item).Reload();
@@ -58,14 +75,17 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(ex.Message);
+                    return BadRequest(new
+                    {
+                        error = ex.Message
+                    });
                 }
 
                 var compactData = CompactedVisBedriftData.ListOfCompactedVisExcelSheet(RawData);
 
                 orgNrArray = CompactedVisBedriftData.GetOrgNrArray(compactData);
 
-                List<int> DbOrgNrArrays = _context.BedriftInfos.Select(b => b.Orgnummer).ToList();
+                List<int> DbOrgNrArrays = _context.CompanyInfos.Select(b => b.Orgnumber).ToList();
 
                 List<int> NonDuplicateOrgNrs = orgNrArray.Except(DbOrgNrArrays).ToList();
 
@@ -78,7 +98,8 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
                 if (NonDuplicateData.Count > 0) CompactedVisBedriftData.AddListToDb(NonDuplicateData, _context);
 
                 if (DuplicateData.Count > 0) CompactedVisBedriftData.UpdateFaseStatus(DuplicateData, _context);
-
+                /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); UNCOMMENT WHEN PROFF API IS ACTIVE*/
+                //START OF LOCAL WORKAROUND BEFORE ACCESS TO PROFF API, COMMENT OUT WHEN PROFF API ACITVE
                 List<ReturnStructure> paramStructures = [];
                 string contentPath = "./LocalData";
                 ReturnStructure? Data = null;
@@ -99,6 +120,7 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
                         paramStructures.Add(Data);
                     };
                 }
+                //END OF LOCAL WORKAROUND.
                 foreach (var param in paramStructures)
                 {
                     Console.WriteLine($"Adding {param.Name} to DB");
@@ -111,10 +133,11 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
                         Console.WriteLine(ex.Message);
                     }
                 }
-                Console.WriteLine("Insert Complete, updating delta.");
+                Console.WriteLine("Insert Complete, updating delta and views.");
                 try
                 {
-                    _context.Database.ExecuteSqlRaw("SELECT update_delta()");
+                    await _context.Database.ExecuteSqlRawAsync("CALL update_delta()");
+                    await _context.Database.ExecuteSqlRawAsync("CALL update_views()");
 
                 }
                 catch (Exception ex)
@@ -127,7 +150,10 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
         }
 
     }
@@ -138,13 +164,29 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest("No file uploaded");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Mangler fil.",
+                    "en" => "Missing file.",
+                    _ => "Server Error",
+                }
+            });
 
         }
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (extension != ".xlsx")
         {
-            return BadRequest("Invalid Fileformat. Please upload an Excel file");
+            return BadRequest(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
+                    _ => "Server Error"
+                }
+            });
         }
         List<int> orgNrs = [];
         using (var stream = file.OpenReadStream())
@@ -158,15 +200,31 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
             }
             catch (Exception ex)
             {
-                return BadRequest($"Error reading the file: {ex.Message}");
+                return BadRequest(new
+                {
+                    error = GlobalLanguage.Language switch
+                    {
+                        "nor" => $"Noe gikk galt med å lese filen {ex.Message}",
+                        "en" => $"Something went wrong reading the file {ex.Message}",
+                        _ => "Server Error"
+                    }
+                });
             }
         }
-        var entriesToDelete = _context.BedriftInfos.Where(b => orgNrs.Contains(b.Orgnummer)).ToList();
+        var entriesToDelete = _context.CompanyInfos.Where(b => orgNrs.Contains(b.Orgnumber)).ToList();
         if (entriesToDelete.Count == 0)
         {
-            return NotFound("Could not find any Organisation Numbers corresponding to the file.");
+            return NotFound(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => "Kunne ikke finne noen organisasjoner som matchet de listede organisasjonsnummerene.",
+                    "en" => "Could not find any organisations with the listet organisation numbers",
+                    _ => "Server Error"
+                }
+            });
         }
-        _context.BedriftInfos.RemoveRange(entriesToDelete);
+        _context.CompanyInfos.RemoveRange(entriesToDelete);
         try
         {
             _context.SaveChanges();
@@ -174,7 +232,15 @@ public class ExcelTestController(BtdbContext context) : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"An Error Occured while deleting: {ex.Message}");
+            return StatusCode(500, new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => $"Noe gikk galt ved sletting av data: {ex.Message}",
+                    "en" => $"Something went wrong deleting data: {ex.Message}",
+                    _ => "Server Error"
+                }
+            });
         }
     }
 }

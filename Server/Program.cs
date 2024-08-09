@@ -1,7 +1,8 @@
 using dotenv.net;
 using Microsoft.EntityFrameworkCore;
 using Server.Context;
-using Server.Util;
+using Server.BackgroundServices;
+using Server.Controllers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -9,8 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-builder.WebHost.UseUrls("http://0.0.0.0:5000");
-DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "../.env" }, ignoreExceptions: false));
+builder.WebHost.UseUrls("http://0.0.0.0");
+DotEnv.Load();
+GlobalLanguage.Language = "nor";
 builder.Services.AddDbContext<BtdbContext>(options =>
 {
     options.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").EnableDetailedErrors();
@@ -19,7 +21,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", builder =>
     {
-        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Content-Disposition");
     });
 });
 builder.Services.AddHostedService<ScheduleUpdateFromProff>();
@@ -47,10 +49,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-
+app.UseStaticFiles();
+app.UseRouting();
 app.MapControllers();
+app.MapFallbackToFile("./index.html");
 app.UseCors("AllowAll");
-
 app.Run();
-

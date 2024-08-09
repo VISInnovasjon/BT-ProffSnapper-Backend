@@ -1,10 +1,11 @@
 /* WIP */
 
-namespace Server.Util;
+namespace Server.BackgroundServices;
 using Server.Context;
 using Server.Views;
 using Microsoft.EntityFrameworkCore;
-
+/* REWRITE THIS WITH AZURE FUNCTIONS IN MIND FOR QUARTERLY UPDATES. */
+/* NOT IN USE, USE UPDATE DATA ENDPOINT WITH AZURE FUNCTIONS INSTEAD */
 public class ScheduleUpdateFromProff : BackgroundService
 {
     private readonly IServiceProvider _provider;

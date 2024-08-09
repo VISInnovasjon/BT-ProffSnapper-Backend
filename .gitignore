@@ -8,3 +8,5 @@ ProffReturnExamle.json
 LocalData/
 Server/obj
 Server/bin
+backups
+postgresdowngrade/

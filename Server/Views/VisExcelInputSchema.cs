@@ -1,5 +1,6 @@
 using MiniExcelLibs;
 using Server.Context;
+using Server.Controllers;
 using Server.Models;
 namespace Server.Views;
 
@@ -16,21 +17,22 @@ public class RawVisBedriftData
         var rows = await stream.QueryAsync<RawVisBedriftData>(sheetName: excelSheetName);
 
         var ensureOrgNr = rows.Where(row => row.Orgnummer != 0).ToList();
-        List<int> WrongOrgNr = new() { };
+        List<int> WrongOrgNr = [];
         foreach (var org in ensureOrgNr)
         {
-            if (org.Orgnummer.ToString().Length < 9) WrongOrgNr.Add(org.Orgnummer);
+            if (org.Orgnummer.ToString().Length < 9 || org.Orgnummer.ToString().Length > 9) WrongOrgNr.Add(org.Orgnummer);
         }
         if (WrongOrgNr.Count > 0)
         {
             string OrgNrs = string.Join(", ", WrongOrgNr);
-            throw new ArgumentOutOfRangeException($"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}");
+            throw new ArgumentOutOfRangeException(GlobalLanguage.Language switch
+            {
+                "nor" => $"De følgende Orgnummere kan være skrevet feil, vennligst rett og prøv igjen: {OrgNrs}",
+                "en" => $"The following orgnumbers can be miswritten, please verify and try again {OrgNrs}",
+                _ => "Server Error"
+            });
         }
         ensureOrgNr.Sort((a, b) => a.Orgnummer.CompareTo(b.Orgnummer));
-        foreach (var orgnr in ensureOrgNr)
-        {
-            Console.WriteLine(orgnr.Orgnummer);
-        }
         return ensureOrgNr;
     }
 
@@ -75,16 +77,16 @@ public class CompactedVisBedriftData
         {
             try
             {
-                var companyData = new BedriftInfo
+                var companyData = new CompanyInfo
                 {
-                    Orgnummer = company.Orgnummer,
-                    Bransje = company.Bransje,
-                    KvinneligGrunder = company.KvinneligGrunder == 1
+                    Orgnumber = company.Orgnummer,
+                    Branch = company.Bransje,
+                    FemaleEntrepreneur = company.KvinneligGrunder == 1
                 };
 
-                context.BedriftInfos.Add(companyData);
+                context.CompanyInfos.Add(companyData);
                 context.SaveChanges();
-                var bedriftId = companyData.BedriftId;
+                var companyId = companyData.CompanyId;
                 /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
                 var årFaseOversikt = new Dictionary<int, string>();
                 for (int i = 0; i < company.RapportÅr.Count; i++)
@@ -93,13 +95,13 @@ public class CompactedVisBedriftData
                 }
                 foreach (var pair in årFaseOversikt)
                 {
-                    var faseData = new OversiktBedriftFaseStatus
+                    var faseData = new CompanyPhaseStatusOverview
                     {
-                        Fase = pair.Value,
-                        Rapportår = pair.Key,
-                        BedriftId = bedriftId
+                        Phase = pair.Value,
+                        Year = pair.Key,
+                        CompanyId = companyId
                     };
-                    context.OversiktBedriftFaseStatuses.Add(faseData);
+                    context.CompanyPhaseStatusOverviews.Add(faseData);
                 }
 
             }
@@ -114,7 +116,7 @@ public class CompactedVisBedriftData
     {
         foreach (var company in data)
         {
-            var bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == company.Orgnummer).BedriftId;
+            var companyId = context.CompanyInfos.Single(b => b.Orgnumber == company.Orgnummer).CompanyId;
             /* extracter siste verdien for hvert år. Letter å gjøre her hvor de allerede er paired med en bedrift. */
             var årFaseOversikt = new Dictionary<int, string>();
             for (int i = 0; i < company.RapportÅr.Count; i++)
@@ -123,19 +125,19 @@ public class CompactedVisBedriftData
             }
             foreach (var pair in årFaseOversikt)
             {
-                var faseData = new OversiktBedriftFaseStatus
+                var faseData = new CompanyPhaseStatusOverview
                 {
-                    Fase = pair.Value,
-                    Rapportår = pair.Key,
-                    BedriftId = bedriftId
+                    Phase = pair.Value,
+                    Year = pair.Key,
+                    CompanyId = companyId
                 };
-                if (!context.OversiktBedriftFaseStatuses.Any(b => b.Rapportår == faseData.Rapportår && b.BedriftId == faseData.BedriftId && b.Fase == faseData.Fase)) context.OversiktBedriftFaseStatuses.Add(faseData);
+                if (!context.CompanyPhaseStatusOverviews.Any(b => b.Year == faseData.Year && b.CompanyId == faseData.CompanyId && b.Phase == faseData.Phase)) context.CompanyPhaseStatusOverviews.Add(faseData);
             }
         }
     }
     public static List<int> GetOrgNrArray(List<CompactedVisBedriftData> data)
     {
-        List<int> orgNrArray = new();
+        List<int> orgNrArray = [];
         foreach (var compactData in data)
         {
             orgNrArray.Add(compactData.Orgnummer);

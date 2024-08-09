@@ -15,301 +15,332 @@ public partial class BtdbContext : DbContext
     {
     }
 
-    public virtual DbSet<BedriftInfo> BedriftInfos { get; set; }
+    public virtual DbSet<CompanyInfo> CompanyInfos { get; set; }
 
-    public virtual DbSet<BedriftKunngjøringer> BedriftKunngjøringers { get; set; }
+    public virtual DbSet<CompanyAnnouncement> CompanyAnnouncements { get; set; }
 
-    public virtual DbSet<BedriftLederOversikt> BedriftLederOversikts { get; set; }
+    public virtual DbSet<CompanyLeaderOverview> CompanyLeaderOverviews { get; set; }
 
-    public virtual DbSet<BedriftShareholderInfo> BedriftShareholderInfos { get; set; }
+    public virtual DbSet<CompanyShareholderInfo> CompanyShareholderInfos { get; set; }
 
-    public virtual DbSet<GenerellÅrligBedriftInfo> GenerellÅrligBedriftInfos { get; set; }
+    public virtual DbSet<GeneralYearlyUpdatedCompanyInfo> GeneralYearlyUpdatedCompanyInfos { get; set; }
 
-    public virtual DbSet<OversiktBedriftFaseStatus> OversiktBedriftFaseStatuses { get; set; }
+    public virtual DbSet<CompanyPhaseStatusOverview> CompanyPhaseStatusOverviews { get; set; }
 
-    public virtual DbSet<ÅrligØkonomiskDatum> ÅrligØkonomiskData { get; set; }
+    public virtual DbSet<CompanyEconomicDataPrYear> CompanyEconomicDataPrYears { get; set; }
 
-    public virtual DbSet<ØkoKodeLookup> ØkoKodeLookups { get; set; }
-    public virtual DbSet<DataSortertEtterAldersGruppe> DataSortertEtterAldersGruppes { get; set; }
-    public virtual DbSet<DataSortertEtterBransje> DataSortertEtterBransjes { get; set; }
-    public virtual DbSet<DataSortertEtterFase> DataSortertEtterFases { get; set; }
-    public virtual DbSet<GjennomsnittVerdier> GjennomsnittVerdiers { get; set; }
-    public virtual DbSet<Årsrapport> Årsrapports { get; set; }
+    public virtual DbSet<EcoKodeLookup> EcoCodeLookups { get; set; }
+    public virtual DbSet<SiteText> SiteTexts { get; set; }
+    public virtual DbSet<DataSortedByLeaderAge> DataSortedByLeaderAges { get; set; }
+    public virtual DbSet<DataSortedByCompanyBranch> DataSortedByCompanyBranches { get; set; }
+    public virtual DbSet<DataSortedByPhase> DataSortedByPhases { get; set; }
+    public virtual DbSet<DataSortedByLeaderSex> DataSortedByLeaderSexes { get; set; }
+    public virtual DbSet<AverageValues> AverageValues { get; set; }
+    public virtual DbSet<FullView> FullViews { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<BedriftInfo>(entity =>
+        modelBuilder.Entity<CompanyInfo>(entity =>
         {
-            entity.HasKey(e => e.BedriftId).HasName("bedrift_info_pkey");
+            entity.HasKey(e => e.CompanyId).HasName("company_info_pkey");
 
-            entity.ToTable("bedrift_info");
+            entity.ToTable("company_info");
 
-            entity.HasIndex(e => e.Orgnummer, "bedrift_info_orgnummer_key").IsUnique();
+            entity.HasIndex(e => e.Orgnumber, "company_info_orgnumber_key").IsUnique();
 
-            entity.Property(e => e.BedriftId).HasColumnName("bedrift_id");
-            entity.Property(e => e.Beskrivelse)
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.Description)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasColumnName("beskrivelse");
-            entity.Property(e => e.Bransje)
+                .HasColumnName("description");
+            entity.Property(e => e.Branch)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasColumnName("bransje");
-            entity.Property(e => e.Målbedrift)
+                .HasColumnName("branch");
+            entity.Property(e => e.CompanyName)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasColumnName("målbedrift");
-            entity.Property(e => e.Navneliste)
+                .HasColumnName("company_name");
+            entity.Property(e => e.PrevNames)
                 .HasDefaultValueSql("NULL::character varying[]")
                 .HasColumnType("character varying(255)[]")
-                .HasColumnName("navneliste");
-            entity.Property(e => e.Likvidert).HasColumnName("likvidert").HasDefaultValue(false);
-            entity.Property(e => e.KvinneligGrunder).HasColumnName("kvinnelig_grunder").HasDefaultValue(false);
-            entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
+                .HasColumnName("prev_names");
+            entity.Property(e => e.Liquidated).HasColumnName("liquidated").HasDefaultValue(false);
+            entity.Property(e => e.FemaleEntrepreneur).HasColumnName("female_entrepreneur").HasDefaultValue(false);
+            entity.Property(e => e.Orgnumber).HasColumnName("orgnumber");
         });
 
-        modelBuilder.Entity<BedriftKunngjøringer>(entity =>
+        modelBuilder.Entity<CompanyAnnouncement>(entity =>
         {
-            entity.HasKey(e => new { e.BedriftId, e.KunngjøringId }).HasName("bedrift_kunngjøringer_pkey");
+            entity.HasKey(e => new { e.CompanyId, e.AnnouncementId }).HasName("company_announcements_pkey");
 
-            entity.ToTable("bedrift_kunngjøringer");
+            entity.ToTable("company_announcement");
 
-            entity.Property(e => e.BedriftId).HasColumnName("bedrift_id");
-            entity.Property(e => e.KunngjøringId).HasColumnName("kunngjøring_id");
-            entity.Property(e => e.Dato).HasColumnName("dato");
-            entity.Property(e => e.Kunngjøringstekst).HasColumnName("kunngjøringstekst");
-            entity.Property(e => e.Kunngjøringstype)
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.AnnouncementId).HasColumnName("announcement_id");
+            entity.Property(e => e.Date).HasColumnName("date");
+            entity.Property(e => e.AnnouncementText).HasColumnName("announcement_text");
+            entity.Property(e => e.AnnouncementType)
                 .HasMaxLength(255)
-                .HasColumnName("kunngjøringstype");
+                .HasColumnName("announcement_type");
 
-            entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftKunngjøringers)
-                .HasForeignKey(d => d.BedriftId)
+            entity.HasOne(d => d.Company).WithMany(p => p.CompanyAnnouncements)
+                .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("bedrift_kunngjøringer_bedrift_id_fkey");
+                .HasConstraintName("company_announcement_company_id_fkey");
         });
 
-        modelBuilder.Entity<BedriftLederOversikt>(entity =>
+        modelBuilder.Entity<CompanyLeaderOverview>(entity =>
         {
-            entity.HasKey(e => new { e.BedriftId, e.Tittelkode, e.Rapportår }).HasName("bedrift_leder_oversikt_pkey");
+            entity.HasKey(e => new { e.CompanyId, e.TitleCode, e.Year }).HasName("company_leader_overview_pkey");
 
-            entity.ToTable("bedrift_leder_oversikt");
+            entity.ToTable("company_leader_overview");
 
-            entity.Property(e => e.BedriftId).HasColumnName("bedrift_id");
-            entity.Property(e => e.Tittelkode)
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.TitleCode)
                 .HasMaxLength(255)
-                .HasColumnName("tittelkode");
-            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
-            entity.Property(e => e.Fødselsdag).HasColumnName("fødselsdag");
-            entity.Property(e => e.Navn)
+                .HasColumnName("title_code");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.DayOfBirth).HasColumnName("day_of_birth");
+            entity.Property(e => e.Name)
                 .HasMaxLength(255)
-                .HasColumnName("navn");
-            entity.Property(e => e.Tittel)
+                .HasColumnName("name");
+            entity.Property(e => e.Title)
                 .HasMaxLength(255)
-                .HasColumnName("tittel");
+                .HasColumnName("title");
 
-            entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftLederOversikts)
-                .HasForeignKey(d => d.BedriftId)
+            entity.HasOne(d => d.Company).WithMany(p => p.CompanyLeaderOverviews)
+                .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("bedrift_leder_oversikt_bedrift_id_fkey");
+                .HasConstraintName("company_leader_overview_company_id_fkey");
         });
 
-        modelBuilder.Entity<BedriftShareholderInfo>(entity =>
+        modelBuilder.Entity<CompanyShareholderInfo>(entity =>
         {
-            entity.HasKey(e => new { e.BedriftId, e.Rapportår, e.Navn }).HasName("bedrift_shareholder_info_pkey");
+            entity.HasKey(e => new { e.CompanyId, e.Year, e.Name }).HasName("company_shareholder_info_pkey");
 
-            entity.ToTable("bedrift_shareholder_info");
+            entity.ToTable("company_shareholder_info");
 
-            entity.Property(e => e.BedriftId).HasColumnName("bedrift_id");
-            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
-            entity.Property(e => e.Navn)
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.Name)
                 .HasMaxLength(255)
-                .HasColumnName("navn");
-            entity.Property(e => e.AntalShares)
+                .HasColumnName("name");
+            entity.Property(e => e.NumberOfShares)
                 .HasPrecision(12, 4)
-                .HasColumnName("antal_shares");
-            entity.Property(e => e.ShareholderBedriftId)
+                .HasColumnName("number_of_shares");
+            entity.Property(e => e.ShareholdeCompanyId)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasColumnName("shareholder_bedrift_id");
-            entity.Property(e => e.ShareholderEtternavn)
+                .HasColumnName("shareholder_company_id");
+            entity.Property(e => e.ShareholderLastName)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasColumnName("shareholder_etternavn");
-            entity.Property(e => e.ShareholderFornavn)
+                .HasColumnName("shareholder_last_name");
+            entity.Property(e => e.ShareholderFirstName)
                 .HasMaxLength(255)
                 .HasDefaultValueSql("NULL::character varying")
-                .HasColumnName("shareholder_fornavn");
-            entity.Property(e => e.Sharetype)
+                .HasColumnName("shareholder_first_name");
+            entity.Property(e => e.PercentageShares)
                 .HasMaxLength(255)
-                .HasColumnName("sharetype");
+                .HasColumnName("percentage_shares");
 
-            entity.HasOne(d => d.Bedrift).WithMany(p => p.BedriftShareholderInfos)
-                .HasForeignKey(d => d.BedriftId)
+            entity.HasOne(d => d.Company).WithMany(p => p.CompanyShareholderInfos)
+                .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("bedrift_shareholder_info_bedrift_id_fkey");
+                .HasConstraintName("company_shareholder_info_company_id_fkey");
         });
 
-        modelBuilder.Entity<GenerellÅrligBedriftInfo>(entity =>
+        modelBuilder.Entity<GeneralYearlyUpdatedCompanyInfo>(entity =>
         {
-            entity.HasKey(e => new { e.BedriftId, e.Rapportår }).HasName("generell_årlig_bedrift_info_pkey");
+            entity.HasKey(e => new { e.CompanyId, e.Year }).HasName("general_yearly_updated_company_info_pkey");
 
-            entity.ToTable("generell_årlig_bedrift_info");
+            entity.ToTable("general_yearly_updated_company_info");
 
-            entity.Property(e => e.BedriftId).HasColumnName("bedrift_id");
-            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
-            entity.Property(e => e.AntallAnsatte).HasColumnName("antall_ansatte");
-            entity.Property(e => e.Fylke)
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.NumberOfEmployees).HasColumnName("number_of_employees");
+            entity.Property(e => e.County)
                 .HasMaxLength(255)
-                .HasColumnName("fylke");
-            entity.Property(e => e.Kommune)
+                .HasColumnName("county");
+            entity.Property(e => e.Municipality)
                 .HasMaxLength(255)
-                .HasColumnName("kommune");
-            entity.Property(e => e.Landsdel)
+                .HasColumnName("municipality");
+            entity.Property(e => e.CountryPart)
                 .HasMaxLength(255)
-                .HasColumnName("landsdel");
-            entity.Property(e => e.PostAddresse)
+                .HasColumnName("country_part");
+            entity.Property(e => e.AdressLine)
                 .HasMaxLength(255)
-                .HasColumnName("post_addresse");
-            entity.Property(e => e.PostKode)
+                .HasColumnName("adress_line");
+            entity.Property(e => e.ZipCode)
                 .HasMaxLength(255)
-                .HasColumnName("post_kode");
+                .HasColumnName("zip_code");
 
-            entity.HasOne(d => d.Bedrift).WithMany(p => p.GenerellÅrligBedriftInfos)
-                .HasForeignKey(d => d.BedriftId)
+            entity.HasOne(d => d.Company).WithMany(p => p.GeneralYearlyUpdatedCompanyInfos)
+                .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("generell_årlig_bedrift_info_bedrift_id_fkey");
+                .HasConstraintName("general_yearly_updated_company_info_company_id_fkey");
         });
 
-        modelBuilder.Entity<OversiktBedriftFaseStatus>(entity =>
+        modelBuilder.Entity<CompanyPhaseStatusOverview>(entity =>
         {
-            entity.HasKey(e => new { e.BedriftId, e.Rapportår, e.Fase }).HasName("oversikt_bedrift_fase_lokasjon_pr_år_pkey");
-
-            entity.ToTable("oversikt_bedrift_fase_status");
-
-            entity.Property(e => e.BedriftId).HasColumnName("bedrift_id");
-            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
-            entity.Property(e => e.Fase)
+            entity.ToTable("company_phase_status_overview");
+            entity.HasKey(e => new { e.CompanyId, e.Year, e.Phase }).HasName("company_phase_status_overview_pkey");
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.Phase)
                 .HasMaxLength(255)
-                .HasColumnName("fase");
+                .HasColumnName("phase");
 
-            entity.HasOne(d => d.Bedrift).WithMany(p => p.OversiktBedriftFaseStatuses)
-                .HasForeignKey(d => d.BedriftId)
+            entity.HasOne(d => d.Company).WithMany(p => p.CompanyPhaseStatusOverviews)
+                .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("oversikt_bedrift_fase_lokasjon_pr_år_bedrift_id_fkey");
+                .HasConstraintName("company_phase_status_overview_company_id_fkey");
         });
 
-        modelBuilder.Entity<ÅrligØkonomiskDatum>(entity =>
+        modelBuilder.Entity<CompanyEconomicDataPrYear>(entity =>
         {
-            entity.HasKey(e => new { e.BedriftId, e.Rapportår, e.ØkoKode }).HasName("årlig_økonomisk_data_pkey");
+            entity.HasKey(e => new { e.CompanyId, e.Year, e.EcoCode }).HasName("company_economic_data_pr_year_pkey");
 
-            entity.ToTable("årlig_økonomisk_data");
+            entity.ToTable("company_economic_data_pr_year");
 
-            entity.Property(e => e.BedriftId).HasColumnName("bedrift_id");
-            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
-            entity.Property(e => e.ØkoKode)
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.EcoCode)
                 .HasMaxLength(255)
-                .HasColumnName("øko_kode");
+                .HasColumnName("eco_code");
             entity.Property(e => e.Delta)
                 .HasDefaultValueSql("(0)::numeric")
                 .HasColumnName("delta");
-            entity.Property(e => e.ØkoVerdi)
+            entity.Property(e => e.Accumulated)
+                .HasDefaultValueSql("(0)::numeric")
+                .HasColumnName("accumulated");
+            entity.Property(e => e.EcoValue)
                 .HasPrecision(16, 4)
                 .HasDefaultValueSql("NULL::numeric")
-                .HasColumnName("øko_verdi");
+                .HasColumnName("eco_value");
 
-            entity.HasOne(d => d.Bedrift).WithMany(p => p.ÅrligØkonomiskData)
-                .HasForeignKey(d => d.BedriftId)
+            entity.HasOne(d => d.Company).WithMany(p => p.CompanyEconomicDataPrYears)
+                .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("årlig_økonomisk_data_bedrift_id_fkey");
+                .HasConstraintName("company_economic_data_pr_year_company_id_fkey");
         });
 
-        modelBuilder.Entity<ØkoKodeLookup>(entity =>
+        modelBuilder.Entity<EcoKodeLookup>(entity =>
         {
             entity
-                .HasNoKey()
-                .ToTable("øko_kode_lookup");
+                .ToTable("eco_kode_lookup")
+                .HasKey(e => new { e.EcoCode, e.Nor });
 
-            entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
-            entity.Property(e => e.ØkoKode)
+            entity.Property(e => e.Nor).HasColumnName("nor");
+            entity.Property(e => e.En).HasColumnName("en");
+            entity.Property(e => e.EcoCode)
                 .HasMaxLength(255)
-                .HasColumnName("øko_kode");
+                .HasColumnName("eco_code");
         });
-        modelBuilder.Entity<DataSortertEtterAldersGruppe>(entity =>
+        modelBuilder.Entity<SiteText>(entity =>
+        {
+            entity
+                .ToTable("site_text")
+                .HasKey(e => e.Def);
+            entity.Property(e => e.Def).HasColumnName("def");
+            entity.Property(e => e.En).HasColumnName("en");
+            entity.Property(e => e.Nor).HasColumnName("nor");
+        });
+        modelBuilder.Entity<DataSortedByLeaderAge>(entity =>
             {
                 entity
-                    .ToView("data_sortert_etter_aldersgruppe")
+                    .ToView("data_sorted_by_leader_age")
                     .HasNoKey();
-                entity.Property(e => e.AldersGruppe).HasColumnName("alders_gruppe");
+                entity.Property(e => e.AgeGroup).HasColumnName("age_group");
                 entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
-                entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
-                entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
-                entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
-                entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
-                entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
+                entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
+                entity.Property(e => e.Year).HasColumnName("year");
+                entity.Property(e => e.EcoCode).HasColumnName("eco_code");
+                entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+                entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
 
             }
         );
-        modelBuilder.Entity<DataSortertEtterBransje>(entity =>
+        modelBuilder.Entity<DataSortedByCompanyBranch>(entity =>
         {
             entity
-                .ToView("data_sortert_etter_bransje")
+                .ToView("data_sorted_by_company_branch")
                 .HasNoKey();
-            entity.Property(e => e.Bransje).HasColumnName("bransje");
+            entity.Property(e => e.Branch).HasColumnName("branch");
             entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
-            entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
-            entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
-            entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
-            entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
-            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
+            entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.EcoCode).HasColumnName("eco_code");
+            entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
         });
-        modelBuilder.Entity<DataSortertEtterFase>(entity =>
+        modelBuilder.Entity<DataSortedByPhase>(entity =>
         {
             entity
-                .ToView("data_sortert_etter_fase")
+                .ToView("data_sorted_by_phase")
                 .HasNoKey();
-            entity.Property(e => e.Fase).HasColumnName("fase");
+            entity.Property(e => e.Phase).HasColumnName("phase");
             entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
-            entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
-            entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
-            entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
-            entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
-            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
+            entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.EcoCode).HasColumnName("eco_code");
+            entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
         });
-        modelBuilder.Entity<GjennomsnittVerdier>(entity =>
+        modelBuilder.Entity<DataSortedByLeaderSex>(entity =>
         {
             entity
-                .ToView("gjennomsnitt_verdier")
+                .ToView("data_sorted_by_leader_sex")
+                .HasNoKey();
+            entity.Property(e => e.Sex).HasColumnName("sex");
+            entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
+            entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.EcoCode).HasColumnName("eco_code");
+            entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
+        });
+        modelBuilder.Entity<AverageValues>(entity =>
+        {
+            entity
+                .ToView("average_values")
                 .HasNoKey();
             entity.Property(e => e.AvgDelta).HasColumnName("avg_delta");
-            entity.Property(e => e.AvgØkoVerdi).HasColumnName("avg_øko_verdi");
-            entity.Property(e => e.KodeBeskrivelse).HasColumnName("kode_beskrivelse");
-            entity.Property(e => e.RapportÅr).HasColumnName("rapportår");
-            entity.Property(e => e.ØkoKode).HasColumnName("øko_kode");
-            entity.Property(e => e.AvgAkkumulert).HasColumnName("avg_akkumulert");
+            entity.Property(e => e.AvgEcoValue).HasColumnName("avg_eco_value");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.EcoCode).HasColumnName("eco_code");
+            entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
+            entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
         });
-        modelBuilder.Entity<Årsrapport>(entity =>
+        modelBuilder.Entity<FullView>(entity =>
         {
             entity
-                .ToView("årsrapport")
+                .ToView("full_view")
                 .HasNoKey();
-            entity.Property(e => e.AntallAnsatte).HasColumnName("antall_ansatte");
-            entity.Property(e => e.AntallSharesVis).HasColumnName("antall_shares_vis");
-            entity.Property(e => e.DeltaInskuttEgenkapital).HasColumnName("delta_innskutt_egenkapital");
-            entity.Property(e => e.DriftsResultat).HasColumnName("driftsresultat");
-            entity.Property(e => e.LønnTrygdPensjon).HasColumnName("lønn_trygd_pensjon");
-            entity.Property(e => e.SumEgenkapital).HasColumnName("sum_egenkapital");
-            entity.Property(e => e.OrdinærtResultat).HasColumnName("ordinært_resultat");
-            entity.Property(e => e.Orgnummer).HasColumnName("orgnummer");
-            entity.Property(e => e.PostAddresse).HasColumnName("post_addresse");
-            entity.Property(e => e.PostKode).HasColumnName("post_kode");
-            entity.Property(e => e.SharesProsent).HasColumnName("shares_prosent");
-            entity.Property(e => e.SumDriftsIntekter).HasColumnName("sum_drifts_intekter");
-            entity.Property(e => e.SumInskuttEgenkapital).HasColumnName("sum_innskutt_egenkapital");
-            entity.Property(e => e.Målbedrift).HasColumnName("målbedrift");
-            entity.Property(e => e.Rapportår).HasColumnName("rapportår");
+            entity.Property(e => e.Accumulated).HasColumnName("accumulated");
+            entity.Property(e => e.AdressLine).HasColumnName("adress_line");
+            entity.Property(e => e.Branch).HasColumnName("branch");
+            entity.Property(e => e.CodeDescription).HasColumnName("code_description");
+            entity.Property(e => e.CompanyName).HasColumnName("company_name");
+            entity.Property(e => e.CountryPart).HasColumnName("country_part");
+            entity.Property(e => e.County).HasColumnName("county");
+            entity.Property(e => e.Delta).HasColumnName("delta");
+            entity.Property(e => e.EcoCode).HasColumnName("eco_code");
+            entity.Property(e => e.EcoValue).HasColumnName("eco_value");
+            entity.Property(e => e.Liquidated).HasColumnName("liquidated");
+            entity.Property(e => e.Municipality).HasColumnName("municipality");
+            entity.Property(e => e.Name).HasColumnName("name");
+            entity.Property(e => e.NumberOfEmployees).HasColumnName("number_of_employees");
+            entity.Property(e => e.Orgnumber).HasColumnName("orgnumber");
+            entity.Property(e => e.Phase).HasColumnName("phase");
+            entity.Property(e => e.Title).HasColumnName("title");
+            entity.Property(e => e.TitleCode).HasColumnName("title_code");
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.ZipCode).HasColumnName("zip_code");
         });
 
 

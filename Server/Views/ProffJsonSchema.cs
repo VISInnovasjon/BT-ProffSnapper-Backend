@@ -84,65 +84,77 @@ public class ReturnStructure
     public async Task InsertIntoDatabase(BtdbContext context)
     {
         int bedriftId;
-        bedriftId = context.BedriftInfos.Single(b => b.Orgnummer == int.Parse(CompanyId)).BedriftId;
+        bedriftId = context.CompanyInfos.Single(b => b.Orgnumber == int.Parse(CompanyId)).CompanyId;
         bool result = false;
         if (LiquidationDate != null && !string.IsNullOrEmpty(LiquidationDate)) result = true;
         new UpdateNameStructure(
                     Name, result, PreviousNames?.Count == 0 ? null : PreviousNames
                 ).CraftDbValues(context, bedriftId);
-        var genInfo = new InsertGenerellInfoStructure(
+        var genInfo = new InsertGeneralInfoStructure(
             ShareholdersLastUpdatedDate, Location, PostalAddress, NumberOfEmployees ?? null
         ).CraftDbValues(bedriftId);
         try
         {
-            await context.GenerellÅrligBedriftInfos.AddAsync(genInfo);
+            await context.GeneralYearlyUpdatedCompanyInfos.AddAsync(genInfo);
             await context.SaveChangesAsync();
         }
         catch (DbUpdateException ex)
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            await ConflictHandler.HandleConflicts(context, genInfo, ["BedriftId", "Rapportår"], ["AntallAnsatte", "Fylke", "Kommune", "Landsdel", "PostAddresse", "PostKode"]);
+            await ConflictHandler.HandleConflicts(context, genInfo);
         }
-        List<BedriftKunngjøringer> kunnList = [];
+        List<CompanyAnnouncement> annList = [];
         foreach (var announcement in Announcements)
         {
-            var newKunn = new InsertKunngjøringStructure(
+            annList.Add(new InsertAnnouncementStructure(
                 announcement
-            ).CraftDbValues(bedriftId);
+            ).CraftDbValues(bedriftId));
         }
         try
         {
-            await context.BedriftKunngjøringers.AddRangeAsync(kunnList);
+            await context.CompanyAnnouncements.AddRangeAsync(annList);
             await context.SaveChangesAsync();
         }
         catch (DbUpdateException ex)
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            foreach (var item in kunnList)
-            {
-                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "KunngjøringId"], ["Dato", "Kunngjøringstekst", "Kunngjøringstype"]);
-            }
+            foreach (var item in annList)
+                try
+                {
+                    await ConflictHandler.HandleConflicts(context, item);
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine(innerEx.Message);
+                    continue;
+                }
         }
         foreach (var account in CompanyAccounts)
         {
-            var økoList = new ØkoDataSqlStructure(
+            var ecoList = new EcoDataStructure(
                 account
             ).CraftDbValues(bedriftId);
             try
             {
-                await context.ÅrligØkonomiskData.AddRangeAsync(økoList);
+                await context.CompanyEconomicDataPrYears.AddRangeAsync(ecoList);
                 await context.SaveChangesAsync();
             }
             catch (DbUpdateException ex)
             {
                 Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-                foreach (var item in økoList)
-                {
-                    await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "ØkoKode"], ["ØkoVerdi"]);
-                }
+                foreach (var item in ecoList)
+                    try
+                    {
+                        await ConflictHandler.HandleConflicts(context, item);
+                    }
+                    catch (Exception innerEx)
+                    {
+                        Console.WriteLine(innerEx.Message);
+                        continue;
+                    }
             }
         }
-        List<BedriftLederOversikt> ledeList = [];
+        List<CompanyLeaderOverview> leaderList = [];
         Dictionary<string, PersonRole> valuePairs = [];
         foreach (var person in PersonRoles)
         {
@@ -154,35 +166,39 @@ public class ReturnStructure
         }
         foreach (var pair in valuePairs)
         {
-            var newLede = new InsertBedriftLederInfoStructure(
+            leaderList.Add(new CompanyLeaderStructure(
                 ShareholdersLastUpdatedDate, pair.Value
-            ).CraftDbValues(bedriftId);
-            ledeList.Add(newLede);
+            ).CraftDbValues(bedriftId));
         }
         try
         {
-            await context.BedriftLederOversikts.AddRangeAsync(ledeList);
+            await context.CompanyLeaderOverviews.AddRangeAsync(leaderList);
             await context.SaveChangesAsync();
         }
         catch (DbUpdateException ex)
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            foreach (var item in ledeList)
-            {
-                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Tittelkode"], ["Navn", "Tittel", "Fødselsdag"]);
-            }
+            foreach (var item in leaderList)
+                try
+                {
+                    await ConflictHandler.HandleConflicts(context, item);
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine(innerEx.Message);
+                    continue;
+                }
         }
-        List<BedriftShareholderInfo> shareList = [];
+        List<CompanyShareholderInfo> shareList = [];
         if (Shareholders != null) foreach (var shareholder in Shareholders)
             {
-                var newShareholder = new InsertShareholderStructure(
+                shareList.Add(new InsertShareholderStructure(
                     ShareholdersLastUpdatedDate, shareholder
-                ).CraftDbValues(bedriftId);
-                shareList.Add(newShareholder);
+                ).CraftDbValues(bedriftId));
             }
         try
         {
-            await context.BedriftShareholderInfos.AddRangeAsync(shareList);
+            await context.CompanyShareholderInfos.AddRangeAsync(shareList);
             await context.SaveChangesAsync();
         }
         catch (DbUpdateException ex)
@@ -190,48 +206,48 @@ public class ReturnStructure
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             foreach (var item in shareList)
             {
-                await ConflictHandler.HandleConflicts(context, item, ["BedriftId", "Rapportår", "Navn"], ["AntalShares", "ShareholderBedriftId", "ShareholderFornavn", "ShareholderEtternavn", "Sharetype"]);
+                try
+                {
+                    await ConflictHandler.HandleConflicts(context, item);
+                }
+                catch (Exception innerEx)
+                {
+                    Console.WriteLine(innerEx.Message);
+                    continue;
+                }
             }
         }
     }
 }
 
-public class ØkoDataSqlStructure
+public class EcoDataStructure
 {
-    public int OrgNr { get; set; }
-    public int År { get; set; }
-    public List<string> Kodenavn { get; set; }
-    public List<decimal> Kodeverdier { get; set; }
-    public ØkoDataSqlStructure(AccountsInfo accounts)
+    public int InputYear { get; set; }
+    public Dictionary<string, decimal> CodeValuePairs { get; set; }
+    public EcoDataStructure(AccountsInfo accounts)
     {
         bool ParsingNr;
         ParsingNr = int.TryParse(accounts.Year, out int TempOutput);
         if (!ParsingNr) throw new ArgumentException($"Could not parse {accounts.Year} to an integer.");
-        År = TempOutput;
-        Kodenavn = [];
-        Kodeverdier = [];
-        for (int i = 0; i < accounts.Accounts.Count; i++)
-        {
-            Kodenavn.Add(accounts.Accounts[i].Code);
-            Kodeverdier.Add(decimal.Parse(accounts.Accounts[i].Amount));
-        }
-
+        InputYear = TempOutput;
+        CodeValuePairs = [];
+        foreach (var account in accounts.Accounts)
+            CodeValuePairs[account.Code] = decimal.Parse(account.Amount);
     }
-    public List<ÅrligØkonomiskDatum> CraftDbValues(int bedriftId)
+    public List<CompanyEconomicDataPrYear> CraftDbValues(int bedriftId)
     {
         try
         {
-            List<ÅrligØkonomiskDatum> dataList = [];
-            for (int i = 0; i < Kodenavn.Count; i++)
+            List<CompanyEconomicDataPrYear> dataList = [];
+            foreach (var pair in CodeValuePairs)
             {
-                var ØkoData = new ÅrligØkonomiskDatum
+                dataList.Add(new CompanyEconomicDataPrYear
                 {
-                    BedriftId = bedriftId,
-                    ØkoKode = Kodenavn[i],
-                    ØkoVerdi = Kodeverdier[i],
-                    Rapportår = År
-                };
-                dataList.Add(ØkoData);
+                    CompanyId = bedriftId,
+                    EcoCode = pair.Key,
+                    EcoValue = pair.Value,
+                    Year = InputYear
+                });
             }
             return dataList;
         }
@@ -243,25 +259,24 @@ public class ØkoDataSqlStructure
 }
 public class UpdateNameStructure
 {
-    public string Navn { get; set; }
-    public int OrgNr { get; set; }
-    public bool Likvidert { get; set; }
-    public List<string>? TidligereNavn { get; set; }
-    public UpdateNameStructure(string Name, bool isLiquidated, List<string>? PreviousNames = null)
+    public string Name { get; set; }
+    public bool Liquidated { get; set; }
+    public List<string>? PreviousNames { get; set; }
+    public UpdateNameStructure(string name, bool isLiquidated, List<string>? previousNames = null)
     {
-        Navn = Name;
-        if (PreviousNames != null) TidligereNavn = PreviousNames;
-        Likvidert = isLiquidated;
+        Name = name;
+        if (previousNames != null) PreviousNames = previousNames;
+        Liquidated = isLiquidated;
     }
-    public void CraftDbValues(BtdbContext context, int bedriftId)
+    public void CraftDbValues(BtdbContext context, int companyId)
     {
         try
         {
 
-            var bedriftInfo = context.BedriftInfos.Single(b => b.BedriftId == bedriftId);
-            bedriftInfo.Målbedrift = Navn;
-            bedriftInfo.Likvidert = Likvidert;
-            if (TidligereNavn != null && TidligereNavn.Count > 0) bedriftInfo.Navneliste = TidligereNavn;
+            var companyInfo = context.CompanyInfos.Single(b => b.CompanyId == companyId);
+            companyInfo.CompanyName = Name;
+            companyInfo.Liquidated = Liquidated;
+            if (PreviousNames != null && PreviousNames.Count > 0) companyInfo.PrevNames = PreviousNames;
         }
         catch (Exception ex)
         {
@@ -271,42 +286,41 @@ public class UpdateNameStructure
 }
 public class InsertShareholderStructure
 {
-    public int OrgNr { get; set; }
-    public int År { get; set; }
-    public decimal AntallShares { get; set; }
-    public string InputNavn { get; set; }
-    public string InputType { get; set; }
-    public string? ShareholderBId { get; set; }
-    public string? Fornavn { get; set; }
-    public string? Etternavn { get; set; }
+    public int InputYear { get; set; }
+    public decimal InputNumberOfShares { get; set; }
+    public string InputName { get; set; }
+    public string InputPercentage { get; set; }
+    public string? ShareholderCId { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
     public InsertShareholderStructure(string UpdatedYear, ShareHolderInfo info)
     {
         bool parseSuccess;
         parseSuccess = int.TryParse(UpdatedYear, out int output);
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdatedYear} to integer");
-        År = output;
+        InputYear = output;
 
-        AntallShares = info.NumberOfShares;
-        InputNavn = info.Name ?? "Ingen navn funnet";
-        InputType = info.Share;
-        if (!string.IsNullOrEmpty(info.CompanyId)) ShareholderBId = info.CompanyId;
-        if (!string.IsNullOrEmpty(info.FirstName)) Fornavn = info.FirstName;
-        if (!string.IsNullOrEmpty(info.LastName)) Etternavn = info.LastName;
+        InputNumberOfShares = info.NumberOfShares;
+        InputName = info.Name ?? "Ingen navn funnet";
+        InputPercentage = info.Share;
+        if (!string.IsNullOrEmpty(info.CompanyId)) ShareholderCId = info.CompanyId;
+        if (!string.IsNullOrEmpty(info.FirstName)) FirstName = info.FirstName;
+        if (!string.IsNullOrEmpty(info.LastName)) LastName = info.LastName;
     }
-    public BedriftShareholderInfo CraftDbValues(int bedriftId)
+    public CompanyShareholderInfo CraftDbValues(int bedriftId)
     {
         try
         {
-            var shareholder = new BedriftShareholderInfo
+            var shareholder = new CompanyShareholderInfo
             {
-                BedriftId = bedriftId,
-                Rapportår = År,
-                ShareholderBedriftId = ShareholderBId,
-                ShareholderFornavn = Fornavn,
-                ShareholderEtternavn = Etternavn,
-                Sharetype = InputType,
-                Navn = InputNavn,
-                AntalShares = AntallShares
+                CompanyId = bedriftId,
+                Year = InputYear,
+                ShareholdeCompanyId = ShareholderCId,
+                ShareholderFirstName = FirstName,
+                ShareholderLastName = LastName,
+                PercentageShares = InputPercentage,
+                Name = InputName,
+                NumberOfShares = InputNumberOfShares
             };
             return shareholder;
         }
@@ -316,35 +330,35 @@ public class InsertShareholderStructure
         }
     }
 }
-public class InsertKunngjøringStructure
+public class InsertAnnouncementStructure
 {
     public int OrgNr { get; set; }
     public long InputId { get; set; }
-    public DateOnly? InputDato { get; set; }
+    public DateOnly? InputDate { get; set; }
     public string Inputdesc { get; set; }
     public string InputType { get; set; }
-    public InsertKunngjøringStructure(Announcement kunngjøring)
+    public InsertAnnouncementStructure(Announcement announcement)
     {
         bool parseSuccess;
-        parseSuccess = long.TryParse(kunngjøring.Id, out long lOutput);
-        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {kunngjøring.Id} to BigInt");
+        parseSuccess = long.TryParse(announcement.Id, out long lOutput);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {announcement.Id} to BigInt");
         InputId = lOutput;
-        InputDato = string.IsNullOrEmpty(kunngjøring.Date) ? null : DateCorrector.ConvertDate(kunngjøring.Date);
-        InputType = kunngjøring.Type;
-        Inputdesc = kunngjøring.Text;
+        InputDate = string.IsNullOrEmpty(announcement.Date) ? null : DateCorrector.ConvertDate(announcement.Date);
+        InputType = announcement.Type;
+        Inputdesc = announcement.Text;
     }
-    public BedriftKunngjøringer CraftDbValues(int bedriftId)
+    public CompanyAnnouncement CraftDbValues(int bedriftId)
     {
         try
         {
 
-            var announcement = new BedriftKunngjøringer
+            var announcement = new CompanyAnnouncement
             {
-                BedriftId = bedriftId,
-                Dato = InputDato,
-                KunngjøringId = InputId,
-                Kunngjøringstekst = Inputdesc,
-                Kunngjøringstype = InputType
+                CompanyId = bedriftId,
+                Date = InputDate,
+                AnnouncementId = InputId,
+                AnnouncementText = Inputdesc,
+                AnnouncementType = InputType
             };
             return announcement;
         }
@@ -354,45 +368,44 @@ public class InsertKunngjøringStructure
         }
     }
 }
-public class InsertGenerellInfoStructure
+public class InsertGeneralInfoStructure
 {
-    public int OrgNr { get; set; }
-    public int År { get; set; }
-    public string InputLandsdel { get; set; }
-    public string InputFylke { get; set; }
-    public string InputKommune { get; set; }
-    public string InputPostKode { get; set; }
-    public string InputPostAddresse { get; set; }
-    public int? InputAntallAnsatte { get; set; }
-    public InsertGenerellInfoStructure(string UpdateYear, LocationInfo location, PostalInfo post, string? NumberOfEmployees = null)
+    public int InputYear { get; set; }
+    public string InputCountryPart { get; set; }
+    public string InputCounty { get; set; }
+    public string InputMunicipality { get; set; }
+    public string InputZipCode { get; set; }
+    public string InputAddressLine { get; set; }
+    public int? InputNumberOfEmployees { get; set; }
+    public InsertGeneralInfoStructure(string UpdateYear, LocationInfo location, PostalInfo post, string? NumberOfEmployees = null)
     {
         bool parseSuccess;
         parseSuccess = int.TryParse(UpdateYear, out int output);
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdateYear} to Integer");
-        År = output;
+        InputYear = output;
         parseSuccess = int.TryParse(NumberOfEmployees, out output);
-        if (!parseSuccess) InputAntallAnsatte = 1;
-        else InputAntallAnsatte = output;
-        InputLandsdel = location.CountryPart;
-        InputFylke = location.County;
-        InputKommune = location.Municipality;
-        InputPostKode = string.IsNullOrEmpty(post.ZipCode) ? "Mangler PostKode" : post.ZipCode;
-        InputPostAddresse = post.AddressLine;
+        if (!parseSuccess) InputNumberOfEmployees = 2;
+        else InputNumberOfEmployees = output;
+        InputCountryPart = location.CountryPart;
+        InputCounty = location.County;
+        InputMunicipality = location.Municipality;
+        InputZipCode = string.IsNullOrEmpty(post.ZipCode) ? "Mangler PostKode" : post.ZipCode;
+        InputAddressLine = post.AddressLine;
     }
-    public GenerellÅrligBedriftInfo CraftDbValues(int bedriftId)
+    public GeneralYearlyUpdatedCompanyInfo CraftDbValues(int bedriftId)
     {
         try
         {
-            var genInfo = new GenerellÅrligBedriftInfo
+            var genInfo = new GeneralYearlyUpdatedCompanyInfo
             {
-                BedriftId = bedriftId,
-                Landsdel = InputLandsdel,
-                Fylke = InputFylke,
-                Kommune = InputKommune,
-                PostAddresse = InputPostAddresse,
-                PostKode = InputPostKode,
-                Rapportår = År,
-                AntallAnsatte = InputAntallAnsatte
+                CompanyId = bedriftId,
+                CountryPart = InputCountryPart,
+                County = InputCounty,
+                Municipality = InputMunicipality,
+                AdressLine = InputAddressLine,
+                ZipCode = InputZipCode,
+                Year = InputYear,
+                NumberOfEmployees = InputNumberOfEmployees
             };
             return genInfo;
         }
@@ -402,39 +415,38 @@ public class InsertGenerellInfoStructure
         }
     }
 }
-public class InsertBedriftLederInfoStructure
+public class CompanyLeaderStructure
 {
-    public int OrgNr { get; set; }
-    public int År { get; set; }
-    public string InputNavn { get; set; }
-    public string InputTittel { get; set; }
-    public string InputTittelKode { get; set; }
-    public DateOnly? InputFødselÅr { get; set; }
-    public InsertBedriftLederInfoStructure(string UpdateYear, PersonRole person)
+    public int InputYear { get; set; }
+    public string InputName { get; set; }
+    public string InputTitle { get; set; }
+    public string InputTitleCode { get; set; }
+    public DateOnly? InputDayOfBirth { get; set; }
+    public CompanyLeaderStructure(string UpdateYear, PersonRole person)
     {
         bool parseSuccess;
         parseSuccess = int.TryParse(UpdateYear, out int output);
         if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdateYear} into Integer");
-        År = output;
-        InputNavn = person.Name;
-        InputFødselÅr = string.IsNullOrEmpty(person.BirthDate) ? null : DateCorrector.CorrectDate(person.BirthDate);
-        InputTittel = person.Title;
-        InputTittelKode = person.TitleCode;
+        InputYear = output;
+        InputName = person.Name;
+        InputDayOfBirth = string.IsNullOrEmpty(person.BirthDate) ? null : DateCorrector.CorrectDate(person.BirthDate);
+        InputTitle = person.Title;
+        InputTitleCode = person.TitleCode;
     }
-    public BedriftLederOversikt CraftDbValues(int bedriftId)
+    public CompanyLeaderOverview CraftDbValues(int bedriftId)
     {
         try
         {
-            var leder = new BedriftLederOversikt
+            var leader = new CompanyLeaderOverview
             {
-                BedriftId = bedriftId,
-                Navn = InputNavn,
-                Fødselsdag = InputFødselÅr,
-                Tittel = InputTittel,
-                Tittelkode = InputTittelKode,
-                Rapportår = År
+                CompanyId = bedriftId,
+                Name = InputName,
+                DayOfBirth = InputDayOfBirth,
+                Title = InputTitle,
+                TitleCode = InputTitleCode,
+                Year = InputYear
             };
-            return leder;
+            return leader;
         }
         catch (Exception ex)
         {
