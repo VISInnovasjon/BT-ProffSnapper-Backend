@@ -5,5 +5,8 @@ postgres/
 helperJSON/
 ProffJsonSchema.json
 ProffReturnExamle.json
-Models
 LocalData/
+Server/obj
+Server/bin
+backups
+postgresdowngrade/

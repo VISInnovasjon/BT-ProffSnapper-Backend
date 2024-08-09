@@ -1,8 +1,6 @@
 services:
   postgres:
     image: postgres:latest
-    ports:
-      - 5432:5432
     environment:
       - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
       - POSTGRES_USER=${DATABASE_USER}
@@ -11,13 +9,36 @@ services:
       - ./.env
     volumes:
       - ./postgres:/var/lib/postgresql/data
+      - ./postgres:/backups/
+  postgresdowngrade:
+    image: postgres:12.19
+    environment:
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_DB=${DATABASE_NAME}
+    env_file:
+      - ./.env
+    volumes:
+      - ./postgresdowngrade:/var/lib/postgresql/data
+      - ./postgresdowngrade:/backups/
   pgAdmin:
     image: dpage/pgadmin4
     restart: always
     ports:
       - 5050:80
     environment:
-      - PGADMIN_DEFAULT_EMAIL=john.ellingsen@visinnovasjon.no
-      - PGADMIN_DEFAULT_PASSWORD=VIS2024
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_LOGIN}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PW}
     volumes:
       - ./pgAdmin:/var/lib/pgadmin
+      - ./pgAdmin:/backups/
+  csserver:
+    build:
+      context: .
+      dockerfile: ./Server/Dockerfile
+    ports:
+      - 5000:80
+    depends_on:
+      - postgres
+    env_file:
+      - .env

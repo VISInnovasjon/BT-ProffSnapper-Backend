@@ -1,5 +1,5 @@
-namespace Util.ProffFetch;
-using ProffApiClasses;
+namespace Server.Util;
+using Server.Views;
 using System.Text.Json;
 
 public class FetchProffData
@@ -12,7 +12,7 @@ public class FetchProffData
             throw new ArgumentNullException("Could not fetch token from Environment.");
         string baseUrl = "https://api.proff.no/api/companies/register/NO/";
         string url;
-        List<ReturnStructure> ReturnValues = new();
+        List<ReturnStructure> ReturnValues = [];
         var options = new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -24,14 +24,12 @@ public class FetchProffData
             {
                 try
                 {
-                    await Task.Delay(1000);
+                    await Task.Delay(100);
                     url = baseUrl + orgNr.ToString();
                     HttpResponseMessage response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     string responseBody = await response.Content.ReadAsStringAsync();
-                    string filePath = $"./LocalData/response{orgNr.ToString()}.json";
-                    await File.WriteAllTextAsync(filePath, responseBody);
-                    ReturnStructure returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
+                    ReturnStructure? returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
                     if (returnValue != null) ReturnValues.Add(returnValue);
                 }
                 catch (Exception ex)

@@ -1,4 +1,8 @@
 using dotenv.net;
+using Microsoft.EntityFrameworkCore;
+using Server.Context;
+using Server.BackgroundServices;
+using Server.Controllers;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,11 +10,38 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-DotEnv.Load(options: new DotEnvOptions(envFilePaths: new[] { "../.env" }, ignoreExceptions: false));
-
+builder.WebHost.UseUrls("http://0.0.0.0");
+DotEnv.Load();
+GlobalLanguage.Language = "nor";
+builder.Services.AddDbContext<BtdbContext>(options =>
+{
+    options.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").EnableDetailedErrors();
+});
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Content-Disposition");
+    });
+});
+builder.Services.AddHostedService<ScheduleUpdateFromProff>();
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<BtdbContext>();
+    try
+    {
+        context.Database.CanConnect();
+        Console.WriteLine("Connected to DB");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -18,9 +49,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-
+app.UseStaticFiles();
+app.UseRouting();
 app.MapControllers();
-
+app.MapFallbackToFile("./index.html");
+app.UseCors("AllowAll");
 app.Run();
-

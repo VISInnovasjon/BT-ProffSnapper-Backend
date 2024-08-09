@@ -3,6 +3,7 @@
 ## Index:
 
 - [Intro](#intro)
+  - [Bruk](#bruk)
   - [Produkt](#produkt)
   - [Del mål](#del-mål)
   - [Endemål](#endemål)
@@ -29,15 +30,65 @@
   - [Formål](#Formål-DATABASE)
   - [Schema](#schema)
   - [Funksjoner](#funksjoner-DATABASE)
+  - [Views](#views-DATABASE)
 
 ## Intro
 
+Dette er Prosnapper. Et verktøy for innsamling, og utregning av nøkkeltall for VIS innovasjon.<br/>
+Det er skrevet i C# med en React + VITE frontend. <br/>
+Det er en CRUD applikasjon, med excel som primærverktøy for datamanipulasjon i backend. <br/>
 <br/>
+
+### Bruk
+
+Hvordan bruke produktet:<br/>
+
+- Key figures:<br/>
+  Dette er lett tilgjengelige nøkkeltall fra datasettet.
+
+- Bruke graf:<br/>
+  1. Filter: <br/>
+     Datasettet er gruppert i forskjellige grupper som kan filtreres i via filter knappen. Foreløbig kan du filtrere data basert på bedriftleder's alder, <br/>
+     Hvilken fase bedriften har vært i, <br/>
+     og hvilke bransje bedriftene er i. <br/>
+  2. Koder: <br/>
+     Grafen viser kunn et sett med data om gangen, basert på hvilken øko-kode som er valgt. Det er tre øko-koder lett tilgjengelig: <br/>
+     Driftsresultat, <br/>
+     Omsetning, <br/>
+     og Sum Innskutt Egenkapital.<br/>
+     Andre økokoder kan finnes i dropdown meny markert med øk. koder.<br/>
+  3. Kan kan bruke Velg år slideren for å velge et start og slutt år på datasettet.
+  4. Man kan midlertidig velge vekk valgte filtre ved å trykke på de i bunn av grafen. <br/>
+     Dette vil filtrere vekk dataen fra grafen, og vise en strek over navnet i bunn av grafen.<br/>
+     For å få data tilbake er det bare å trykke på navnet igjen. <br/>
+  5. Velge datatype: <br/>
+     Man kan velge å få presentert tre forskjellige verdier i datasettet. <br/> - Gjennomsnittsverdi - Akkumulert - Gjennomsnitts endring over tid
+     Disse kan man velge mellom via radio knapper under grafen. <br/>
+- Bruke Tabell:<br/>
+  Tabellen viser bedrifter ranksjert etter høyest akkumulert verdi i gjeldene økokode.<br/>
+  Man kan søke opp og filtrere etter verdiene man selv ønsker i grafen ved å trykke på tre dotter i kollonen det gjelder. <br/>
+  Dataen i grafen er alltid for to år tilbake i tid, for å garantere at all dataen som mulig er hentet inn.<br/>
+  Man kan velge mellom å vise 5 eller 10 bedrifter om gangen. <br/>
+- Yearly Rapport:<br/>
+  Her kan man generere en årsrapport excel fil ved å laste opp en excelfil med organisasjonsnr man ønsker data om.<br/>
+  Er man usikker på oppsettet av excel arket, kan man bruke "Get Template" for å få en eksempelfil.
+- Company Flow:<br/>
+  Hovedvalg for manipulasjon av data:<br/>
+  1. Add Company Data
+     Desverre blir ikke databasen oppdatert automatisk når nye bedrifter blir tatt opp i VIS.<br/>
+     Nye bedrifter kan legges til i Add Company Data.<br/>
+     Er man usikker på hva data som skal legges til fra VIS, kan man bruke "Get Template" for å se en eksempelfil. <br/>
+  2. Delete Company data
+     Hvis man ønsker å slette en bedrift fra systemet kan det gjøres her.<br/>
+     Man laster opp en excelfil med organisasjonsnr man ønsker å slette.<br/>
+     Er man usikker på oppsettet av excelfilen, kan man bruke "Get Template".<br/>
+- Get Full View:<br/>
+  Her kan man laste ned hele datasettet i excelformat. <br/>
 
 ### Produkt
 
 Fullstack app, som skal kombinere data fra PROFF.NO, og samkjøre dette med data fra VIS. <br/>
-mth. Oppfølging av bedrifter som har vært gjennom VIS inkubasjon og/eller andre programmer.
+mth. Oppfølging av bedrifter som har vært gjennom VIS inkubasjon og/eller andre programmer. <br/>
 Hva skal produktet gjøre:
 
 1. Kobles opp mot Intern Microsoft Authentication Layer for å kunne ta i bruk eksisterende brukere.
@@ -77,7 +128,7 @@ Hva skal produktet gjøre:
 1. Lage et wireframe oppsett på hvordan siden skal se ut, og hvordan brukeropplevelsen skal være. <a href="https://excalidraw.com/#json=t7vlG0xVLfCtKv7Kl61zd,2p75ewZ4-Q4NYjYgLlf8kA"> Foreløbig ide</a>
 2. Designe oppsett og komponenter i FIGMA, Tenke på bruk og formål. Dette er mer et enterprise verktøy enn en butikk. (Legg til figma link her.)
 3. Få tilbakemelding fra sluttbruker når det kommer til brukervennlighet og design.
-4. Bestemme bruk av Frontend framework, hva som egner seg best, og hva som er lettest å self-hoste på azure. Next? Ren react? JS + HTML? <br> Vi har som mål å følge bergen stacken tett, og velger NextJS som frontend og C# som backend.
+4. Bestemme bruk av Frontend framework, hva som egner seg best, og hva som er lettest å self-hoste på azure. Next? Ren react? JS + HTML? <br> Vi velger React + Vite som frontend og C# som backend.
 5. Bestemme oss for database oppsett. Vi har som mål å bruke POSTGRESQL for å lagre brukerdata samt data fra proff og vis.
 6. Når det kommer til brukertyper, mener vi mht formål at alle brukere har tilgang til samme funksjonalitet.
 7. Nå et punkt hvor C# backend kan snakke med databasen på samme måte som nodejs prototype backend.
@@ -110,7 +161,6 @@ Vi bruker primært pull-requests for å oppdatere koden i dev. Det gjør at vi h
 
 ## Kode Standarer
 
-Vi forholder oss til <a href="https://nextjs.org/docs">NextJS docs</a> for best practise. <br>
 Vi bruker primært en jsdoc blokk kommentar for å kommentere funksjoner: <br>
 
 ```javascript
@@ -273,7 +323,7 @@ For å gjennomføre dette trenger vi følgende komponenter:
 | Link           | `<Link/>`         | Håndterer routing internt i siden                          | none                            | Ja, react base component               |
 | Input: radial  | `<Radial/>`       | Radial knapp for veksling mellom funksjonalitet            | none                            | Kanskje                                |
 | Input: Button  | `<Button/>`       | Knapp for generell funksjonalitet.                         | none                            | Kanskje                                |
-| Graf           | `<BarChart/> `    | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
+| Graf           | `<LineChart/> `   | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
 | Tabell         | `<Table/>`        | Tabell for å vise deler av datasett på en strukturert måte | Bygget opp av `<tr>` components | Ja, usikker hvilken som skal bli brukt |
 | AutoComplete   | `<AutoComplete/>` | Komponent som slår sammen dropdown med et søkbart felt.    | Liste eller array av options.   | Ja, hentet fra mui                     |
 
@@ -315,26 +365,67 @@ Dette for å ha en stack som følger tett opp mot bergen stacken, dette for å g
 <br/>
 
 <h3 id="routing-API">Routing</h3>
-Vi trenger endepunkt for følgende systemer:
+Alle endepunktene til api ligger under fellesendepunktet ./API/ .<br/>
 
-1. Authorisering layer.
-   Dette laget må bruker passe gjennom for å få komme til de neste endepunktene. Her må vi passe på å ungå at en potensiell bruker kan snike seg rundt layeret å få tilgang til de andre lagene uten authorisering.
-   dette vil være /, men vil passe deg ned til /:uid, som så vil passe deg ned til hvorenn du skulle ønske. Siden dette er et internt system kan potensielt dette samkjøres med frontend, hvis frontend og backend deler samme routing.
+Liste over endepunkter i API: <br/>
 
-2. Query
-   Her gjør bruker queries til databasen. Her må vi finne beste måten å gjennomføre dette på. Vi har som mål å ta i bruk URL req query systemet til dette. Dette vil være et /GET med queryparams.
+1. yearlyreport:
 
-3. Update
-   Dette vil være en /POST som skal extracte ut data fra et excel ark, og poste data fra excel arket med rett struktur til databasen.
+   - Henter data fra yearlyreport materialized view, og leverer excelfil basert på det. <br/>
 
-4. ÅrsRapport
-   Dette endepunktet vil levere ut en årsrapport fil for ønskede organisasjonsnr.
+2. orgnummertemplate:
+
+   - genererer excel template for orgnummer baserte operasjoner<br/>
+
+3. dbupdatetemplate:
+
+   - genererer exceltemplate for insetting av ny data til database.<br/>
+
+4. graphdata:
+
+   - genererer graphdata for frontend. Leverer i JSON format<br/>
+
+5. workyear:
+
+   - genererer tall for Årsverk Key Figure. <br/>
+
+6. workercount:
+
+   - genererer tall for Arbeidsplasser Key Figure. <br/>
+
+7. totalturnover:
+
+   - genererer tall for Omsetning Key Figure. <br/>
+
+8. companycount:
+
+   - generer tall for Antall Bedrifter Key Figure. <br/>
+
+9. excelfullview:
+
+   - genererer excel fil med fullstendig datasett fra database.<br/>
+
+10. updatewithnewdata:
+
+    - håndterer oppdatering av database med ny data fra excelark.<br/>
+
+11. deletedata:
+
+    - håndterer sletting av data basert på excelfil.<br/>
+
+12. tabledata:
+
+    - genererer data for frontend table. Leverer JSON format.<br/>
+
+13. updateonschedule:
+
+    - WIP endepunkt for å håndtere schedulert oppdatering av data via en Azure Function.<br/>
 
 <br/>
 
 ### Micro Services
 
-En Cronjob skal være kjørende på serveren som en gang i året gjør calls til /Changes endepunktet til PROFF for å finne ny data for alle organisasjonsnr i databasen. Den vil så hente data for hvert ORGNR med oppdatert data.
+En Azure Funksjon vil kalle updateonschedule for å automatisere innhenting av ny data fra bl.a. PROFF.
 
 <br/>
 
@@ -355,235 +446,32 @@ Databasen skal være lett, ta lite plass. Og håndtere så mye logikk den kan se
 
 ### Schema
 
-Foreløbig ide til database setup.
-
-Tabell 1.
-
-Bedrift_Info
-
-| bedrift_id (SERIAL PRIMARY KEY) | Orgnummer (INTEGER UNIQUE NOT NULL) | MålBedrift (VARCHAR(255) NOT NULL) | Bransje (VARCHAR(255) DEFAULT NULL) | Beskrivelse (VARCHAR(255) DEFAULT NULL) | NavneListe (VARCHAR(255)[]) DEFAULT NULL |
-| :------------------------------ | :---------------------------------- | :--------------------------------- | :---------------------------------- | --------------------------------------- | :--------------------------------------- |
-| 1                               | 43234324                            | Bedriften                          | IT                                  | Beste Bedrift                           | [startuppen, helt-okay-bedrift]          |
-
-Tabell 2.
-
-oversikt_bedrift_fase_status
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER NOT NULL) | fase (VARCHAR(255)[]) | PRIMARY KEY(bedrift_id, rapportår, fase) |
-| :------------------------------------------------------- | :--------------------------- | :-------------------- | :--------------------------------------- |
-| 1                                                        | 2023                         | '{Alumni}'            | (1,2023, '{Alumni}')                     |
-
-Tabell 3.
-
-Årlig_økonomisk_data
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | øko_kode(VARCHAR(255) REFERENCES øko_kode_lookup(øko_kode)) | øko_verdi (NUMERIC(10,4) DEFAULT NULL) | PRIMARY KEY(bedrift_id, rapportår, øko_kode) |
-| :------------------------------------------------------- | :------------------ | :---------------------------------------------------------- | :------------------------------------- | -------------------------------------------- |
-| 1                                                        | 2023                | EK                                                          | 230.4                                  | (1,2023,EK)                                  |
-
-Denne tabellen kan potensielt partisjoneres etter BERDIFT_ID hvis den blir stor.
-
-Tabell 4.
-
-Øko_kode_lookup
-
-| øko_kode(VARCHAR(255)) | kode_beskrivelse(text) |
-| :--------------------- | :--------------------- |
-| EK                     | 'Egen Kapital'         |
-
-Tabell 5.
-
-bedrift_kunngjøringer
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | kunngjørings_id (VARCHAR(255)) | dato (VARCHAR(255)) | kunngjøringstekst (text)                | kunngjøringstype (VARCHAR(255)) | PRIMARY KEY (bedrift_id, kunngjørings_id) |
-| :------------------------------------------------------- | :----------------------------- | :------------------ | :-------------------------------------- | :------------------------------ | :---------------------------------------- |
-| 1                                                        | 2309400923498234               | "20.12.12"          | "Noe ganske stort og kult er kunngjort" | "Generell"                      | (1, 2309400923498234)                     |
-
-Tabell 6.
-
-bedrift_leder_oversikt<br>
-Her beholder vi kun info om de som er markert med Kode DAGL eller LEDE
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | tittel (VARCHAR (255)) | navn (VARCHAR(255)) | fødselsdag (VARCHAR(255)) | tittelkode (VARCHAR255) | rapportår (INTEGER) |
-| :------------------------------------------------------- | :--------------------- | :------------------ | :------------------------ | :---------------------- | :------------------ |
-| 1                                                        | Styrets Leder          | John Johnson        | "20.12.12"                | LEDE                    | 2024                |
-
-Tabell 7.
-
-bedrift_shareholder_info
-
-| bedrift_id (INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår (INTEGER) | antall_shares (INTEGER) | shareholder_bedrift_id (VARCHAR (255)DEFAULT NULL) | navn (VARCHAR(255)) | sharetype (VARCHAR(255)) | shareholder_fornavn (VARCHAR (255) DEFAULT NULL) | shareholder_etternavn (VARCHAR(255) DEFAULT NULL) |
-| :------------------------------------------------------- | :------------------ | :---------------------- | :------------------------------------------------- | :------------------ | :----------------------- | :----------------------------------------------- | :------------------------------------------------ |
-| 1                                                        | 2024                | 300000                  | null                                               | Fattern             | 50                       | null                                             | null                                              |
-
-Tabell 8.
-
-generell_årlig_bedrift_info
-
-| bedrift_id(INTEGER REFERENCES bedrift_info(bedrift_id)) | rapportår INTEGER | antall_ansatte INTEGER | landsdel (VARCHAR(255)) | fylke (VARCHAR(255)) | kommune (VARCHAR(255)) | post_kode (VARCHAR(255)) | post_adresse (VARCHAR(255)) |
-| :------------------------------------------------------ | :---------------- | :--------------------- | :---------------------- | :------------------- | :--------------------- | :----------------------- | :-------------------------- |
-| 1                                                       | 2024              | 1                      | Vestlandet              | Vestland             | Bergen                 | 5050                     | Sandefjordsvika 98          |
-
+Ferdig oppsett av database ser slik ut:<br>
+![Bilde som viser relasjonsgraf for databasen](https://imgur.com/a/z6nvU25)
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
 
-Når C# backend fetcher ny data fra proff dekonstruerer den JSON data til classer som passer til følgende databasefunksjoner:
+Databasen har to hjelpefunksjoner som blir trigget av EF core.<br/>
 
-1. Insert*bedrift_leder_info(orgnr INTEGER, input_navn VARCHAR(255), input_tittel VARCHAR(255), input_tittelkode VARCHAR(255), input*år INTEGER, input_fødselsår VARCHAR(255))<br>
+1. Update delta:
+   Denne funksjonen oppdaterer data generert av databasen ved innsetting av ny data.<br/>
+2. Update Views:
+   Denne funksjonen oppdaterer materialized views ved innsetting av ny data.<br/>
 
-```sql
+<h3 id="views-DATABASE">Views</h3>
+Databasen har flere materialized views for å hjelpe med rask levering av databasegenerert data.
 
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO bedrift_leder_oversikt(bedrift_id, tittel, navn, fødselsdag, tittelkode, rapportår)
-	VALUES (id, input_tittel, input_navn, input_fødselsår, input_tittelkode, input_år)
-	ON CONFLICT do nothing;
-END;
-```
+1. Average Values:
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, uten filter.
+2. Data Sorted By Company Branch
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, men er gruppert basert på bedriftenes bransje.
+3. Data Sorted By Leader Age
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, men er gruppert i aldergrupper basert på bedriftlederens alder.
+4. Data Sorted By Phase
+   Dette er et materialized view som viser gjennomsnittsverdier for hele databasen, men er gruppert basert på hvilken intern fase bedriften er i.
+5. Full View
+   Dette er et materialized view som kombinerer dataen til et dataset som passer Excel Format.
+6. Årsrapport
+   Dette er et materialized view som kombinerer dataen til et årsrapport format som passer Excel Format.
 
-2. insert*generell*årlig_bedrift_info(orgnr INTEGER, år INTEGER ,input_landsdel VARCHAR, input_fylke VARCHAR, input_kommune VARCHAR, input_post_kode VARCHAR, input_post_adresse VARCHAR, input_antall_ansatte INTEGER DEFAULT NULL)<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO generell_årlig_bedrift_info(bedrift_id, rapportår, landsdel, fylke, kommune, post_kode, post_addresse, antall_ansatte)
-	VALUES (id, år, input_landsdel, input_fylke, input_kommune, input_post_kode, input_post_addresse, input_antall_ansatte)
-	ON CONFLICT do nothing;
-END;
-```
-
-3. insert_kunngjøringer(orgnr INTEGER, input_id BIGINT, input_dato VARCHAR, input_desc TEXT, input_type VARCHAR)<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO bedrift_kunngjøringer(bedrift_id, kunngjøring_id, dato, kunngjøringstekst, kunngjøringstype)
-	VALUES (id, input_id, input_dato, input_desc, input_type)
-	ON CONFLICT do nothing;
-END;
-```
-
-4. insert_shareholder_info(orgnr INTEGER, år INTEGER, antall INTEGER, input_navn VARCHAR, input_type VARCHAR, bedrift_navn VARCHAR DEFAULT NULL, fornavn VARCHAR DEFAULT NULL, etternavn VARCHAR DEFAULT NULL)<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	INSERT INTO bedrift_shareholder_info(bedrift_id, rapportår, antal_shares, shareholder_bedrift_id, shareholder_fornavn, shareholder_etternavn, navn, sharetype)
-	VALUES (id, år, antall, bedrift_navn, fornavn, etternavn, input_navn, input_type)
-		ON CONFLICT do nothing;
-END;
-```
-
-5. insert_øko_data(orgnr INTEGER, år INTEGER, kodenavn VARCHAR[], kodeverdier NUMERIC[])<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-	curr_kode VARCHAR(255);
-	curr_val NUMERIC;
-BEGIN
-	SELECT bedrift_id
-	FROM bedrift_info
-	INTO id
-	WHERE orgnummer = orgnr;
-	FOR i in 1..array_length(kodenavn, 1)
-	LOOP
-		curr_kode := kodenavn[i];
-		curr_val := kodeverdier[i];
-		INSERT INTO årlig_økonomisk_data(bedrift_id, rapportår, øko_kode, øko_verdi)
-		VALUES (id, år, curr_kode, curr_val)
-		ON CONFLICT do nothing;
-	END LOOP;
-END;
-```
-
-6. update_bedrift_info_with_name(orgnr INTEGER, navn VARCHAR, tidligere_navn VARCHAR[])<br>
-
-```sql
-BEGIN
-	UPDATE bedrift_info
-	SET målbedrift = navn,
-		navneliste = tidligere_navn
-	WHERE orgnummer = orgnr;
-END
-```
-
-Når bruker vil legge til flere bedrifter via excel-ark gjennom dashboard kjøres følgende funksjon:
-
-1. insert_bedrift_data_vis(orgnr INTEGER, bransjenavn VARCHAR, rapportår INTEGER[], faser VARCHAR[])<br>
-
-```sql
-
-DECLARE
-	id INTEGER;
-	år INTEGER;
-	fasetext VARCHAR(255);
-BEGIN
-	INSERT INTO bedrift_info(orgnummer, bransje)
-	VALUES (orgnr, bransjenavn)
-	ON CONFLICT(orgnummer)
-	DO UPDATE SET bransje = EXCLUDED.bransje
-	RETURNING bedrift_id INTO id;
-
-	FOR i in 1..array_length(rapportÅrarray, 1)
-	LOOP
-		år := rapportÅrarray[i];
-		fasetext := Faser[i];
-		INSERT INTO oversikt_bedrift_fase_status(bedrift_id, rapportår, fase)
-		VALUES (id, år, fasetext)
-		ON CONFLICT do nothing;
-	END LOOP;
-END;
-```
-
-Når ny data fra proff er lagt inn i databasen, trigrer C# følgende funksjon for å generere DELTA verdier:
-
-1. update_delta()
-
-```sql
-
-BEGIN
-	UPDATE årlig_økonomisk_data t1
-	SET delta = t1.øko_verdi - t2.øko_verdi
-	FROM årlig_økonomisk_data t2
-	WHERE t1.bedrift_id = t2.bedrift_id
-	AND t2.øko_kode = t2.øko_kode
-	AND t1.rapportår = t2.rapportår+1;
-	UPDATE årlig_økonomisk_data t1
-	SET delta = 0
-	WHERE NOT EXISTS(
-		SELECT 1
-		FROM årlig_økonomisk_data t2
-		WHERE t1.bedrift_id = t2.bedrift_id
-		AND t2.øko_kode = t2.øko_kode
-		AND t1.rapportår = t2.rapportår+1
-	);
-END;
-```
-
-Grunnen for at dette gjøres på C# er fordi postgreSQL ikke har en dedikert batch insert trigger. Dette er en mer nøyaktig måte å gjøre dette på,<br> og garanterer at delta blir laget korrekt uavhengig av hvor mange år som legges inn om gangen.
