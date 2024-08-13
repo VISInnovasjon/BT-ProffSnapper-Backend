@@ -75,7 +75,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
                     "en" => "Accumulated Man-years",
                     _ => "Missing Language",
                 }},
-                {"number", (int)WorkYears[0]/750}
+                {"number", (int)WorkYears[0]/855}
             };
             var JsonString = JsonSerializer.Serialize(Count);
             return Ok(JsonString);
@@ -103,7 +103,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         {
             int Year = int.Parse(query.Year);
             var WorkerCountBasis = _context.CompanyEconomicDataPrYears.Where(e => e.EcoCode == "SDI" && (e.Year == Year)).Sum(e => e.EcoValue) ?? 0;
-            int WorkerCount = (int)WorkerCountBasis / 750;
+            int WorkerCount = (int)WorkerCountBasis / 855;
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
