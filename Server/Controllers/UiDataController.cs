@@ -101,16 +101,17 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         });
         try
         {
-            int Year = DateTime.Now.Year;
-            var WorkerCount = _context.GeneralYearlyUpdatedCompanyInfos.Where(e => e.Year == Year - 1 || e.Year == Year - 2).Sum(e => e.NumberOfEmployees);
+            int Year = int.Parse(query.Year);
+            var WorkerCountBasis = _context.CompanyEconomicDataPrYears.Where(e => e.EcoCode == "SDI" && (e.Year == Year)).Sum(e => e.EcoValue) ?? 0;
+            int WorkerCount = (int)WorkerCountBasis / 750;
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
-                    "nor" => "Arbeidsplasser",
-                    "en" => "Number of employees",
+                    "nor" => "Årsverk",
+                    "en" => "Man-years",
                     _ => "Missing Language",
                 }},
-                {"number", WorkerCount ?? 0}
+                {"number", WorkerCount}
             };
             var JsonString = JsonSerializer.Serialize(Count);
             return Ok(JsonString);
@@ -172,7 +173,8 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         });
         try
         {
-            var CompanyCount = _context.CompanyInfos.Count(e => e.CompanyName != null);
+            int Year = int.Parse(query.Year);
+            var CompanyCount = _context.CompanyEconomicDataPrYears.Where(e => e.Year == Year && e.EcoValue != null).Select(e => e.CompanyId).Distinct().Count();
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
