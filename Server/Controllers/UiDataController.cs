@@ -63,15 +63,19 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             int QueryYear = int.Parse(query.Year);
-            var WorkYears = _context.CompanyEconomicDataPrYears.Where(e => e.Year <= QueryYear).GroupBy(e => new { e.CompanyId, e.Year }).Count();
+            /*
+            Denne bør endres på hvis vi finner en annen plass å hente arbeidsplasser. Akkurat nå er dette et estimat basert på 750000kr pr årsverk pr bedrift i total akkumulert omsetning for hvert år. 
+            */
+            var WorkYears = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == QueryYear || e.Year == QueryYear - 1)).Select(e => e.TotalAccumulated).ToList();
+            WorkYears.Reverse();
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
-                    "nor" => "Antall Rapporter",
-                    "en" => "Number of reports",
+                    "nor" => "Akkumulert Årsverk",
+                    "en" => "Accumulated Man-years",
                     _ => "Missing Language",
                 }},
-                {"number", WorkYears}
+                {"number", (int)WorkYears[0]/750}
             };
             var JsonString = JsonSerializer.Serialize(Count);
             return Ok(JsonString);

@@ -7,20 +7,11 @@ services:
       - POSTGRES_DB=${DATABASE_NAME}
     env_file:
       - ./.env
+    ports:
+      - 5432:5432
     volumes:
       - ./postgres:/var/lib/postgresql/data
       - ./postgres:/backups/
-  postgresdowngrade:
-    image: postgres:12.19
-    environment:
-      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
-      - POSTGRES_USER=${DATABASE_USER}
-      - POSTGRES_DB=${DATABASE_NAME}
-    env_file:
-      - ./.env
-    volumes:
-      - ./postgresdowngrade:/var/lib/postgresql/data
-      - ./postgresdowngrade:/backups/
   pgAdmin:
     image: dpage/pgadmin4
     restart: always
