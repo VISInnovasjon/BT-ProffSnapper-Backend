@@ -23,12 +23,13 @@ public class TableDataController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> SendTableData([FromQuery] QueryParamsForTable query)
     {
-        if (string.IsNullOrEmpty(query.EcoCode)) return BadRequest("Missing EcoCode");
+        if (!query.Valid()) return BadRequest("Missing EcoCode and/or year.");
         List<Models.CompanyEconomicDataPrYear>? topPerformers = null;
         try
         {
+            int year = int.Parse(query.Year);
             topPerformers = await _context.CompanyEconomicDataPrYears
-                                    .Where(p => p.EcoCode == query.EcoCode && p.Year == DateTime.Now.Year - 2)
+                                    .Where(p => p.EcoCode == query.EcoCode && p.Year == year)
                                     .OrderByDescending(p => p.Accumulated)
                                     .Include(p => p.Company)
                                     .ToListAsync();
