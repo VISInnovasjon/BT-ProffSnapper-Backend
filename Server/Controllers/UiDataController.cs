@@ -204,6 +204,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var branch = _context.CompanyInfos.Select(e => e.Branch).Where(branch => branch != null).Distinct().ToList();
+            branch.Sort();
             var returnstr = JsonSerializer.Serialize(branch);
             return Ok(returnstr);
         }
@@ -223,6 +224,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var agegroups = _context.DataSortedByLeaderAges.Select(e => e.AgeGroup).Where(AgeGroup => AgeGroup != null).Distinct().ToList();
+            agegroups.Sort();
             var returnstr = JsonSerializer.Serialize(agegroups);
             return Ok(returnstr);
         }
@@ -242,6 +244,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var sexes = _context.DataSortedByLeaderSexes.Select(e => e.Sex).Distinct().ToList();
+            sexes.Sort();
             var returnstr = JsonSerializer.Serialize(sexes);
             return Ok(returnstr);
         }
@@ -261,6 +264,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var phases = _context.CompanyPhaseStatusOverviews.Select(e => e.Phase).Where(phase => phase != null).Distinct().ToList();
+            phases.Sort();
             var returnstr = JsonSerializer.Serialize(phases);
             return Ok(returnstr);
         }
