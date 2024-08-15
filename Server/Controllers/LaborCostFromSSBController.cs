@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Server.Context;
 using Server.Models;
@@ -14,10 +15,10 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateLabourCost()
     {
-        Dictionary<string, int> newData;
+        SSBJsonStat newData;
         try
         {
-            newData = await FetchSSBData.GetSSBData();
+            newData = await FetchSSBData.GetSSBDataAvgBasedOnDepth();
         }
         catch (Exception ex)
         {
@@ -26,7 +27,8 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
                 error = ex.Message
             });
         }
-        foreach (var data in newData)
+        Dictionary<string, int> laborCostData = newData.GetAvgDataBasedOnDepth();
+        foreach (var data in laborCostData)
         {
             var newValue = new AvgLaborCostPrYear()
             {
@@ -45,9 +47,11 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
                 await ConflictHandler.HandleConflicts(_context, newValue);
             }
         }
+        var jsonTestData = newData.GroupedDataByKey();
         return Ok(new
         {
-            success = "Update Complete"
+            success = "Update Complete",
+            data = JsonSerializer.Serialize(jsonTestData)
         });
 
 
