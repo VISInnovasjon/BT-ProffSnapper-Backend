@@ -67,6 +67,8 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             Denne bør endres på hvis vi finner en annen plass å hente arbeidsplasser. Akkurat nå er dette et estimat basert på 750000kr pr årsverk pr bedrift i total akkumulert omsetning for hvert år. 
             */
             var WorkYears = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == QueryYear || e.Year == QueryYear - 1)).Select(e => e.TotalAccumulated).ToList();
+            var costSelect = _context.AvgLaborCostPrYears.Where(e => e.Year == query.Year).Select(e => e.Value).ToList();
+            var cost = costSelect.Count == 0 || costSelect == null ? 855 : costSelect[0] / 1000;
             WorkYears.Reverse();
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
@@ -75,7 +77,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
                     "en" => "Accumulated Man-years",
                     _ => "Missing Language",
                 }},
-                {"number", (int)WorkYears[0]/855}
+                {"number", (int)WorkYears[0]/cost}
             };
             var JsonString = JsonSerializer.Serialize(Count);
             return Ok(JsonString);
@@ -103,7 +105,9 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         {
             int Year = int.Parse(query.Year);
             var WorkerCountBasis = _context.CompanyEconomicDataPrYears.Where(e => e.EcoCode == "SDI" && (e.Year == Year)).Sum(e => e.EcoValue) ?? 0;
-            int WorkerCount = (int)WorkerCountBasis / 855;
+            var costSelect = _context.AvgLaborCostPrYears.Where(e => e.Year == query.Year).Select(e => e.Value).ToList();
+            var cost = costSelect.Count == 0 || costSelect == null ? 855 : costSelect[0] / 1000;
+            var WorkerCount = (int)WorkerCountBasis / cost;
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
