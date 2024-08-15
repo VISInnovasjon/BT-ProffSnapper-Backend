@@ -1,13 +1,12 @@
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 
 namespace Server.Models;
 
 public class SSBJsonStat
 {
-    private readonly int _DepthSize;
-    private readonly int _GroupSize;
-    private readonly int _GroupKeysSize;
     [JsonPropertyName("version")]
     public string? Version { get; set; }
     [JsonPropertyName("class")]
@@ -34,12 +33,15 @@ public class SSBJsonStat
     public List<int?>? Value { get; set; }
     public SSBJsonStat()
     {
-        _DepthSize = Size[2] ?? throw new NullReferenceException("Missing size for depth");
-        _GroupSize = Size[0] ?? throw new NullReferenceException("Missing size for group");
-        _GroupKeysSize = Size[1] ?? throw new NullReferenceException("Missing size for group keys");
+
     }
     public Dictionary<string, int> GetAvgDataBasedOnDepth()
     {
+        int _DepthSize = Size[2] ?? throw new NullReferenceException("Missing size for depth");
+        int _GroupSize = Size[0] ?? throw new NullReferenceException("Missing size for group");
+        int _GroupKeysSize = Size[1] ?? throw new NullReferenceException("Missing size for group keys");
+        List<string> _DepthLabels = Dimension[Id[2]].Category.Label.Values.ToList() ?? throw new NullReferenceException("Missing Labels for Depth");
+
         List<int> SumData = Enumerable.Repeat(0, _DepthSize).ToList();
         int count = 0;
         for (int i = 0; i < Value.Count; i++)
@@ -48,31 +50,57 @@ public class SSBJsonStat
             count++;
             if (count == _DepthSize) count = 0;
         }
-        string DepthKey = Id[2] ?? throw new NullReferenceException("Missing key for depth values.");
-        if (!Dimension.ContainsKey(DepthKey)) throw new NullReferenceException($"missing labels for key {DepthKey}");
-        List<string> DepthLabels = [];
-        try
-        {
-            foreach (var value in Dimension[DepthKey].Category.Label.Values)
-            {
-                DepthLabels.Add(value);
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new Exception($"Missing value: {ex.Message}");
-        }
         Dictionary<string, int> Data = [];
         for (int i = 0; i < SumData.Count; i++)
         {
             Data.Add(
-                DepthLabels[i], SumData[i]
+                _DepthLabels[i], SumData[i] / (_GroupSize * _GroupKeysSize)
             );
         }
         return Data;
     }
-
+    public Dictionary<string, Dictionary<string, List<int>>> GroupedDataByKey()
+    {
+        // TODO: Legge til labels for år. 
+        int _DepthSize = Size[2] ?? throw new NullReferenceException("Missing size for depth");
+        int _GroupKeysSize = Size[1] ?? throw new NullReferenceException("Missing size for group keys");
+        List<string> _GroupLabels = Dimension[Id[0]].Category.Label.Values.ToList() ?? throw new NullReferenceException("Missing labels for group");
+        List<string> _GroupKeyLabels = Dimension[Id[1]].Category.Label.Values.ToList() ?? throw new NullReferenceException("Missing labels for groupkeys");
+        Dictionary<string, Dictionary<string, List<int>>> Data = [];
+        foreach (var label in _GroupLabels)
+        {
+            Data.Add(
+                label, []
+            );
+            foreach (var key in _GroupKeyLabels)
+            {
+                Data[label].Add(
+                    key, Enumerable.Repeat(0, _DepthSize).ToList()
+                );
+            }
+        }
+        int DepthCount = 0;
+        int KeyCount = 0;
+        int GroupCount = 0;
+        for (int i = 0; i < Value.Count; i++)
+        {
+            Data[_GroupLabels[GroupCount]][_GroupKeyLabels[KeyCount]][DepthCount] = Value[i] ?? 0;
+            DepthCount++;
+            if (DepthCount == _DepthSize)
+            {
+                DepthCount = 0;
+                KeyCount++;
+                if (KeyCount == _GroupKeysSize)
+                {
+                    KeyCount = 0;
+                    GroupCount++;
+                }
+            }
+        }
+        return Data;
+    }
 }
+
 public class Dimentions
 {
     [JsonPropertyName("label")]
