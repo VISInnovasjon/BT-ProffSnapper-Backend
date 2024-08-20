@@ -33,13 +33,13 @@ public class SSBJsonStat
     public List<int?>? Value { get; set; }
     public SSBJsonStat()
     {
-
+        //TODO: custom constructor for å initialize readonly fields her. 
     }
     public Dictionary<string, int> GetAvgDataBasedOnDepth()
     {
         int _DepthSize = Size[2] ?? throw new NullReferenceException("Missing size for depth");
         int _GroupSize = Size[0] ?? throw new NullReferenceException("Missing size for group");
-        int _GroupKeysSize = Size[1] ?? throw new NullReferenceException("Missing size for group keys");
+        int _WidthSize = Size[1] ?? throw new NullReferenceException("Missing size for group keys");
         List<string> _DepthLabels = Dimension[Id[2]].Category.Label.Values.ToList() ?? throw new NullReferenceException("Missing Labels for Depth");
 
         List<int> SumData = Enumerable.Repeat(0, _DepthSize).ToList();
@@ -54,7 +54,7 @@ public class SSBJsonStat
         for (int i = 0; i < SumData.Count; i++)
         {
             Data.Add(
-                _DepthLabels[i], SumData[i] / (_GroupSize * _GroupKeysSize)
+                _DepthLabels[i], SumData[i] / (_GroupSize * _WidthSize)
             );
         }
         return Data;
@@ -63,16 +63,16 @@ public class SSBJsonStat
     {
         // TODO: Legge til labels for år. 
         int _DepthSize = Size[2] ?? throw new NullReferenceException("Missing size for depth");
-        int _GroupKeysSize = Size[1] ?? throw new NullReferenceException("Missing size for group keys");
-        List<string> _GroupLabels = Dimension[Id[0]].Category.Label.Values.ToList() ?? throw new NullReferenceException("Missing labels for group");
-        List<string> _GroupKeyLabels = Dimension[Id[1]].Category.Label.Values.ToList() ?? throw new NullReferenceException("Missing labels for groupkeys");
+        int _WithSize = Size[1] ?? throw new NullReferenceException("Missing size for group keys");
+        List<string> _GroupLabels = Dimension[Id[0]].Category.Label.Keys.ToList() ?? throw new NullReferenceException("Missing labels for group");
+        List<string> _WidthLabels = Dimension[Id[1]].Category.Label.Keys.ToList() ?? throw new NullReferenceException("Missing labels for groupkeys");
         Dictionary<string, Dictionary<string, List<int>>> Data = [];
         foreach (var label in _GroupLabels)
         {
             Data.Add(
                 label, []
             );
-            foreach (var key in _GroupKeyLabels)
+            foreach (var key in _WidthLabels)
             {
                 Data[label].Add(
                     key, Enumerable.Repeat(0, _DepthSize).ToList()
@@ -84,13 +84,13 @@ public class SSBJsonStat
         int GroupCount = 0;
         for (int i = 0; i < Value.Count; i++)
         {
-            Data[_GroupLabels[GroupCount]][_GroupKeyLabels[KeyCount]][DepthCount] = Value[i] ?? 0;
+            Data[_GroupLabels[GroupCount]][_WidthLabels[KeyCount]][DepthCount] = Value[i] ?? 0;
             DepthCount++;
             if (DepthCount == _DepthSize)
             {
                 DepthCount = 0;
                 KeyCount++;
-                if (KeyCount == _GroupKeysSize)
+                if (KeyCount == _WithSize)
                 {
                     KeyCount = 0;
                     GroupCount++;
