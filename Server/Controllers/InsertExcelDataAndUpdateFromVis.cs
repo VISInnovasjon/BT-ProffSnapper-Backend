@@ -37,7 +37,7 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
             {
                 error = GlobalLanguage.Language switch
                 {
-                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "nor" => "Feil filformat. Vennligst sjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
                     "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
                     _ => "Server Error"
                 }
@@ -182,7 +182,7 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
             {
                 error = GlobalLanguage.Language switch
                 {
-                    "nor" => "Feil filformat. Vennligst skjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
+                    "nor" => "Feil filformat. Vennligst sjekk filen eller prøv igjen med en .xlsx fil. Hvis du mangler fil, eller er usikker på formatering, bruk 'Hent mal' knappen under.",
                     "en" => "Invalid format or file type. Please check the file or try again with a .xlsx file. If missing file or unsure how to format, click on the button 'Get Template'.",
                     _ => "Server Error"
                 }
