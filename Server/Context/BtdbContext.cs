@@ -322,6 +322,7 @@ public partial class BtdbContext : DbContext
             entity.ToTable("avg_labor_cost_pr_year").HasKey(e => e.Year);
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.Value).HasColumnName("value");
+            entity.Property(e => e.TotalManYear).HasColumnName("total_man_year");
         });
         modelBuilder.Entity<FullView>(entity =>
         {
