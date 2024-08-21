@@ -35,7 +35,10 @@ public class ConflictHandler
         foreach (var key in primaryKeys)
         {
             var property = Expression.Property(parameter, key);
-            var value = Expression.Constant(typeof(T)?.GetProperty(key)?.GetValue(entity));
+            var propertyInfo = typeof(T).GetProperty(key);
+            var propertyType = propertyInfo.PropertyType;
+            var value = Expression.Constant(propertyInfo.GetValue(entity));
+            value ??= Expression.Constant(null);
             var equals = Expression.Equal(property, value);
             predicate = predicate == null ? equals : Expression.AndAlso(predicate, equals);
         }

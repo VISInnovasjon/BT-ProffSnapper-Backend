@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Server.Context;
 using Server.Models;
 using Server.Util;
@@ -28,12 +29,28 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
             });
         }
         Dictionary<string, int> laborCostData = newData.GetAvgDataBasedOnDepth();
-        foreach (var data in laborCostData)
+        List<string> yearLabels = laborCostData.Keys.ToList();
+        int convFirstYear = int.Parse(yearLabels.First());
+        int rangeLength = int.Parse(yearLabels.Last()) + 2 - convFirstYear;
+        List<int> yearKeys = Enumerable.Range(convFirstYear, rangeLength).ToList();
+        int ValidDataPoint = 0;
+
+        for (int i = 0; i < yearKeys.Count; i++)
         {
+            Console.WriteLine(yearKeys[i]);
+            string key = yearKeys[i].ToString();
+            if (laborCostData.TryGetValue(key, out int value))
+            {
+                ValidDataPoint = value;
+            }
+            else
+            {
+                ValidDataPoint += ValidDataPoint * 3 / 100;
+            }
             var newValue = new AvgLaborCostPrYear()
             {
-                Year = data.Key,
-                Value = data.Value
+                Year = yearKeys[i],
+                Value = ValidDataPoint,
             };
             try
             {
@@ -42,10 +59,19 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
             );
                 await _context.SaveChangesAsync();
             }
-            catch (Exception)
+            catch (DbUpdateException)
             {
+                Console.WriteLine("Caught update exception");
                 await ConflictHandler.HandleConflicts(_context, newValue);
             }
+        }
+        try
+        {
+            await _context.Database.ExecuteSqlRawAsync("SELECT update_total_man_year()");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
         }
         var jsonTestData = newData.GroupedDataByKey();
         return Ok(new
