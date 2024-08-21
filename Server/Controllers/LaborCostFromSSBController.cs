@@ -37,7 +37,6 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
 
         for (int i = 0; i < yearKeys.Count; i++)
         {
-            Console.WriteLine(yearKeys[i]);
             string key = yearKeys[i].ToString();
             if (laborCostData.TryGetValue(key, out int value))
             {
@@ -67,7 +66,7 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
         }
         try
         {
-            await _context.Database.ExecuteSqlRawAsync("SELECT update_total_man_year()");
+            await _context.Database.ExecuteSqlRawAsync("CALL update_total_man_year()");
         }
         catch (Exception ex)
         {
