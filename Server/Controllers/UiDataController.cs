@@ -63,15 +63,15 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             int QueryYear = int.Parse(query.Year);
-            var WorkYears = _context.CompanyEconomicDataPrYears.Where(e => e.Year <= QueryYear).GroupBy(e => new { e.CompanyId, e.Year }).Count();
+            decimal? AccumulatedManYears = _context.AvgLaborCostPrYears.Where(e => e.Year <= QueryYear && e.TotalManYear != null).Sum(e => e.TotalManYear);
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
-                    "nor" => "Antall Rapporter",
-                    "en" => "Number of reports",
+                    "nor" => "Akkumulert Årsverk",
+                    "en" => "Accumulated Man-years",
                     _ => "Missing Language",
                 }},
-                {"number", WorkYears}
+                {"number", (int)AccumulatedManYears}
             };
             var JsonString = JsonSerializer.Serialize(Count);
             return Ok(JsonString);
@@ -97,16 +97,16 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         });
         try
         {
-            int Year = DateTime.Now.Year;
-            var WorkerCount = _context.GeneralYearlyUpdatedCompanyInfos.Where(e => e.Year == Year - 1 || e.Year == Year - 2).Sum(e => e.NumberOfEmployees);
+            int Year = int.Parse(query.Year);
+            var WorkerCount = _context.AvgLaborCostPrYears.Where(e => e.Year == Year).Select(e => e.TotalManYear).ToList();
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
-                    "nor" => "Arbeidsplasser",
-                    "en" => "Number of employees",
+                    "nor" => $"Årsverk totalt {query.Year}",
+                    "en" => $"Man-years in total {query.Year}",
                     _ => "Missing Language",
                 }},
-                {"number", WorkerCount ?? 0}
+                {"number", (int)WorkerCount[0]}
             };
             var JsonString = JsonSerializer.Serialize(Count);
             return Ok(JsonString);
@@ -168,12 +168,13 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         });
         try
         {
-            var CompanyCount = _context.CompanyInfos.Count(e => e.CompanyName != null);
+            int Year = int.Parse(query.Year);
+            var CompanyCount = _context.CompanyEconomicDataPrYears.Where(e => e.Year == Year && e.EcoValue != null).Select(e => e.CompanyId).Distinct().Count();
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
-                    "nor" => "Antall bedrifter",
-                    "en" => "Number of companies",
+                    "nor" => $"Antall bedrifter totalt {query.Year}",
+                    "en" => $"Number of companies in total {query.Year}",
                     _ => "Missing Language",
                 }},
                 {"number", CompanyCount}
@@ -198,6 +199,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var branch = _context.CompanyInfos.Select(e => e.Branch).Where(branch => branch != null).Distinct().ToList();
+            branch.Sort();
             var returnstr = JsonSerializer.Serialize(branch);
             return Ok(returnstr);
         }
@@ -217,6 +219,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var agegroups = _context.DataSortedByLeaderAges.Select(e => e.AgeGroup).Where(AgeGroup => AgeGroup != null).Distinct().ToList();
+            agegroups.Sort();
             var returnstr = JsonSerializer.Serialize(agegroups);
             return Ok(returnstr);
         }
@@ -236,6 +239,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var sexes = _context.DataSortedByLeaderSexes.Select(e => e.Sex).Distinct().ToList();
+            sexes.Sort();
             var returnstr = JsonSerializer.Serialize(sexes);
             return Ok(returnstr);
         }
@@ -255,6 +259,7 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         try
         {
             var phases = _context.CompanyPhaseStatusOverviews.Select(e => e.Phase).Where(phase => phase != null).Distinct().ToList();
+            phases.Sort();
             var returnstr = JsonSerializer.Serialize(phases);
             return Ok(returnstr);
         }

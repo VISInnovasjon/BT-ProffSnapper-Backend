@@ -37,6 +37,7 @@ public partial class BtdbContext : DbContext
     public virtual DbSet<DataSortedByLeaderSex> DataSortedByLeaderSexes { get; set; }
     public virtual DbSet<AverageValues> AverageValues { get; set; }
     public virtual DbSet<FullView> FullViews { get; set; }
+    public virtual DbSet<AvgLaborCostPrYear> AvgLaborCostPrYears { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}");
@@ -315,6 +316,13 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.EcoCode).HasColumnName("eco_code");
             entity.Property(e => e.TotalAccumulated).HasColumnName("total_accumulated");
             entity.Property(e => e.UniqueCompanyCount).HasColumnName("unique_company_count");
+        });
+        modelBuilder.Entity<AvgLaborCostPrYear>(entity =>
+        {
+            entity.ToTable("avg_labor_cost_pr_year").HasKey(e => e.Year);
+            entity.Property(e => e.Year).HasColumnName("year");
+            entity.Property(e => e.Value).HasColumnName("value");
+            entity.Property(e => e.TotalManYear).HasColumnName("total_man_year");
         });
         modelBuilder.Entity<FullView>(entity =>
         {

@@ -2,7 +2,7 @@ namespace Server.Util;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Server.Context;
-public class ConflictHandler
+public class UpsertHandler
 {
     /// <summary>
     /// Creates a lamdafunction to find and update values in a potential duplicate tracked by EF.
@@ -23,7 +23,7 @@ public class ConflictHandler
     ///<exception cref="NullReferenceException">
     ///If it fails to create a a Lamda predicate based on the primary keys in question on class T
     ///</exception>
-    public static async Task HandleConflicts<T>(BtdbContext context, T entity, bool? detachOnly = false) where T : class
+    public static void UpsertEntity<T>(BtdbContext context, T entity, bool? detachOnly = false) where T : class
     {
         context.Entry(entity).State = EntityState.Detached;
         if (detachOnly == true) return;
@@ -35,26 +35,26 @@ public class ConflictHandler
         foreach (var key in primaryKeys)
         {
             var property = Expression.Property(parameter, key);
-            var value = Expression.Constant(typeof(T)?.GetProperty(key)?.GetValue(entity));
+            var propertyInfo = typeof(T).GetProperty(key);
+            var propertyType = propertyInfo.PropertyType;
+            var value = Expression.Constant(propertyInfo.GetValue(entity));
+            value ??= Expression.Constant(null);
             var equals = Expression.Equal(property, value);
             predicate = predicate == null ? equals : Expression.AndAlso(predicate, equals);
         }
         if (predicate == null) throw new NullReferenceException("Could not build predicate for the lamda function.");
         var lamda = Expression.Lambda<Func<T, bool>>(predicate, parameter);
-        var existingEntity = context.ChangeTracker.Entries<T>().FirstOrDefault(e => lamda.Compile()(e.Entity))?.Entity;
-        existingEntity ??= await context.Set<T>().SingleOrDefaultAsync(lamda);
+        var existingEntity = context.Set<T>().SingleOrDefault(lamda);
         if (existingEntity == null)
         {
             try
             {
-                await context.Set<T>().AddAsync(entity);
-                DetachUnwantedEntities(context, entity);
-                await context.SaveChangesAsync();
+                context.Set<T>().Add(entity);
+                context.SaveChanges();
                 return;
             }
             catch (DbUpdateException ex)
             {
-                await HandleConflicts(context, entity, true);
                 throw new Exception($"Failed to update reference, detatching entity: {ex.Message}");
             }
         }
@@ -78,8 +78,7 @@ public class ConflictHandler
         }
         try
         {
-            DetachUnwantedEntities(context, existingEntity);
-            await context.SaveChangesAsync();
+            context.SaveChanges();
             return;
         }
         catch (DbUpdateException ex)

@@ -1,0 +1,40 @@
+{
+  "query": [
+    {
+      "code": "NACE2007",
+      "selection": {
+        "filter": "vs:NACE225hovedomr",
+        "values": [
+          "B_",
+          "C",
+          "D",
+          "E",
+          "F",
+          "G_",
+          "H_",
+          "I_",
+          "J",
+          "K_",
+          "L",
+          "M",
+          "N",
+          "O",
+          "P",
+          "Q",
+          "R",
+          "S_"
+        ]
+      }
+    },
+    {
+      "code": "ContentsCode",
+      "selection": {
+        "filter": "item",
+        "values": ["ArbKostTot"]
+      }
+    }
+  ],
+  "response": {
+    "format": "json-stat2"
+  }
+}

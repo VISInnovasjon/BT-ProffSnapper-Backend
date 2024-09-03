@@ -27,7 +27,7 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
             try
             {
                 foreach (var param in fetchedData)
-                    await param.InsertIntoDatabase(_context);
+                    param.InsertIntoDatabase(_context);
             }
             catch (Exception ex)
             {

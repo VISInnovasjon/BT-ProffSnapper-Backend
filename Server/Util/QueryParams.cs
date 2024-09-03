@@ -4,7 +4,13 @@ namespace Server.Util;
 public class QueryParamsForTable
 {
     public string? EcoCode { get; set; }
+    public string? Year { get; set; }
+    public bool Valid()
+    {
+        return !string.IsNullOrEmpty(EcoCode) && !string.IsNullOrEmpty(Year);
+    }
 }
+
 public class QueryParamsForLang
 {
     public string? Language { get; set; }

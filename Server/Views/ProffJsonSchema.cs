@@ -81,7 +81,7 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public async Task InsertIntoDatabase(BtdbContext context)
+    public void InsertIntoDatabase(BtdbContext context)
     {
         int bedriftId;
         bedriftId = context.CompanyInfos.Single(b => b.Orgnumber == int.Parse(CompanyId)).CompanyId;
@@ -95,13 +95,11 @@ public class ReturnStructure
         ).CraftDbValues(bedriftId);
         try
         {
-            await context.GeneralYearlyUpdatedCompanyInfos.AddAsync(genInfo);
-            await context.SaveChangesAsync();
+            UpsertHandler.UpsertEntity(context, genInfo);
         }
         catch (DbUpdateException ex)
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            await ConflictHandler.HandleConflicts(context, genInfo);
         }
         List<CompanyAnnouncement> annList = [];
         foreach (var announcement in Announcements)
@@ -112,22 +110,14 @@ public class ReturnStructure
         }
         try
         {
-            await context.CompanyAnnouncements.AddRangeAsync(annList);
-            await context.SaveChangesAsync();
+            foreach (var entity in annList)
+            {
+                UpsertHandler.UpsertEntity(context, entity);
+            }
         }
         catch (DbUpdateException ex)
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            foreach (var item in annList)
-                try
-                {
-                    await ConflictHandler.HandleConflicts(context, item);
-                }
-                catch (Exception innerEx)
-                {
-                    Console.WriteLine(innerEx.Message);
-                    continue;
-                }
         }
         foreach (var account in CompanyAccounts)
         {
@@ -136,22 +126,14 @@ public class ReturnStructure
             ).CraftDbValues(bedriftId);
             try
             {
-                await context.CompanyEconomicDataPrYears.AddRangeAsync(ecoList);
-                await context.SaveChangesAsync();
+                foreach (var entity in ecoList)
+                {
+                    UpsertHandler.UpsertEntity(context, entity);
+                };
             }
             catch (DbUpdateException ex)
             {
                 Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-                foreach (var item in ecoList)
-                    try
-                    {
-                        await ConflictHandler.HandleConflicts(context, item);
-                    }
-                    catch (Exception innerEx)
-                    {
-                        Console.WriteLine(innerEx.Message);
-                        continue;
-                    }
             }
         }
         List<CompanyLeaderOverview> leaderList = [];
@@ -166,57 +148,32 @@ public class ReturnStructure
         }
         foreach (var pair in valuePairs)
         {
-            leaderList.Add(new CompanyLeaderStructure(
+            try
+            {
+                UpsertHandler.UpsertEntity(context, new CompanyLeaderStructure(
                 ShareholdersLastUpdatedDate, pair.Value
             ).CraftDbValues(bedriftId));
+            }
+            catch (DbUpdateException ex)
+            {
+                Console.WriteLine($"Update error occured: {ex.Message}");
+            }
         }
-        try
-        {
-            await context.CompanyLeaderOverviews.AddRangeAsync(leaderList);
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            foreach (var item in leaderList)
-                try
-                {
-                    await ConflictHandler.HandleConflicts(context, item);
-                }
-                catch (Exception innerEx)
-                {
-                    Console.WriteLine(innerEx.Message);
-                    continue;
-                }
-        }
+
         List<CompanyShareholderInfo> shareList = [];
         if (Shareholders != null) foreach (var shareholder in Shareholders)
             {
-                shareList.Add(new InsertShareholderStructure(
-                    ShareholdersLastUpdatedDate, shareholder
-                ).CraftDbValues(bedriftId));
-            }
-        try
-        {
-            await context.CompanyShareholderInfos.AddRangeAsync(shareList);
-            await context.SaveChangesAsync();
-        }
-        catch (DbUpdateException ex)
-        {
-            Console.WriteLine($"DbUpdateException occured: {ex.Message}");
-            foreach (var item in shareList)
-            {
                 try
                 {
-                    await ConflictHandler.HandleConflicts(context, item);
+                    UpsertHandler.UpsertEntity(context, new InsertShareholderStructure(
+                        ShareholdersLastUpdatedDate, shareholder
+                    ).CraftDbValues(bedriftId));
                 }
-                catch (Exception innerEx)
+                catch (DbUpdateException ex)
                 {
-                    Console.WriteLine(innerEx.Message);
-                    continue;
+                    Console.WriteLine($"Update failed: {ex.Message}");
                 }
             }
-        }
     }
 }
 
