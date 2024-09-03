@@ -81,7 +81,7 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public async Task InsertIntoDatabase(BtdbContext context)
+    public void InsertIntoDatabase(BtdbContext context)
     {
         int bedriftId;
         bedriftId = context.CompanyInfos.Single(b => b.Orgnumber == int.Parse(CompanyId)).CompanyId;
