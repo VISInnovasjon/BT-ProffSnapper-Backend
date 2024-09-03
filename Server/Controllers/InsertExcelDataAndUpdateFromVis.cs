@@ -126,7 +126,7 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                     Console.WriteLine($"Adding {param.Name} to DB");
                     try
                     {
-                        await param.InsertIntoDatabase(_context);
+                        param.InsertIntoDatabase(_context);
                     }
                     catch (Exception ex)
                     {

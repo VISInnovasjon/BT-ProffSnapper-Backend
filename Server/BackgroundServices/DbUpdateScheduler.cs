@@ -4,6 +4,8 @@ namespace Server.BackgroundServices;
 using Server.Context;
 using Server.Views;
 using Microsoft.EntityFrameworkCore;
+using Server.Controllers;
+
 /* REWRITE THIS WITH AZURE FUNCTIONS IN MIND FOR QUARTERLY UPDATES. */
 /* NOT IN USE, USE UPDATE DATA ENDPOINT WITH AZURE FUNCTIONS INSTEAD */
 public class ScheduleUpdateFromProff : BackgroundService
@@ -20,7 +22,7 @@ public class ScheduleUpdateFromProff : BackgroundService
     {
 
         _logger.LogInformation("Starting Scheduler.");
-        _timer = new Timer(RunFetchAsync, null, TimeSpan.Zero, TimeSpan.FromMinutes(1));
+        _timer = new Timer(RunFetchAsync, null, TimeSpan.Zero, TimeSpan.FromHours(1));
         return Task.CompletedTask;
     }
     public override Task StopAsync(CancellationToken token)
@@ -31,7 +33,7 @@ public class ScheduleUpdateFromProff : BackgroundService
     {
         base.Dispose();
     }
-    private void RunFetchAsync(object? state)
+    private async void RunFetchAsync(object? state)
     {
         using (var scope = _provider.CreateScope())
         {
@@ -66,6 +68,8 @@ public class ScheduleUpdateFromProff : BackgroundService
                     Console.WriteLine(ex.Message);
                 }
             } */
+            LaborCostFromSSBController ssbController = new(context);
+            await ssbController.UpdateLabourCost();
             Console.WriteLine($"Scheduler updated.");
         }
     }
