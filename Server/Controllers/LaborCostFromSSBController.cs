@@ -6,28 +6,21 @@ using Server.Models;
 using Server.Util;
 namespace Server.Controllers;
 
-[ApiController]
-[Route("api")]
-public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
+public class LaborCostFromSSBController(BtdbContext context)
 {
     private readonly BtdbContext _context = context;
-    [HttpGet("updatelaborcost")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateLabourCost()
+    public async Task UpdateLabourCost()
     {
-        SSBJsonStat newData;
+        SSBJsonStat? newData = null;
         try
         {
             newData = await FetchSSBData.GetSSBDataAvgBasedOnDepth();
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new
-            {
-                error = ex.Message
-            });
+            Console.WriteLine($"Failed to fetch data from SSB: {ex.Message}");
         }
+        if (newData == null) return;
         Dictionary<string, int> laborCostData = newData.GetAvgDataBasedOnDepth();
         List<string> yearLabels = laborCostData.Keys.ToList();
         int convFirstYear = int.Parse(yearLabels.First());
@@ -53,15 +46,11 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
             };
             try
             {
-                await _context.AvgLaborCostPrYears.AddAsync(
-                    newValue
-            );
-                await _context.SaveChangesAsync();
+                UpsertHandler.UpsertEntity(context, newValue);
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                Console.WriteLine("Caught update exception");
-                await ConflictHandler.HandleConflicts(_context, newValue);
+                Console.WriteLine($"Caught update exception: {ex.Message}");
             }
         }
         try
@@ -72,13 +61,5 @@ public class LaborCostFromSSBController(BtdbContext context) : ControllerBase
         {
             Console.WriteLine(ex.Message);
         }
-        var jsonTestData = newData.GroupedDataByKey();
-        return Ok(new
-        {
-            success = "Update Complete",
-            data = JsonSerializer.Serialize(jsonTestData)
-        });
-
-
     }
 }

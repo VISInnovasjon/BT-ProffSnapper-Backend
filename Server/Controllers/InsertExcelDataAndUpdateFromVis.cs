@@ -144,9 +144,17 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                 {
                     Console.WriteLine(ex.Message);
                 }
-                jsonData = JsonSerializer.Serialize(paramStructures);
+                try
+                {
+                    LaborCostFromSSBController ssbFetcher = new(_context);
+                    await ssbFetcher.UpdateLabourCost();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
             }
-            return Ok(jsonData);
+            return Ok();
         }
         catch (Exception ex)
         {
