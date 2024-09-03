@@ -102,8 +102,8 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
-                    "nor" => "Årsverk",
-                    "en" => "Man-years",
+                    "nor" => $"Årsverk totalt {query.Year}",
+                    "en" => $"Man-years in total {query.Year}",
                     _ => "Missing Language",
                 }},
                 {"number", (int)WorkerCount[0]}
@@ -173,8 +173,8 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             Dictionary<string, object> Count = new(){
                 {"text", GlobalLanguage.Language switch
                 {
-                    "nor" => "Antall bedrifter",
-                    "en" => "Number of companies",
+                    "nor" => $"Antall bedrifter totalt {query.Year}",
+                    "en" => $"Number of companies in total {query.Year}",
                     _ => "Missing Language",
                 }},
                 {"number", CompanyCount}
