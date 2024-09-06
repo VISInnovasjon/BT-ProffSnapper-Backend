@@ -19,37 +19,47 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateSchedule()
     {
-        List<int> orgNrList = _context.CompanyInfos.Where(b => b.Liquidated != true).Select(b => b.Orgnumber).ToList();
+        var now = DateTime.Now.ToLongDateString();
+        string filePath = $"./UpdateReport{now}.txt";
+        List<int> orgNrList = context.CompanyInfos.Where(b => b.Liquidated != true).Select(b => b.Orgnumber).ToList();
         List<ReturnStructure> fetchedData = [];
-        if (orgNrList.Count > 0) fetchedData = await FetchProffData.GetDatabaseValues(orgNrList);
-        if (fetchedData.Count > 0)
+        using (StreamWriter writer = new StreamWriter(filePath, true))
         {
-            try
+            if (orgNrList.Count > 0) fetchedData = await FetchProffData.GetDatabaseValues(orgNrList, writer);
+
+            if (fetchedData.Count > 0)
             {
                 foreach (var param in fetchedData)
-                    param.InsertIntoDatabase(_context);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
                 {
-                    error = ex.Message
-                });
-            }
-            Console.WriteLine("Insert Complete, updating delta.");
-            try
-            {
-                await _context.Database.ExecuteSqlRawAsync("CALL update_delta()");
-                await _context.Database.ExecuteSqlRawAsync("CALL update_views()");
+                    writer.WriteLine($"Adding {param.Name} to DB");
+                    try
+                    {
+                        param.InsertIntoDatabase(context);
+                    }
+                    catch (Exception ex)
+                    {
+                        writer.WriteLine($"Error passing param to database: {ex.Message}");
+                    }
+                }
+                writer.WriteLine("Insert Complete, updating views.");
+                try
+                {
+                    context.Database.ExecuteSqlRaw("CALL update_delta()");
+                    context.Database.ExecuteSqlRaw("CALL update_views()");
 
+                }
+                catch (Exception ex)
+                {
+                    writer.WriteLine($"Error updating views: {ex.Message}");
+                }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return StatusCode(500);
-            }
+            LaborCostFromSSBController ssbController = new(context);
+            await ssbController.UpdateLabourCost(writer);
+            writer.WriteLine($"Scheduler updated.");
+            writer.WriteLine("--------------------------------");
+            DateUpdatedController.LastUpdated = DateTime.Now;
+            return Ok();
         }
-        return Ok();
     }
     [HttpPost("updateecocode")]
     [ProducesResponseType(StatusCodes.Status200OK)]
