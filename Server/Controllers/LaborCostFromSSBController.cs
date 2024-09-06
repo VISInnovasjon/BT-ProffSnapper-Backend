@@ -9,7 +9,7 @@ namespace Server.Controllers;
 public class LaborCostFromSSBController(BtdbContext context)
 {
     private readonly BtdbContext _context = context;
-    public async Task UpdateLabourCost()
+    public async Task UpdateLabourCost(StreamWriter writer)
     {
         SSBJsonStat? newData = null;
         try
@@ -18,7 +18,7 @@ public class LaborCostFromSSBController(BtdbContext context)
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to fetch data from SSB: {ex.Message}");
+            writer.WriteLine($"Failed to fetch data from SSB: {ex.Message}");
         }
         if (newData == null) return;
         Dictionary<string, int> laborCostData = newData.GetAvgDataBasedOnDepth();
@@ -50,7 +50,7 @@ public class LaborCostFromSSBController(BtdbContext context)
             }
             catch (DbUpdateException ex)
             {
-                Console.WriteLine($"Caught update exception: {ex.Message}");
+                writer.WriteLine($"Failed to insert data: {ex.Message}");
             }
         }
         try
@@ -59,7 +59,7 @@ public class LaborCostFromSSBController(BtdbContext context)
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            writer.WriteLine($"Failed to update values for man_year: {ex.Message}");
         }
     }
 }
