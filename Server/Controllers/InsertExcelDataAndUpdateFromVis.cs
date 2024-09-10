@@ -131,7 +131,17 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                     {
                         writer.WriteLine($"Failed to update data from SSB: {ex.Message}");
                     }
-                    DateUpdatedController.LastUpdated = DateTime.Now;
+                    try
+                    {
+                        _context.LastUpdates.Add(new LastUpdate
+                        {
+                            UpdateDate = DateTime.Now
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        writer.WriteLine(ex.Message);
+                    }
                     writer.WriteLine($"Update complete.");
                     writer.WriteLine("-----------------------");
                 }

@@ -38,6 +38,7 @@ public partial class BtdbContext : DbContext
     public virtual DbSet<AverageValues> AverageValues { get; set; }
     public virtual DbSet<FullView> FullViews { get; set; }
     public virtual DbSet<AvgLaborCostPrYear> AvgLaborCostPrYears { get; set; }
+    public virtual DbSet<LastUpdate> LastUpdates { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}");
@@ -117,6 +118,13 @@ public partial class BtdbContext : DbContext
                 .HasForeignKey(d => d.CompanyId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("company_leader_overview_company_id_fkey");
+        });
+        modelBuilder.Entity<LastUpdate>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("id");
+            entity.ToTable("last_updated");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.UpdateDate).HasColumnName("update_date");
         });
 
         modelBuilder.Entity<CompanyShareholderInfo>(entity =>
