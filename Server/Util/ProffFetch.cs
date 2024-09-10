@@ -5,7 +5,7 @@ using System.Text.Json;
 public class FetchProffData
 {
 
-    public static async Task<List<ReturnStructure>> GetDatabaseValues(List<int> orgNrArray)
+    public static async Task<List<ReturnStructure>> GetDatabaseValues(List<int> orgNrArray, StreamWriter writer)
     {
         string? ApiKey = Environment.GetEnvironmentVariable("PROFF_API_KEY");
         if (string.IsNullOrEmpty(ApiKey))
@@ -31,10 +31,11 @@ public class FetchProffData
                     string responseBody = await response.Content.ReadAsStringAsync();
                     ReturnStructure? returnValue = JsonSerializer.Deserialize<ReturnStructure>(responseBody, options);
                     if (returnValue != null) ReturnValues.Add(returnValue);
+                    writer.WriteLine($"{orgNr} successfully fetched from Proff");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    writer.WriteLine($"Failed to fetch {orgNr} from Proff: {ex.Message}");
                 }
             }
         }

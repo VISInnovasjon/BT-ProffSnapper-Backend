@@ -1,7 +1,6 @@
 using dotenv.net;
 using Microsoft.EntityFrameworkCore;
 using Server.Context;
-using Server.BackgroundServices;
 using Server.Controllers;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +23,6 @@ builder.Services.AddCors(options =>
         builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Content-Disposition");
     });
 });
-builder.Services.AddHostedService<ScheduleUpdateFromProff>();
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

@@ -1,10 +1,11 @@
-using System.Text.Json;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
 using Server.Context;
 using MiniExcelLibs;
 using Server.Views;
+using Server.Util;
 namespace Server.Controllers;
 
 
@@ -13,10 +14,6 @@ namespace Server.Controllers;
 public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
-    private readonly JsonSerializerOptions jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
 
     ///<summary>
     ///Posts new data to database based on Excel spreadsheet.
@@ -64,7 +61,6 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
         }
         try
         {
-            string jsonData;
             using (var stream = file.OpenReadStream())
             {
                 List<RawVisBedriftData> RawData;
@@ -98,60 +94,56 @@ public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
                 if (NonDuplicateData.Count > 0) CompactedVisBedriftData.AddListToDb(NonDuplicateData, _context);
 
                 if (DuplicateData.Count > 0) CompactedVisBedriftData.UpdateFaseStatus(DuplicateData, _context);
-                /* List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs); UNCOMMENT WHEN PROFF API IS ACTIVE*/
-                //START OF LOCAL WORKAROUND BEFORE ACCESS TO PROFF API, COMMENT OUT WHEN PROFF API ACITVE
-                List<ReturnStructure> paramStructures = [];
-                string contentPath = "./LocalData";
-                ReturnStructure? Data = null;
-                foreach (string filename in Directory.GetFiles(contentPath, "*.json"))
+                var now = DateTime.Now.ToLongDateString();
+                string filePath = $"./UpdateReport{now}.txt";
+                using (StreamWriter writer = new StreamWriter(filePath, true))
                 {
-                    string jsonContent = System.IO.File.ReadAllText(filename);
+                    List<ReturnStructure> paramStructures = await FetchProffData.GetDatabaseValues(NonDuplicateOrgNrs, writer);
+                    foreach (var param in paramStructures)
+                    {
+                        writer.WriteLine($"Adding {param.Name} to DB");
+                        try
+                        {
+                            param.InsertIntoDatabase(_context);
+                        }
+                        catch (Exception ex)
+                        {
+                            writer.WriteLine($"Failed to insert param: {ex.Message}");
+                        }
+                    }
+                    writer.WriteLine("Insert Complete, updating delta and views.");
                     try
                     {
-                        Data = JsonSerializer.Deserialize<ReturnStructure>(jsonContent, jsonOptions);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                    if (Data != null)
-                    {
-                        Console.WriteLine($"Adding {Data.Name} To List");
-                        paramStructures.Add(Data);
-                    };
-                }
-                //END OF LOCAL WORKAROUND.
-                foreach (var param in paramStructures)
-                {
-                    Console.WriteLine($"Adding {param.Name} to DB");
-                    try
-                    {
-                        param.InsertIntoDatabase(_context);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                }
-                Console.WriteLine("Insert Complete, updating delta and views.");
-                try
-                {
-                    await _context.Database.ExecuteSqlRawAsync("CALL update_delta()");
-                    await _context.Database.ExecuteSqlRawAsync("CALL update_views()");
+                        await _context.Database.ExecuteSqlRawAsync("CALL update_delta()");
+                        await _context.Database.ExecuteSqlRawAsync("CALL update_views()");
 
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                }
-                try
-                {
-                    LaborCostFromSSBController ssbFetcher = new(_context);
-                    await ssbFetcher.UpdateLabourCost();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
+                    }
+                    catch (Exception ex)
+                    {
+                        writer.WriteLine($"Failed to update delta and views: {ex.Message}");
+                    }
+                    try
+                    {
+                        LaborCostFromSSBController ssbFetcher = new(_context);
+                        await ssbFetcher.UpdateLabourCost(writer);
+                    }
+                    catch (Exception ex)
+                    {
+                        writer.WriteLine($"Failed to update data from SSB: {ex.Message}");
+                    }
+                    try
+                    {
+                        _context.LastUpdates.Add(new LastUpdate
+                        {
+                            UpdateDate = DateTime.Now
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        writer.WriteLine(ex.Message);
+                    }
+                    writer.WriteLine($"Update complete.");
+                    writer.WriteLine("-----------------------");
                 }
             }
             return Ok();
