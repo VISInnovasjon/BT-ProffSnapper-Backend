@@ -1,4 +1,4 @@
-# Bedrift-tracker Arbeidsplan:
+# Proffsnapper, Bruk og utvikling.
 
 ## Index:
 
@@ -29,56 +29,17 @@
 
 ## Intro
 
-Dette er Prosnapper. Et verktøy for innsamling, og utregning av nøkkeltall for VIS innovasjon.<br/>
+Dette er Proffsnapper. Et verktøy for innsamling, og utregning av nøkkeltall for VIS innovasjon.<br/>
 Det er skrevet i C# med en React + VITE frontend. <br/>
 Det er en CRUD applikasjon, med excel som primærverktøy for datamanipulasjon i backend. <br/>
 <br/>
 
 ### Bruk
 
-Hvordan bruke produktet:<br/>
+Proffsnapper sin backend består av flere forskjellige endepunkter som kan nåes ved å calle /api/endepunktnavn.<br/>
+Mesteparten av dataen og skriften på frontenden kan også fåes ut i JSON format ved å bruke disse endepunktene. <br/>
+Det er også mulig å kjøre en lokal versjon av programmet, mer detaljer om dette finner du under "Lokal kopi".<br/>
 
-- Key figures:<br/>
-  Dette er lett tilgjengelige nøkkeltall fra datasettet.
-
-- Bruke graf:<br/>
-  1. Filter: <br/>
-     Datasettet er gruppert i forskjellige grupper som kan filtreres i via filter knappen. Foreløbig kan du filtrere data basert på bedriftleder's alder, <br/>
-     Hvilken fase bedriften har vært i, <br/>
-     og hvilke bransje bedriftene er i. <br/>
-  2. Koder: <br/>
-     Grafen viser kunn et sett med data om gangen, basert på hvilken øko-kode som er valgt. Det er tre øko-koder lett tilgjengelig: <br/>
-     Driftsresultat, <br/>
-     Omsetning, <br/>
-     og Sum Innskutt Egenkapital.<br/>
-     Andre økokoder kan finnes i dropdown meny markert med øk. koder.<br/>
-  3. Kan kan bruke Velg år slideren for å velge et start og slutt år på datasettet.
-  4. Man kan midlertidig velge vekk valgte filtre ved å trykke på de i bunn av grafen. <br/>
-     Dette vil filtrere vekk dataen fra grafen, og vise en strek over navnet i bunn av grafen.<br/>
-     For å få data tilbake er det bare å trykke på navnet igjen. <br/>
-  5. Velge datatype: <br/>
-     Man kan velge å få presentert tre forskjellige verdier i datasettet. <br/> - Gjennomsnittsverdi - Akkumulert - Gjennomsnitts endring over tid
-     Disse kan man velge mellom via radio knapper under grafen. <br/>
-- Bruke Tabell:<br/>
-  Tabellen viser bedrifter ranksjert etter høyest akkumulert verdi i gjeldene økokode.<br/>
-  Man kan søke opp og filtrere etter verdiene man selv ønsker i grafen ved å trykke på tre dotter i kollonen det gjelder. <br/>
-  Dataen i grafen er alltid for to år tilbake i tid, for å garantere at all dataen som mulig er hentet inn.<br/>
-  Man kan velge mellom å vise 5 eller 10 bedrifter om gangen. <br/>
-- Yearly Rapport:<br/>
-  Her kan man generere en årsrapport excel fil ved å laste opp en excelfil med organisasjonsnr man ønsker data om.<br/>
-  Er man usikker på oppsettet av excel arket, kan man bruke "Get Template" for å få en eksempelfil.
-- Company Flow:<br/>
-  Hovedvalg for manipulasjon av data:<br/>
-  1. Add Company Data
-     Desverre blir ikke databasen oppdatert automatisk når nye bedrifter blir tatt opp i VIS.<br/>
-     Nye bedrifter kan legges til i Add Company Data.<br/>
-     Er man usikker på hva data som skal legges til fra VIS, kan man bruke "Get Template" for å se en eksempelfil. <br/>
-  2. Delete Company data
-     Hvis man ønsker å slette en bedrift fra systemet kan det gjøres her.<br/>
-     Man laster opp en excelfil med organisasjonsnr man ønsker å slette.<br/>
-     Er man usikker på oppsettet av excelfilen, kan man bruke "Get Template".<br/>
-- Get Full View:<br/>
-  Her kan man laste ned hele datasettet i excelformat. <br/>
 
 ### Produkt
 
