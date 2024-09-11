@@ -5,7 +5,7 @@
 - [Intro](#intro)
   - [Bruk](#bruk)
   - [Produkt](#produkt)
-  - [Del mål](#del-mål)
+  - [Lokal Kopi](#lokal-kopi)
   - [Endemål](#endemål)
 - [Bruk av Github](#git-hub)
   - [Brancher](#brancher)
@@ -39,45 +39,79 @@ Det er en CRUD applikasjon, med excel som primærverktøy for datamanipulasjon i
 Proffsnapper sin backend består av flere forskjellige endepunkter som kan nåes ved å calle /api/endepunktnavn.<br/>
 Mesteparten av dataen og skriften på frontenden kan også fåes ut i JSON format ved å bruke disse endepunktene. <br/>
 Det er også mulig å kjøre en lokal versjon av programmet, mer detaljer om dette finner du under "Lokal kopi".<br/>
+<br/>
+Appen følger "Bergenstacken" og bruker en C# Backend med EF Core, postgreSQL database og en React basert frontend. <br/>
 
+### Lokal Kopi
 
-### Produkt
+For å sette opp en lokal kopi må bruker installere en utgave av Docker Daemon på pc. <br/>
+Den enkleste måten å gjøre dette på er å installere Docker Desktop fra <a href="https://www.docker.com/products/docker-desktop/">Docker</a>.<br/>
+Når dette er gjort kan man forke ned repoet. <br/>
+Det første man bør gjøre er å kikke på filen som heter docker-compose.yaml<br/>
+Her kan man se at den krever en del environmentvariabler som skal lastes inn når Docker Daemon starter de forskjellige bildene.<br/>
+Mange av disse kreves også i serverkoden, som f.eks databasepassordene. <br/>
+For å lage en env fil, kan man kopiere .env_example og rename den til .env.<br/>
+For så å fylle ut variablene inni, til de ønskede verdier.<br/>
 
-Fullstack app, som skal kombinere data fra PROFF.NO, og samkjøre dette med data fra VIS. <br/>
-mth. Oppfølging av bedrifter som har vært gjennom VIS inkubasjon og/eller andre programmer. <br/>
-Hva skal produktet gjøre:
+Hvis man er usikker, og vil ha mer forklaring kan man bruke setup_env_file.sh <br/>
+Denne filen er en shell script som kjører i en BASH terminal, så den krever <a href="https://itsfoss.com/install-bash-on-windows/"> WSL og BASH</a>. <br/>
+Hvis du har bash installert, og er i en bash terminal, kan man gjøre følgende:
 
-1. Kobles opp mot Intern Microsoft Authentication Layer for å kunne ta i bruk eksisterende brukere.
+- Skriv følgende kommando inn i terminal for å gjøre shell scriptet "executable": <br/>
+  ´´´bash
+  chmod +X setup_env_file.sh
+  ´´´
+- Kjør følgende kommando inn i terminal for å kjøre scriptet:<br/>
+  ´´´bash
+  ./setup_env_file.sh
+  ´´´
+- Følg instruksjonene som kommer opp i terminal, disse er på engelsk. <br/>
+  Verdiene du skriver inn er kun for lokalt bruk, og fungerer ikke andre steder enn i din lokale kopi av prosjektet, med unntak i PROFF_API nøkkel. <br/>
+  Når man har enten har laget en manuel kopi selv, eller kjørt setup scriptet, skal man nå ha en .env fil i rootfolderen til prosjektet. <br/>
 
-2. Ved suksessfull login, skal brukeren presenteres med en graf som viser Gjennomsnittet av omsetting for alle bedrifter i databasen.
+Det neste steget er å skjekke at docker daemon kjører.<br/>
+I terminal skriv følgende kommando: <br/>
+´´´bash
+docker ps
+´´´
+<br/>
+Her vil man enten få opp en error during connect, eller info om noen images kjører.<br/>
+Får man en error, prøv å start docker daemon enten via service start, eller ved å starte Docker Desktop. <br/>
+Hvis man ser at docker er aktiv og kan kobles til. Kan man prøve å starte den lokale kopien via følgende kommando: <br/>
+´´´bash
+docker-compose up --build
+´´´
+Da skal docker laste ned bildene de trenger fra docker hub, og initialisere og starte opp alle bildene.<br/>
+I terminalen vil du se etter byggstadiet er gjort, at terminalen "Attacher" til postgres-1, csserver-1 og pg_admin-1.<br/>
+terminallinjer fra serveren vil da vises her. <br/>
 
-3. Header skal presentere logo + navn og to knappe for funksjonalitet.
-   - Generer årsrapport.
-     - Denne skal hjelpe med å automatisk fylle ut en økonomisk årsrapport for hver bedrift bruker ønsker.
-     - Skal ta inn enten en string av organisasjonsnummer, evt et excel ark fult av organisjasjonsnr. Så levere ut et excel ark bruker kan laste ned.
-   - Legg til eller oppdater bedrift i tracker.
-     - Her skal bruker kunne legge til nye bedrifter til trackersystemet. Det skal kunne ta i mot et excel ark med bedrifter. Excel arket bør inneholde følgende data:
-     ```json
-     {
-       "målbedrift": "bedriftnavn",
-       "orgnummer": "bedriftens organisasjonsnavn",
-       "fase": "hvilken fase bedriften er i VIS systemet",
-       "år": "Hvilket år dette gjelder"
-     }
-     ```
-     - Dette skal og kunne ta i mot oppdatering av eksisterende bedrifter. Dette burde kunne legges med i samme fil, og så filtrerer backenden om dette er en ny, eller en ooppdatering av eksisterende bedrift.
-4. En logg-ut knapp under header.
-
-5. På hoved siden, under graf, bør bruker ha mulighet å filtrere data, og evt exportere datasettet til excel.
-
-6. Siden skal også presentere en oversiktlig tabell, som viser bedrift, gjeldene år, samt hva data som blir vist. <br> Bruker skal kunne trykke på en bedrift i tabellene, og grafen skal oppdateres til å vise gjeldene data for den bedriften.
-
-7. Vi bruker følgende "stack":
-
-- Front-end: React + Vite
-- Back-End: .NET 8.0
-- Database: Postgresql
-  <br/>
+Legg merke til --build flagget. <br/>
+Dette flagget må legges ved første gang man kjører prosjektet, samt hver gang man gjør endringer i C# koden,<br/> dette er for å si til docker at programmet er endret, og må bygges på nytt før man kjører. <br/>
+Hvis man ikke har gjort noen endringer, og allerede har gjort --build steget en gang før, kan man også starte bildene med en enklere kommando: <br/>
+´´´bash
+docker-compose up
+´´´
+<br/>
+Da bruker docker filene de allerede har generert, for å starte programmet.<br/>
+Hvis man ikke ønsker å se terminal feeden til docker imagene, kan man også starte i detached modus.<br>
+´´´bash
+docker-compose up -d
+´´´
+<br/>
+Da får man ikke opp terminalfeeden til docker imagene i terminalen i f.eks VS-code, men kan fremdeles hente de ut fra Docker Desktop. <br/>
+Man kan også kombinere disse flaggene:<br/>
+´´´bash
+docker-compose up -d --build
+´´´
+<br/>
+For å stenge bildene bruker man følgende kommando: <br/>
+´´´bash
+docker-compose down
+´´´
+<br/>
+Hvis man kjører uten -d flagget kan man også stoppe via shortcut ctrl+c.<br/>
+Når bildene er oppe finner man ProffSnapper sin homepage på localhost:5000, og PgAdmin sin login side på localhost:5050.<br/>
+Det første man bør gjøre når man ser docker bildene fungerer som det skal, er å åpne PgAdmin, og legge til både Azure databasen, og den lokale kopien. <br/>
 
 ### Del Mål
 
@@ -309,7 +343,7 @@ Databasen skal være lett, ta lite plass. Og håndtere så mye logikk den kan se
 ### Schema
 
 Ferdig oppsett av database ser slik ut:<br>
-![Bilde som viser relasjonsgraf for databasen](https://imgur.com/a/z6nvU25)
+![Bilde som viser relasjonsgraf for databasen](https://i.imgur.com/UXei4yO.png)
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>
