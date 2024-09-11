@@ -39,6 +39,10 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
                     catch (Exception ex)
                     {
                         writer.WriteLine($"Error passing param to database: {ex.Message}");
+                        if (ex.InnerException != null)
+                        {
+                            writer.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                        }
                     }
                 }
                 writer.WriteLine("Insert Complete, updating views.");

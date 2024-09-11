@@ -2,16 +2,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Server.Context;
 namespace Server.Controllers;
-public static class DateUpdatedController
-{
-    private static DateTime _LastUpdated = DateTime.Now;
-    public static DateTime LastUpdated
-    {
-        get { return _LastUpdated; }
-        set { _LastUpdated = value; }
-    }
-
-}
 [ApiController]
 [Route("api")]
 public class LastUpdated(BtdbContext context) : ControllerBase

@@ -32,7 +32,7 @@ public class LanguageController(BtdbContext context) : ControllerBase
         Dictionary<string, string> ReturnLang = [];
         var databaseLang = _context.SiteTexts.ToList();
         string langstr;
-        switch (GlobalLanguage.Language)
+        switch (query.Language)
         {
             case "nor":
                 databaseLang.ForEach(entry =>
