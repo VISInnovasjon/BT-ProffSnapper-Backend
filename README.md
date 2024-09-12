@@ -1,25 +1,19 @@
-# Bedrift-tracker Arbeidsplan:
+# Proffsnapper, Bruk og utvikling.
 
 ## Index:
 
 - [Intro](#intro)
   - [Bruk](#bruk)
   - [Produkt](#produkt)
-  - [Del mål](#del-mål)
-  - [Endemål](#endemål)
+  - [Lokal Kopi](#lokal-kopi)
 - [Bruk av Github](#git-hub)
   - [Brancher](#brancher)
   - [Code Review](#code-review)
 - [Kode Standarer](#kode-standarer)
+
   - [Error Håndtering](#error-håndtering)
-- [Front End](#front-end)
-  - [Formål](#formål-FRONTEND)
-  - [Framework](#framework-FRONTEND)
-  - [Delmål](#delmål-FRONTEND)
-  - [Komponent Liste](#Komponent-liste)
-  - [Håndtering av State](#håndtering-av-state)
-  - [Routing](#routing-FRONTEND)
-  - [Authorizering](#Authorizering)
+
+- [Authorizering](#Authorizering)
 - [API](#api)
   - [Formål](#formål-API)
   - [Framework](#framework-API)
@@ -34,314 +28,177 @@
 
 ## Intro
 
-Dette er Prosnapper. Et verktøy for innsamling, og utregning av nøkkeltall for VIS innovasjon.<br/>
+Dette er Proffsnapper. Et verktøy for innsamling, og utregning av nøkkeltall for VIS innovasjon.<br/>
 Det er skrevet i C# med en React + VITE frontend. <br/>
 Det er en CRUD applikasjon, med excel som primærverktøy for datamanipulasjon i backend. <br/>
 <br/>
 
 ### Bruk
 
-Hvordan bruke produktet:<br/>
+Proffsnapper sin backend består av flere forskjellige endepunkter som kan nåes ved å calle /api/endepunktnavn.<br/>
+Mesteparten av dataen og skriften på frontenden kan også fåes ut i JSON format ved å bruke disse endepunktene. <br/>
+Det er også mulig å kjøre en lokal versjon av programmet, mer detaljer om dette finner du under "Lokal kopi".<br/>
+<br/>
+Appen følger "Bergenstacken" og bruker en C# Backend med EF Core, postgreSQL database og en React basert frontend. <br/>
 
-- Key figures:<br/>
-  Dette er lett tilgjengelige nøkkeltall fra datasettet.
+### Lokal Kopi
 
-- Bruke graf:<br/>
-  1. Filter: <br/>
-     Datasettet er gruppert i forskjellige grupper som kan filtreres i via filter knappen. Foreløbig kan du filtrere data basert på bedriftleder's alder, <br/>
-     Hvilken fase bedriften har vært i, <br/>
-     og hvilke bransje bedriftene er i. <br/>
-  2. Koder: <br/>
-     Grafen viser kunn et sett med data om gangen, basert på hvilken øko-kode som er valgt. Det er tre øko-koder lett tilgjengelig: <br/>
-     Driftsresultat, <br/>
-     Omsetning, <br/>
-     og Sum Innskutt Egenkapital.<br/>
-     Andre økokoder kan finnes i dropdown meny markert med øk. koder.<br/>
-  3. Kan kan bruke Velg år slideren for å velge et start og slutt år på datasettet.
-  4. Man kan midlertidig velge vekk valgte filtre ved å trykke på de i bunn av grafen. <br/>
-     Dette vil filtrere vekk dataen fra grafen, og vise en strek over navnet i bunn av grafen.<br/>
-     For å få data tilbake er det bare å trykke på navnet igjen. <br/>
-  5. Velge datatype: <br/>
-     Man kan velge å få presentert tre forskjellige verdier i datasettet. <br/> - Gjennomsnittsverdi - Akkumulert - Gjennomsnitts endring over tid
-     Disse kan man velge mellom via radio knapper under grafen. <br/>
-- Bruke Tabell:<br/>
-  Tabellen viser bedrifter ranksjert etter høyest akkumulert verdi i gjeldene økokode.<br/>
-  Man kan søke opp og filtrere etter verdiene man selv ønsker i grafen ved å trykke på tre dotter i kollonen det gjelder. <br/>
-  Dataen i grafen er alltid for to år tilbake i tid, for å garantere at all dataen som mulig er hentet inn.<br/>
-  Man kan velge mellom å vise 5 eller 10 bedrifter om gangen. <br/>
-- Yearly Rapport:<br/>
-  Her kan man generere en årsrapport excel fil ved å laste opp en excelfil med organisasjonsnr man ønsker data om.<br/>
-  Er man usikker på oppsettet av excel arket, kan man bruke "Get Template" for å få en eksempelfil.
-- Company Flow:<br/>
-  Hovedvalg for manipulasjon av data:<br/>
-  1. Add Company Data
-     Desverre blir ikke databasen oppdatert automatisk når nye bedrifter blir tatt opp i VIS.<br/>
-     Nye bedrifter kan legges til i Add Company Data.<br/>
-     Er man usikker på hva data som skal legges til fra VIS, kan man bruke "Get Template" for å se en eksempelfil. <br/>
-  2. Delete Company data
-     Hvis man ønsker å slette en bedrift fra systemet kan det gjøres her.<br/>
-     Man laster opp en excelfil med organisasjonsnr man ønsker å slette.<br/>
-     Er man usikker på oppsettet av excelfilen, kan man bruke "Get Template".<br/>
-- Get Full View:<br/>
-  Her kan man laste ned hele datasettet i excelformat. <br/>
+For å sette opp en lokal kopi må bruker installere en utgave av Docker Daemon på pc. <br/>
+Den enkleste måten å gjøre dette på er å installere Docker Desktop fra <a href="https://www.docker.com/products/docker-desktop/">Docker</a>.<br/>
+Når dette er gjort kan man forke ned repoet. <br/>
+Det første man bør gjøre er å kikke på filen som heter docker-compose.yaml<br/>
+Her kan man se at den krever en del environmentvariabler som skal lastes inn når Docker Daemon starter de forskjellige bildene.<br/>
+Mange av disse kreves også i serverkoden, som f.eks databasepassordene. <br/>
+For å lage en env fil, kan man kopiere .env_example og rename den til .env.<br/>
+For så å fylle ut variablene inni, til de ønskede verdier.<br/>
 
-### Produkt
+Hvis man er usikker, og vil ha mer forklaring kan man bruke setup_env_file.sh <br/>
+Denne filen er en shell script som kjører i en BASH terminal, så den krever <a href="https://itsfoss.com/install-bash-on-windows/"> WSL og BASH</a>. <br/>
+Hvis du har bash installert, og er i en bash terminal, kan man gjøre følgende:
 
-Fullstack app, som skal kombinere data fra PROFF.NO, og samkjøre dette med data fra VIS. <br/>
-mth. Oppfølging av bedrifter som har vært gjennom VIS inkubasjon og/eller andre programmer. <br/>
-Hva skal produktet gjøre:
+- Skriv følgende kommando inn i terminal for å gjøre shell scriptet "executable": <br/>
 
-1. Kobles opp mot Intern Microsoft Authentication Layer for å kunne ta i bruk eksisterende brukere.
+```bash
+chmod +X setup_env_file.sh
+```
 
-2. Ved suksessfull login, skal brukeren presenteres med en graf som viser Gjennomsnittet av omsetting for alle bedrifter i databasen.
+- Kjør følgende kommando inn i terminal for å kjøre scriptet:<br/>
 
-3. Header skal presentere logo + navn og to knappe for funksjonalitet.
-   - Generer årsrapport.
-     - Denne skal hjelpe med å automatisk fylle ut en økonomisk årsrapport for hver bedrift bruker ønsker.
-     - Skal ta inn enten en string av organisasjonsnummer, evt et excel ark fult av organisjasjonsnr. Så levere ut et excel ark bruker kan laste ned.
-   - Legg til eller oppdater bedrift i tracker.
-     - Her skal bruker kunne legge til nye bedrifter til trackersystemet. Det skal kunne ta i mot et excel ark med bedrifter. Excel arket bør inneholde følgende data:
-     ```json
-     {
-       "målbedrift": "bedriftnavn",
-       "orgnummer": "bedriftens organisasjonsnavn",
-       "fase": "hvilken fase bedriften er i VIS systemet",
-       "år": "Hvilket år dette gjelder"
-     }
-     ```
-     - Dette skal og kunne ta i mot oppdatering av eksisterende bedrifter. Dette burde kunne legges med i samme fil, og så filtrerer backenden om dette er en ny, eller en ooppdatering av eksisterende bedrift.
-4. En logg-ut knapp under header.
+```bash
+./setup_env_file.sh
+```
 
-5. På hoved siden, under graf, bør bruker ha mulighet å filtrere data, og evt exportere datasettet til excel.
+- Følg instruksjonene som kommer opp i terminal, disse er på engelsk. <br/>
+  Verdiene du skriver inn er kun for lokalt bruk, og fungerer ikke andre steder enn i din lokale kopi av prosjektet, med unntak i PROFF_API nøkkel. <br/>
+  Når man har enten har laget en manuel kopi selv, eller kjørt setup scriptet, skal man nå ha en .env fil i rootfolderen til prosjektet. <br/>
 
-6. Siden skal også presentere en oversiktlig tabell, som viser bedrift, gjeldene år, samt hva data som blir vist. <br> Bruker skal kunne trykke på en bedrift i tabellene, og grafen skal oppdateres til å vise gjeldene data for den bedriften.
+Det neste steget er å skjekke at docker daemon kjører.<br/>
+I terminal skriv følgende kommando: <br/>
 
-7. Vi bruker følgende "stack":
+```bash
+docker ps
+```
 
-- Front-end: React + Vite
-- Back-End: .NET 8.0
-- Database: Postgresql
-  <br/>
+<br/>
+Her vil man enten få opp en error during connect, eller info om noen images kjører.<br/>
+Får man en error, prøv å start docker daemon enten via service start, eller ved å starte Docker Desktop. <br/>
+Hvis man ser at docker er aktiv og kan kobles til. Kan man prøve å starte den lokale kopien via følgende kommando: <br/>
 
-### Del Mål
+```bash
+docker-compose up --build
+```
 
-1. Lage et wireframe oppsett på hvordan siden skal se ut, og hvordan brukeropplevelsen skal være. <a href="https://excalidraw.com/#json=t7vlG0xVLfCtKv7Kl61zd,2p75ewZ4-Q4NYjYgLlf8kA"> Foreløbig ide</a>
-2. Designe oppsett og komponenter i FIGMA, Tenke på bruk og formål. Dette er mer et enterprise verktøy enn en butikk. (Legg til figma link her.)
-3. Få tilbakemelding fra sluttbruker når det kommer til brukervennlighet og design.
-4. Bestemme bruk av Frontend framework, hva som egner seg best, og hva som er lettest å self-hoste på azure. Next? Ren react? JS + HTML? <br> Vi velger React + Vite som frontend og C# som backend.
-5. Bestemme oss for database oppsett. Vi har som mål å bruke POSTGRESQL for å lagre brukerdata samt data fra proff og vis.
-6. Når det kommer til brukertyper, mener vi mht formål at alle brukere har tilgang til samme funksjonalitet.
-7. Nå et punkt hvor C# backend kan snakke med databasen på samme måte som nodejs prototype backend.
-8. Bestemme for endepunkter til backend. Pluss hvordan det er best å sette opp CRON jobber.
+Da skal docker laste ned bildene de trenger fra docker hub, og initialisere og starte opp alle bildene.<br/>
+I terminalen vil du se etter byggstadiet er gjort, at terminalen "Attacher" til postgres-1, csserver-1 og pg_admin-1.<br/>
+terminallinjer fra serveren vil da vises her. <br/>
 
-   <br/>
+Legg merke til --build flagget. <br/>
+Dette flagget må legges ved første gang man kjører prosjektet, samt hver gang man gjør endringer i C# koden,<br/> dette er for å si til docker at programmet er endret, og må bygges på nytt før man kjører. <br/>
+Hvis man ikke har gjort noen endringer, og allerede har gjort --build steget en gang før, kan man også starte bildene med en enklere kommando: <br/>
 
-### Endemål
+```bash
+docker-compose up
+```
 
-Vi ønsker å lage et enkelt verktøy for å samle, presentere, og hjelpe med organisering av data for bedrifter som har vært med i VIS sine systemer. <br>
-Et verktøy som kan gjøre det lettere å hente, manipulere og bruke data fra bl.a. PROFF for bl.a. generer årsrapporter. <br>
+<br/>
+Da bruker docker filene de allerede har generert, for å starte programmet.<br/>
+Hvis man ikke ønsker å se terminal feeden til docker imagene, kan man også starte i detached modus.<br>
+
+```bash
+docker-compose up -d
+```
+
+<br/>
+Da får man ikke opp terminalfeeden til docker imagene i terminalen i f.eks VS-code, men kan fremdeles finne terminalene til imagene i Docker Desktop. <br/>
+Man kan også kombinere disse flaggene:<br/>
+
+```bash
+docker-compose up -d --build
+```
+
+<br/>
+For å stenge bildene bruker man følgende kommando: <br/>
+
+```bash
+docker-compose down
+```
+
+<br/>
+Hvis man kjører uten -d flagget kan man også stoppe via shortcut ctrl+c.<br/>
+Når bildene er oppe finner man ProffSnapper sin homepage på localhost:5000, og PgAdmin sin login side på localhost:5050.<br/>
+<br/>
+Det første man bør gjøre når man ser docker bildene fungerer som det skal, er å åpne PgAdmin, og legge til både Azure databasen, og den lokale kopien. <br/>
+Når man har logget inn med sin lokale bruker i PgAdmin, kan man legge til en ny database ved å registrere en ny server ved å høyreklikke på "Servers" gruppen som ligger i object exlorer:<br/>
+
+![Bilde som viser Object Explorer -> Register -> Server...](https://i.imgur.com/p0VETEV.png)
+
+<br/>
+Da vil det dukke opp en Register Server popup, og man er på "tab" markert General.<br/>
+Her kan man fylle inn Navnet serveren skal være registrert i på PgAdmin. Det lureste er å gi det samme navnet du gav i .evn filen. <br/>
+
+![Bilde som viser General Tab hvor man fyller inn Name](https://i.imgur.com/kTM7PKz.png)
+
+<br/>
+Etter det må man inn på Connection Tabben, her fyller man inn detaljene man trenger for å koble seg til en ekstern database.<br/>
+Her fyller man inn andre verdier fra .env filen, som DATABASE_USER og DATABASE_PASSWORD. Samt DATABASE_HOST.<br/>
+Disse verdiene kan hentes ut fra Azure, for å koble seg til produksjonsdatabasen. Man finner de under Environment Variables på prosjektet. <br/>
+
+![Bilde som viser General Tab hvor man fyller inn Connection tab](https://i.imgur.com/1CFvJQb.png)
+<br/>
+
+Tilkobling til Produksjonsdatabasen er kun tilgjengelig på Collaborate nettverket. <br/>
+
+Når man ser at begge databasene dukker opp i PgAdmin, kan man bruke pgdump og pgrestore for å bygge din lokale database som en kopi av produksjonsdatabasen. Dette kan gjøres via SQL kommandoer i terminalen til pgadmin,<br/> eller ved å høyreklikke på en database, velge backup, så fylle inn hva man trenger. <br/>
+
+Velg databasen som heter postgres under Azure serveren. Høyre klikk på denne og velg backup... <br/>
+![Bilde som viser Azure server -> postgres -> backup](https://i.imgur.com/nqoJh7B.png)
+<br/>
+Da får du opp en backup meny. Siden vi er interessert i en full backup, trenger man kun å gi et filnavn. Her er det viktig at man avslutter med .backup <br/>
+
+![Bilde som viser backup menyen](https://i.imgur.com/GDpycRN.png)
+<br/>
+
+Trykk på "Backup" knappen nede til høyre i menyen for å lagre en backup av databasen. <br/>
+
+Gå så inn i din lokale postgres server, og finn databasen med navnet du gav den. Høyreklikk og velg restore...<br/>
+
+![Bilde som viser lokal server -> mydatabasename -> restore](https://i.imgur.com/uNtGxS4.png)
+<br/>
+Da åpner det seg en ny meny, hvor man kan enten skrive inn filnavnet til backup filen direkte, eller velge en undermeny for å finne filen i filstrukturen til pgAdmin.<br/>
+
+![Bilde som viser restore meny](https://i.imgur.com/UqGMgQb.png)
+
+<br>
+Undermeny for å velge fil direkte, ved å trykke på mappe ikonet: <br/>
+
+![Bilde som viser undermeny for å velge fil](https://i.imgur.com/lR3zynx.png)
+
+<br/>
+
+Når dette er gjort vil din lokale kopi være en nøyaktig kopi av prod, og ha samme data tilgjengelig.<br/> Din lokale kopi av proffsnapper er satt opp til å kun snakke med din lokale postgres server, slik at endringer som blir gjort kan testes skikkelig før de bli lagt opp i Azure. <br/>
 
 <br/>
 
 ## Bruk av GitHub
 
-Vi jobber primært på VIS INNOVASJON sin github, i BT repo.
+Vi jobber primært på VIS INNOVASJON sin github, i BT proff-snapper backend repo.<br/>
 <br/>
 
 ### Brancher
 
-Vi utvikler og pusher endringer til DEV, og holder av push til MAIN primært når vi har nådd milepæler.
-Hvis det blir laget nye feature-set eller test brancher kan disse navngis etter formål i.e. EXCEL_IMPORT_TESTING.
+Vi har to hovedrepoer. Main, som er en stabil build, identisk til Azure Prod. Og Dev som er hvor endringer blir testet og klargjort før merging med Main. <br/>
+For å passe på stabilitet og ryddighet, lagres endringer i egne brancher, som merges inn i Dev og slettes etterhvert som endringer er utført.<br/>
+Her er det lurt å ha en god detaljert mergekommentar så det er lett å lese og dømme hva endringer som blir gjort, og hvorfor. <br/>
 <br/>
 
 ### Code Review
 
-Vi bruker primært pull-requests for å oppdatere koden i dev. Det gjør at vi har to øyne på koden som går opp til en hver tid.
+Vi bruker primært pull-requests for å oppdatere koden i dev. Det gjør at vi har to øyne på koden som går opp til en hver tid. <br/>Når flere jobber i repoet, er det lurt å kjøre en code-review på merge requesten for å skjekke over at filer plutselig ikke dukker opp som ikke skal dukke opp, eller kode ikke gjør det den skal.<br/>
 <br/>
 
-## Kode Standarer
+## Authorizering
 
-Vi bruker primært en jsdoc blokk kommentar for å kommentere funksjoner: <br>
-
-```javascript
-/**
- * Funksjon som consol.logger "hello world!"
- */
-const helloWorld = () => {
-  console.log("Hello World!");
-};
-```
-
-<br>
-
-Vi bruker korte blokk kommentarer for å forklare enkelt funksjonen til en komponent, hvis det trengs:
-
-```javascript
-/**
- * underoverskrift til prosjekt.
- *
- */
-const MyComponent = () => {
-  return <h2>Hello!</h2>;
-};
-```
-
-<br>
-
-### Error Håndtering
-
-Errorhåndtering bør håndteres så tidlig som mulig.
-
-Eksempel:
-
-```javascript
-/**
- * wrapper function over nodefetch
- * @params{string, requestInit}
- */
-const fetchData = async (url: string, options: requestInit) => {
-  try {
-    const response = await fetch(url, options);
-    const result = await response.json();
-    return { error: null, result: result };
-  } catch (error) {
-    saveToLog(error);
-    return { error: error, result: null };
-  }
-};
-```
-
-Da har vi en oversiktlig måte å passe states gjort av funksjoner som kan throwe errors videre. slik at både server kan evt. korrektere, eller bruker kan håndtere error.
-
-Brukerinputs bør håndteres med en enkel boolean, slik at vi kan bruke conditional rendering for å vise front-end error til brukeren:
-
-```javascript
-/**
- *@params{a: number, b:number}
- *@returns boolean
- */
-const userInputWithinRange = (a: number, b: number) => {
-  return a < b && b >= 100 && a >= 0;
-};
-```
-
-Det gjør at vi ender opp med enkle boolean checks som kan hjelpe med conditional rendering:
-
-```javascript
-const MyComponent = () => {
-  return (
-    <>
-      {userInputWithinRange(10, 20) ? (
-        <h1>You're good to go!</h1>
-      ) : (
-        <h1>Your numbers are outside permited range</h1>
-      )}
-    </>
-  );
-};
-```
-
-Dette gjør også at vi kan fange potensielle input feil i frontend før det havner i backend.
-
-<br/>
-
-## Front End
-
-Vi har som mål å følge Bergenstacken så tett som mulig. Den mest populære frameworken i bergenstacken er NextJS.
-
-<br/>
-
-<h3 id="formål-FRONTEND">Formål</h3>
-Målet er å skape en stil-ren, lettleselig og enkel frontend for å gjennomføre de arbeidsoppgaver som sluttbruker krever.<br>
-Målet er å ha en interaktiv graf hvor bruker lett kan sammenligne flere datapunkter i en linjegraf.<br>
-DVS. Sammenligne bedrifter basert på hvisse kriterier.<br>
-Kriterier som:
-  - Alder på daglig leder.
-  - Kjønn daglig leder.
-  - Faser i interne inkubatorprogrammer.
-  - Bransje.
-<br>
-Datapunktene bruker skal kunne velge mellom er f.eks:
-  - Innskutt egenkapital.
-  - Driftsresultat.
-<br>
-
-<br/>
-
-<h3 id="delmål-FRONTENT">Delmål</h3>
-
-Delmål for å oppnå frontend:
-
-1. Ta i bruk testData json fil, og lag en funksjon som kan vise en og en bedrift i en grafekomponent.
-
-2. Lage en tabell som kan presentere top fem bedrifter i testData.json for gjeldende økonomisk data.
-
-3. Lage en felles Header for alle endepunkt. Headeren skal inneholde en logo, pluss to knapper: Oppdater database, Generer Årsrapport.
-
-4. Lage en filtermeny, som dropdown. som kan filtrere gjennom økonomisk data set i testdata.json.
-
-5. Gjøre tabellen interaktiv, trykke på en bedrift i tabell vises i graf.
-
-6. Koble opp mot API, passe på at graf og tabell fremdeles er interaktiv og kan jobbe med fetched data fra api.
-
-7. Årsrapport Endpoint.
-   - Drag and Drop endpoint som kan ta imot excel filer.
-   - Encrypte og sende excelfiler til backend i en POST til /Årsrapport.
-   - Initialisere en nedlasting av returnert EXCEL fil.
-8. Oppdatere database endpoint.
-   - Drag and drop endpoint for å ta imot excel filer.
-   - Endcrypte og sende filer til backen i en POST til /UpdateDb
-   - Presentere bruker med svar om lagring er ok.
-9. Integrere med MAL.
-   - Integrere med MAL for Azure.
-   - endre endepunkter til å inkludere /:uid/ før endepunkt.
-
-<br/>
-
-<h3 id="framework-FRONTEND">Framework</h3>
-
-Vi har som mål å basere frontend på NextJS.
-
-<br/>
-
-### Komponent Liste
-
-Front-end skal ha følgende funksjonalitet:
-| Endpoint | Funksjonalitet |
-| :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
-| felles alle | <ul>Header:<li>Logo</li><li>Navn</li><li>LINK: Oppdater database</li><li>LINK: Generer årsrapport</li></ul> |
-| /login | <ul>Log in with Microsoft Account: <li>Email(or autocomplete with MSAL components)</li><li>Password(not needed when using MSAL components)</li></ul> |
-| /Query | <ul>graf:<li>x-akse i år</li><li>y-akse bestemt av dataset.</li></ul><ul>funksjonalitetsknapper: <li>Filter, for å filtre i gjeldende dataset.</li><li>Søk, for å gjøre nye søk</li></ul><ul>tabell: <li>Gjeldende Bedrift</li><li>Gjeldene år</li><li>Data</li><li>Exporter dataset</li></ul> |
-| /UpdateDb | <ul>Import Excel: <li>drag and drop file-upload</li><li>Upload button</li><li>user feedback/error</li></ul> |
-| /Årsrapport | <ul>Import Excel: <li>drag and drop file-upload</li><li>Upload button</li><li>user feedback/error</li></ul><ul>Handling av generert excel fil: <li>Forhåndsvisning og/eller automatisk nedlastning</li></ul> |
-
-For å gjennomføre dette trenger vi følgende komponenter:
-
-| Komponent navn | Komponent form    | Komponent Beskrivelse                                      | Children:                       | Finnes i bibliotek                     |
-| :------------- | :---------------- | :--------------------------------------------------------- | :------------------------------ | :------------------------------------- |
-| Header         | `<Header/>`       | Header hoved component                                     | `<Logo/>` `<Link/>`             | Nei                                    |
-| Link           | `<Link/>`         | Håndterer routing internt i siden                          | none                            | Ja, react base component               |
-| Input: radial  | `<Radial/>`       | Radial knapp for veksling mellom funksjonalitet            | none                            | Kanskje                                |
-| Input: Button  | `<Button/>`       | Knapp for generell funksjonalitet.                         | none                            | Kanskje                                |
-| Graf           | `<LineChart/> `   | Graf for å visualisere dataset.                            | General Graph Components        | Ja, hentet fra mui: mui-x-bar-chart    |
-| Tabell         | `<Table/>`        | Tabell for å vise deler av datasett på en strukturert måte | Bygget opp av `<tr>` components | Ja, usikker hvilken som skal bli brukt |
-| AutoComplete   | `<AutoComplete/>` | Komponent som slår sammen dropdown med et søkbart felt.    | Liste eller array av options.   | Ja, hentet fra mui                     |
-
-|
-
-<br/>
-
-### Håndtering av state
-
-<br/>
-
-<h3 id="routing-FRONTEND">Routing</h3>
-
-<br/>
-
-### Authorizering
-
-Authorizering skal samkjøres via MAL og MALJS, Dette må gjøres når siden skal hostes på Azure.
+Authorisering håndteres av MSAL-react på frontend, og ENTRA på Azure. 
 
 <br/>
 
@@ -403,15 +260,15 @@ Liste over endepunkter i API: <br/>
 
 9. excelfullview:
 
-   - genererer excel fil med fullstendig datasett fra database.<br/>
+   - genererer excel fil med fullstendig datasett fra database. Ligger bak entra auth.<br/>
 
 10. updatewithnewdata:
 
-    - håndterer oppdatering av database med ny data fra excelark.<br/>
+    - håndterer oppdatering av database med ny data fra excelark. Ligger bak entra auth.<br/>
 
 11. deletedata:
 
-    - håndterer sletting av data basert på excelfil.<br/>
+    - håndterer sletting av data basert på excelfil. Ligger bak entra auth.<br/>
 
 12. tabledata:
 
@@ -419,19 +276,16 @@ Liste over endepunkter i API: <br/>
 
 13. updateonschedule:
 
-    - WIP endepunkt for å håndtere schedulert oppdatering av data via en Azure Function.<br/>
+    - WIP endepunkt for å håndtere schedulert oppdatering av data via en Azure Function. Ligger bak entra auth.<br/>
 
 <br/>
 
 ### Micro Services
 
-En Azure Funksjon vil kalle updateonschedule for å automatisere innhenting av ny data fra bl.a. PROFF.
+En Azure Funksjon vil kalle updateonschedule for å automatisere innhenting av ny data fra bl.a. PROFF. Er gjort via en webjob på Azure.
 
 <br/>
 
-### Middleware
-
-Vi bruker MAL auth som authorizering middleware, da dette skal hostest og brukes internt på Azure.
 
 <br/>
 
@@ -447,7 +301,7 @@ Databasen skal være lett, ta lite plass. Og håndtere så mye logikk den kan se
 ### Schema
 
 Ferdig oppsett av database ser slik ut:<br>
-![Bilde som viser relasjonsgraf for databasen](https://imgur.com/a/z6nvU25)
+![Bilde som viser relasjonsgraf for databasen](https://i.imgur.com/UXei4yO.png)
 <br/>
 
 <h3 id="funksjoner-DATABASE">Funksjoner</h3>

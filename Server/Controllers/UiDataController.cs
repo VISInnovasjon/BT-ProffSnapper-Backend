@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Server.Context;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using Server.Views;
 namespace Server.Controllers;
 
 
@@ -17,23 +16,30 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> FetchEcoCodes()
+    public async Task<IActionResult> FetchEcoCodes([FromQuery] QueryParamsForLang query)
     {
+        if (!QueryParamsForLang.CheckLangParamOnly(query)) return BadRequest(
+            new
+            {
+                Message = "Missing Language"
+            }
+        );
         try
         {
+            var Lang = query.Language;
             Dictionary<string, string> EcoCodes = [];
             var fetchedCodes = await _context.EcoCodeLookups.ToListAsync();
             if (fetchedCodes == null) return StatusCode(500, new
             {
-                error = ErrorText(500)
+                error = ErrorText(500, Lang)
             });
             string? desc;
             foreach (var item in fetchedCodes)
             {
                 if (item == null) continue;
                 if (item.EcoCode == null) continue;
-                if (string.Equals(GlobalLanguage.Language, "nor")) desc = item.Nor;
-                else if (string.Equals(GlobalLanguage.Language, "en")) desc = item.En;
+                if (string.Equals(Lang, "nor")) desc = item.Nor;
+                else if (string.Equals(Lang, "en")) desc = item.En;
                 else desc = "Missing Language";
                 EcoCodes.Add(
                     item.EcoCode, desc
@@ -58,14 +64,15 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
     {
         if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
         {
-            error = ErrorText(400)
+            error = ErrorText(400, query.Language)
         });
         try
         {
+            var Lang = query.Language;
             int QueryYear = int.Parse(query.Year);
             decimal? AccumulatedManYears = _context.AvgLaborCostPrYears.Where(e => e.Year <= QueryYear && e.TotalManYear != null).Sum(e => e.TotalManYear);
             Dictionary<string, object> Count = new(){
-                {"text", GlobalLanguage.Language switch
+                {"text", Lang switch
                 {
                     "nor" => "Akkumulert Årsverk",
                     "en" => "Accumulated Man-years",
@@ -93,14 +100,15 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
     {
         if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
         {
-            error = ErrorText(400)
+            error = ErrorText(400, query.Language)
         });
         try
         {
+            var Lang = query.Language;
             int Year = int.Parse(query.Year);
             var WorkerCount = _context.AvgLaborCostPrYears.Where(e => e.Year == Year).Select(e => e.TotalManYear).ToList();
             Dictionary<string, object> Count = new(){
-                {"text", GlobalLanguage.Language switch
+                {"text", Lang switch
                 {
                     "nor" => $"Årsverk totalt {query.Year}",
                     "en" => $"Man-years in total {query.Year}",
@@ -128,15 +136,16 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
     {
         if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
         {
-            error = ErrorText(400)
+            error = ErrorText(400, query.Language)
         });
         try
         {
+            var Lang = query.Language;
             var Year = int.Parse(query.Year);
             var TotalTurnover = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == Year || e.Year == Year - 1)).Select(e => e.TotalAccumulated).ToList();
             TotalTurnover.Reverse();
             Dictionary<string, object> Count = new(){
-                {"text", GlobalLanguage.Language switch
+                {"text", Lang switch
                 {
                     "nor" => "Akkumulert Omsetning",
                     "en" => "Accumulated Turnover",
@@ -164,14 +173,15 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
     {
         if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
         {
-            error = ErrorText(400)
+            error = ErrorText(400, query.Language)
         });
         try
         {
+            var Lang = query.Language;
             int Year = int.Parse(query.Year);
             var CompanyCount = _context.CompanyEconomicDataPrYears.Where(e => e.Year == Year && e.EcoValue != null).Select(e => e.CompanyId).Distinct().Count();
             Dictionary<string, object> Count = new(){
-                {"text", GlobalLanguage.Language switch
+                {"text", Lang switch
                 {
                     "nor" => $"Antall bedrifter totalt {query.Year}",
                     "en" => $"Number of companies in total {query.Year}",
@@ -271,19 +281,19 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             });
         }
     }
-    private static string ErrorText(int code)
+    private static string ErrorText(int code, string Lang)
     {
         switch (code)
         {
             case 500:
-                return GlobalLanguage.Language switch
+                return Lang switch
                 {
                     "nor" => "Noe gikk galt med å fetche fra databasen.",
                     "en" => "Something went wrong fetching from the database",
                     _ => "Server error",
                 };
             case 400:
-                return GlobalLanguage.Language switch
+                return Lang switch
                 {
                     "nor" => "Mangler år i query parameter.",
                     "en" => "Missing Year In Query Param.",

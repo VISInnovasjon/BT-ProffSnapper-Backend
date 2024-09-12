@@ -39,6 +39,11 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
                     catch (Exception ex)
                     {
                         writer.WriteLine($"Error passing param to database: {ex.Message}");
+                        if (ex.InnerException != null)
+                        {
+                            writer.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                        }
+
                     }
                 }
                 writer.WriteLine("Insert Complete, updating views.");
@@ -55,9 +60,19 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
             }
             LaborCostFromSSBController ssbController = new(context);
             await ssbController.UpdateLabourCost(writer);
+            try
+            {
+                _context.LastUpdates.Add(new LastUpdate
+                {
+                    UpdateDate = DateTime.Now
+                });
+            }
+            catch (Exception ex)
+            {
+                writer.WriteLine(ex.Message);
+            }
             writer.WriteLine($"Scheduler updated.");
             writer.WriteLine("--------------------------------");
-            DateUpdatedController.LastUpdated = DateTime.Now;
             return Ok();
         }
     }
