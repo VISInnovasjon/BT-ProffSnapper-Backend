@@ -56,6 +56,23 @@ public class GenYearlyReport(BtdbContext context) : ControllerBase
         }
         var now = DateOnly.FromDateTime(DateTime.Now);
         var companyIds = _context.CompanyInfos.Where(p => orgNrs.Contains(p.Orgnumber)).Select(p => p.CompanyId).ToList();
+        if (companyIds.Count == 0 || companyIds == null)
+        {
+            string orgNrString = "";
+            orgNrs.ForEach(nr =>
+            {
+                orgNrString += $"{nr} ";
+            });
+            return NotFound(new
+            {
+                error = GlobalLanguage.Language switch
+                {
+                    "nor" => $"Fant ingen data for {orgNrString}",
+                    "en" => $"Found no data for {orgNrString}",
+                    _ => "Server Error"
+                }
+            });
+        }
         var viewList = _context.FullViews.Where(p => p.Year == DateTime.Now.Year - 1 && orgNrs.Contains(p.Orgnumber)).ToList();
         var announcementList = await _context.CompanyAnnouncements
                                         .Where(p => p.Date.HasValue && p.Date.Value.Year == DateTime.Now.Year - 1 && companyIds.Contains(p.CompanyId))
@@ -99,23 +116,6 @@ public class GenYearlyReport(BtdbContext context) : ControllerBase
             ["Bedrift Info"] = viewList,
             ["Shareholder Info"] = shareTable
         };
-        if (viewList == null || viewList.Count == 0 || tableList == null || tableList.Count == 0)
-        {
-            string orgNrString = "";
-            orgNrs.ForEach(nr =>
-            {
-                orgNrString += $"{nr} ";
-            });
-            return NotFound(new
-            {
-                error = GlobalLanguage.Language switch
-                {
-                    "nor" => $"Fant ingen data for {orgNrString}",
-                    "en" => $"Found no data for {orgNrString}",
-                    _ => "Server Error"
-                }
-            });
-        }
         var memStream = new MemoryStream();
         Console.WriteLine("saving to stream");
         await memStream.SaveAsAsync(ExcelSheets);
