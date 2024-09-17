@@ -7,6 +7,7 @@ namespace Server.Controllers;
 public class LastUpdated(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
+
     [HttpGet("lastupdated")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
