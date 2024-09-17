@@ -6,10 +6,12 @@ using Server.Context;
 using MiniExcelLibs;
 using Server.Views;
 using Server.Util;
+using Microsoft.AspNetCore.Authorization;
 namespace Server.Controllers;
 
 
 [ApiController]
+[Authorize]
 [Route("api")]
 public class InsertDataBasedOnExcel(BtdbContext context) : ControllerBase
 {
