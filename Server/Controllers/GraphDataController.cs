@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Server.Context;
 using Server.Views;
-using Server.Util;
 
 namespace Server.Controllers;
 

@@ -4,8 +4,10 @@ using MiniExcelLibs;
 using Server.Views;
 using Server.Context;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 namespace Server.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api")]
 public class GenYearlyReport(BtdbContext context) : ControllerBase

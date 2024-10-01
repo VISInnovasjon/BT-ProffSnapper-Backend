@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Server.Context;
 using MiniExcelLibs;
 using Microsoft.EntityFrameworkCore;
 using Server.Views;
+using Microsoft.AspNetCore.Authorization;
 namespace Server.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api")]
 public class GetFullModelExcel : ControllerBase
