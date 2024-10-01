@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Server.Context;
 using Server.Controllers;
-using System.Security.Claims;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,7 +15,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 DotEnv.Load();
 GlobalLanguage.Language = "nor";
-Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
 builder.Services.AddDbContext<BtdbContext>(options =>
 {
     options.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}").EnableDetailedErrors();
