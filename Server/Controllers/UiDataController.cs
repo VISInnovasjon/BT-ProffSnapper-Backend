@@ -207,15 +207,21 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchAccumulatedCompanyCount([FromQuery] QueryParamForYear query)
     {
+
+        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
+        {
+            error = ErrorText(400, query.Language)
+        });
+        var year = int.Parse(query.Year);
         var Lang = query.Language;
         try
         {
-            var CompanyCount = _context.CompanyInfos.Select(e => e.CompanyId).Count();
+            var CompanyCount = _context.CompanyInfos.Where(e => _context.CompanyPhaseStatusOverviews.Any(cps => cps.CompanyId == e.CompanyId && cps.Year <= year)).Select(e => e.CompanyId).Count();
             Dictionary<string, object> Count = new(){
                 {"text", Lang switch
                 {
-                    "nor" => $"Antall bedrifter totalt",
-                    "en" => $"Number of companies in total",
+                    "nor" => $"Antall bedrifter totalt {year}",
+                    "en" => $"Number of companies in total {year}",
                     _ => "Missing Language",
                 }},
                 {"number", CompanyCount}
