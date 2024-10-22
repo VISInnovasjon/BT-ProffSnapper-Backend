@@ -29,4 +29,5 @@ public partial class CompanyInfo
     public virtual ICollection<CompanyPhaseStatusOverview> CompanyPhaseStatusOverviews { get; set; } = new List<CompanyPhaseStatusOverview>();
 
     public virtual ICollection<CompanyEconomicDataPrYear> CompanyEconomicDataPrYears { get; set; } = new List<CompanyEconomicDataPrYear>();
+
 }
