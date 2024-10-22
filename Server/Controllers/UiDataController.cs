@@ -179,12 +179,43 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
         {
             var Lang = query.Language;
             int Year = int.Parse(query.Year);
-            var CompanyCount = _context.CompanyEconomicDataPrYears.Where(e => e.Year == Year && e.EcoValue != null).Select(e => e.CompanyId).Distinct().Count();
+            var CompanyCount = _context.CompanyPhaseStatusOverviews.Where(e => e.Year == Year && e.Phase != "Alumni").Select(e => e.CompanyId).Distinct().Count();
             Dictionary<string, object> Count = new(){
                 {"text", Lang switch
                 {
-                    "nor" => $"Antall bedrifter totalt {query.Year}",
-                    "en" => $"Number of companies in total {query.Year}",
+                    "nor" => $"Antall bedrifter i inkubasjon {query.Year}",
+                    "en" => $"Number of companies in incubation {query.Year}",
+                    _ => "Missing Language",
+                }},
+                {"number", CompanyCount}
+            };
+            var JsonString = JsonSerializer.Serialize(Count);
+            return Ok(JsonString);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return StatusCode(500, new
+            {
+                error = ex.Message
+            });
+        }
+    }
+    [HttpGet("accumulatedCompanyCount")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult FetchAccumulatedCompanyCount([FromQuery] QueryParamForYear query)
+    {
+        var Lang = query.Language;
+        try
+        {
+            var CompanyCount = _context.CompanyInfos.Select(e => e.CompanyId).Count();
+            Dictionary<string, object> Count = new(){
+                {"text", Lang switch
+                {
+                    "nor" => $"Antall bedrifter totalt",
+                    "en" => $"Number of companies in total",
                     _ => "Missing Language",
                 }},
                 {"number", CompanyCount}
