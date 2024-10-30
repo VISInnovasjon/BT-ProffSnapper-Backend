@@ -56,26 +56,33 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             });
         }
     }
-    [HttpGet("workyear")]
+    [HttpGet("accworkyear")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchWorkYear([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
-        {
-            error = ErrorText(400, query.Language)
-        });
+
         try
         {
-            var Lang = query.Language;
-            int QueryYear = int.Parse(query.Year);
-            decimal? AccumulatedManYears = _context.AvgLaborCostPrYears.Where(e => e.Year <= QueryYear && e.TotalManYear != null).Sum(e => e.TotalManYear);
+            QueryParamForYear.ExtractedParams queryData;
+            try
+            {
+                queryData = query.ExtractParams();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            var Lang = queryData.Language;
+            int EndYear = queryData.EndYear;
+            int StartYear = queryData.StartYear;
+            decimal? AccumulatedManYears = _context.AvgLaborCostPrYears.Where(e => e.Year <= EndYear && e.Year >= StartYear && e.TotalManYear != null).Sum(e => e.TotalManYear);
             Dictionary<string, object> Count = new(){
                 {"text", Lang switch
                 {
-                    "nor" => "Akkumulert Årsverk",
-                    "en" => "Accumulated Man-years",
+                    "nor" => $"Akkumulert Årsverk mellom {StartYear} og {EndYear}",
+                    "en" => $"Accumulated Man-years between {StartYear} and {EndYear}",
                     _ => "Missing Language",
                 }},
                 {"number", (int)AccumulatedManYears}
@@ -92,26 +99,31 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             });
         }
     }
-    [HttpGet("workercount")]
+    [HttpGet("yearlyworkyear")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchWorkerCount([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
-        {
-            error = ErrorText(400, query.Language)
-        });
         try
         {
-            var Lang = query.Language;
-            int Year = int.Parse(query.Year);
-            var WorkerCount = _context.AvgLaborCostPrYears.Where(e => e.Year == Year).Select(e => e.TotalManYear).ToList();
+            QueryParamForYear.ExtractedParams queryData;
+            try
+            {
+                queryData = query.ExtractParams();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            var Lang = queryData.Language;
+            int EndYear = queryData.EndYear;
+            var WorkerCount = _context.AvgLaborCostPrYears.Where(e => e.Year == EndYear).Select(e => e.TotalManYear).ToList();
             Dictionary<string, object> Count = new(){
                 {"text", Lang switch
                 {
-                    "nor" => $"Årsverk totalt {query.Year}",
-                    "en" => $"Man-years in total {query.Year}",
+                    "nor" => $"Årsverk totalt {EndYear}",
+                    "en" => $"Man-years in total {EndYear}",
                     _ => "Missing Language",
                 }},
                 {"number", (int)WorkerCount[0]}
@@ -128,30 +140,35 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             });
         }
     }
-    [HttpGet("totalturnover")]
+    [HttpGet("accturnover")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchTotalTurnover([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
-        {
-            error = ErrorText(400, query.Language)
-        });
         try
         {
-            var Lang = query.Language;
-            var Year = int.Parse(query.Year);
-            var TotalTurnover = _context.AverageValues.Where(e => e.EcoCode == "SDI" && (e.Year == Year || e.Year == Year - 1)).Select(e => e.TotalAccumulated).ToList();
-            TotalTurnover.Reverse();
+            QueryParamForYear.ExtractedParams queryData;
+            try
+            {
+                queryData = query.ExtractParams();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            var Lang = queryData.Language;
+            int EndYear = queryData.EndYear;
+            int StartYear = queryData.StartYear;
+            var TotalTurnover = (int)_context.CompanyEconomicDataPrYears.Where(e => e.EcoCode == "SDI" && e.Year >= StartYear && e.Year <= EndYear).Sum(e => e.EcoValue);
             Dictionary<string, object> Count = new(){
                 {"text", Lang switch
                 {
-                    "nor" => "Akkumulert Omsetning",
-                    "en" => "Accumulated Turnover",
+                    "nor" => $"Akkumulert Omsetning mellom {StartYear} og {EndYear}",
+                    "en" => $"Accumulated Turnover between {StartYear} and {EndYear}",
                     _ => "Missing Language",
                 }},
-                {"number", TotalTurnover[0]}
+                {"number", TotalTurnover}
             };
             var JsonString = JsonSerializer.Serialize(Count);
             return Ok(JsonString);
@@ -165,26 +182,31 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             });
         }
     }
-    [HttpGet("companycount")]
+    [HttpGet("yearlycompanycount")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchCompanyCount([FromQuery] QueryParamForYear query)
     {
-        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
-        {
-            error = ErrorText(400, query.Language)
-        });
         try
         {
-            var Lang = query.Language;
-            int Year = int.Parse(query.Year);
-            var CompanyCount = _context.CompanyPhaseStatusOverviews.Where(e => e.Year == Year && e.Phase != "Alumni").Select(e => e.CompanyId).Distinct().Count();
+            QueryParamForYear.ExtractedParams queryData;
+            try
+            {
+                queryData = query.ExtractParams();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            var Lang = queryData.Language;
+            int QueryYear = queryData.EndYear;
+            var CompanyCount = _context.CompanyPhaseStatusOverviews.Where(e => e.Year == QueryYear && e.Phase != "Alumni").Select(e => e.CompanyId).Distinct().Count();
             Dictionary<string, object> Count = new(){
                 {"text", Lang switch
                 {
-                    "nor" => $"Antall bedrifter i inkubasjon {query.Year}",
-                    "en" => $"Number of companies in incubation {query.Year}",
+                    "nor" => $"Antall bedrifter i inkubasjon {query.EndYear}",
+                    "en" => $"Number of companies in incubation {query.EndYear}",
                     _ => "Missing Language",
                 }},
                 {"number", CompanyCount}
@@ -201,27 +223,33 @@ public class UiDataHandler(BtdbContext context) : ControllerBase
             });
         }
     }
-    [HttpGet("accumulatedCompanyCount")]
+    [HttpGet("acccompanycount")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public IActionResult FetchAccumulatedCompanyCount([FromQuery] QueryParamForYear query)
     {
 
-        if (!QueryParamForYear.CheckYearParam(query)) return BadRequest(new
-        {
-            error = ErrorText(400, query.Language)
-        });
-        var year = int.Parse(query.Year);
-        var Lang = query.Language;
         try
         {
-            var CompanyCount = _context.CompanyInfos.Where(e => _context.CompanyPhaseStatusOverviews.Any(cps => cps.CompanyId == e.CompanyId && cps.Year <= year)).Select(e => e.CompanyId).Count();
+            QueryParamForYear.ExtractedParams queryData;
+            try
+            {
+                queryData = query.ExtractParams();
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            var Lang = queryData.Language;
+            int StartYear = queryData.StartYear;
+            int EndYear = queryData.EndYear;
+            var CompanyCount = _context.CompanyInfos.Where(e => _context.CompanyPhaseStatusOverviews.Any(cps => cps.CompanyId == e.CompanyId && cps.Year <= EndYear && cps.Year >= StartYear)).Select(e => e.CompanyId).Count();
             Dictionary<string, object> Count = new(){
                 {"text", Lang switch
                 {
-                    "nor" => $"Antall bedrifter totalt {year}",
-                    "en" => $"Number of companies in total {year}",
+                    "nor" => $"Antall bedrifter totalt mellom {StartYear} og {EndYear}",
+                    "en" => $"Number of companies in total between {StartYear} and {EndYear}",
                     _ => "Missing Language",
                 }},
                 {"number", CompanyCount}
