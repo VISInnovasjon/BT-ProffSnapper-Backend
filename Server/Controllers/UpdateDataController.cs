@@ -49,6 +49,7 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
                         {
                             writer.WriteLine($"Inner Exception: {ex.InnerException.Message}");
                         }
+
                     }
                 }
                 writer.WriteLine("Insert Complete, updating views.");
