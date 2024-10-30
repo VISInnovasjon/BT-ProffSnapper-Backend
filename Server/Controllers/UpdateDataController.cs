@@ -13,12 +13,18 @@ namespace Server.Controllers;
 public class UpdateHandler(BtdbContext context) : ControllerBase
 {
     private readonly BtdbContext _context = context;
+    private readonly string _ApiKey = Environment.GetEnvironmentVariable("X_API_KEY");
 
     [HttpGet("scheduleupdate")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> UpdateSchedule()
     {
+        var apiKey = Request.Headers["X-API-Key"];
+        if (_ApiKey != apiKey)
+        {
+            return Unauthorized();
+        }
         var now = DateTime.Now.ToLongDateString();
         string filePath = $"./UpdateReport{now}.txt";
         List<int> orgNrList = context.CompanyInfos.Where(b => b.Liquidated != true).Select(b => b.Orgnumber).ToList();

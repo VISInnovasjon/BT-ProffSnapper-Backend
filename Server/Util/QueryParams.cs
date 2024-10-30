@@ -21,12 +21,23 @@ public class QueryParamsForLang
 }
 public class QueryParamForYear
 {
-    public string? Year { get; set; }
+    private readonly int _currentYear = DateTime.Now.Year;
+    public string? EndYear { get; set; }
+    public string? StartYear { get; set; }
     public string? Language { get; set; }
-    public static bool CheckYearParam(QueryParamForYear query)
+    public ExtractedParams ExtractParams()
     {
-        return !string.IsNullOrEmpty(query.Year) && !string.IsNullOrEmpty(query.Language) && (
-            string.Equals(query.Language, "nor") || string.Equals(query.Language, "en")
-        );
+        return new ExtractedParams
+        {
+            EndYear = string.IsNullOrEmpty(EndYear) ? _currentYear : int.Parse(EndYear),
+            StartYear = string.IsNullOrEmpty(StartYear) ? 2014 : int.Parse(StartYear),
+            Language = string.IsNullOrEmpty(Language) ? "nor" : Language.ToString()
+        };
+    }
+    public class ExtractedParams
+    {
+        public int EndYear { get; set; }
+        public int StartYear { get; set; }
+        public required string Language { get; set; }
     }
 }
