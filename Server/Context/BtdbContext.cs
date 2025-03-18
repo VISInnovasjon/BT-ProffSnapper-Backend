@@ -139,6 +139,7 @@ public partial class BtdbContext : DbContext
                 .HasMaxLength(255)
                 .HasColumnName("name");
             entity.Property(e => e.NumberOfShares)
+                .HasConversion(v => Math.Round((decimal)v, 2), v => v)
                 .HasPrecision(12, 4)
                 .HasColumnName("number_of_shares");
             entity.Property(e => e.ShareholdeCompanyId)
@@ -228,6 +229,7 @@ public partial class BtdbContext : DbContext
                 .HasDefaultValueSql("(0)::numeric")
                 .HasColumnName("accumulated");
             entity.Property(e => e.EcoValue)
+                .HasConversion(v => Math.Round((decimal)v, 4), v => v)
                 .HasPrecision(16, 4)
                 .HasDefaultValueSql("NULL::numeric")
                 .HasColumnName("eco_value");

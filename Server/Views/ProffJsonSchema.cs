@@ -7,12 +7,12 @@ using Server.Context;
 
 
 
-public class EcoCodes
+public abstract class EcoCodes
 {
     public required string Code { get; set; }
     public required string Amount { get; set; }
 }
-public class AccountsInfo
+public abstract class AccountsInfo
 {
     public string? AccIncompleteCode { get; set; }
     public string? AccIncompleteDesc { get; set; }
@@ -20,12 +20,12 @@ public class AccountsInfo
     public required List<EcoCodes> Accounts { get; set; }
 
 }
-public class WebInfo
+public abstract class WebInfo
 {
     public string? Href { get; set; }
     public string? Rel { get; set; }
 }
-public class ShareHolderInfo
+public abstract class ShareHolderInfo
 {
     public string? CompanyId { get; set; }
     public string? FirstName { get; set; }
@@ -36,25 +36,25 @@ public class ShareHolderInfo
     public WebInfo? Details { get; set; }
 }
 
-public class Announcement
+public abstract class Announcement
 {
     public required string Id { get; set; }
     public required string Date { get; set; }
     public required string Text { get; set; }
     public required string Type { get; set; }
 }
-public class LocationInfo
+public abstract class LocationInfo
 {
     public required string CountryPart { get; set; }
     public required string County { get; set; }
     public required string Municipality { get; set; }
 }
-public class PostalInfo
+public abstract class PostalInfo
 {
     public required string AddressLine { get; set; }
     public required string ZipCode { get; set; }
 }
-public class PersonRole
+public abstract class PersonRole
 {
     public required string BirthDate { get; set; }
     public required string Name { get; set; }
@@ -83,10 +83,9 @@ public class ReturnStructure
     public required PostalInfo PostalAddress { get; set; }
     public void InsertIntoDatabase(BtdbContext context)
     {
-        int bedriftId;
-        bedriftId = context.CompanyInfos.Single(b => b.Orgnumber == int.Parse(CompanyId)).CompanyId;
-        bool result = false;
-        if (LiquidationDate != null && !string.IsNullOrEmpty(LiquidationDate)) result = true;
+        
+        var bedriftId = context.CompanyInfos.Single(b => b.Orgnumber == int.Parse(CompanyId)).CompanyId;
+        var result = false || LiquidationDate != null && !string.IsNullOrEmpty(LiquidationDate);
         new UpdateNameStructure(
                     Name, result, PreviousNames?.Count == 0 ? null : PreviousNames
                 ).CraftDbValues(context, bedriftId);
@@ -102,12 +101,7 @@ public class ReturnStructure
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
         }
         List<CompanyAnnouncement> annList = [];
-        foreach (var announcement in Announcements)
-        {
-            annList.Add(new InsertAnnouncementStructure(
-                announcement
-            ).CraftDbValues(bedriftId));
-        }
+        annList.AddRange(Announcements.Select(announcement => new InsertAnnouncementStructure(announcement).CraftDbValues(bedriftId)));
         try
         {
             foreach (var entity in annList)
@@ -119,11 +113,10 @@ public class ReturnStructure
         {
             Console.WriteLine($"DbUpdateException occured: {ex.Message}");
         }
-        foreach (var account in CompanyAccounts)
+        foreach (var ecoList in CompanyAccounts.Select(account => new EcoDataStructure(
+                     account
+                 ).CraftDbValues(bedriftId)))
         {
-            var ecoList = new EcoDataStructure(
-                account
-            ).CraftDbValues(bedriftId);
             try
             {
                 foreach (var entity in ecoList)
@@ -136,7 +129,7 @@ public class ReturnStructure
                 Console.WriteLine($"DbUpdateException occured: {ex.Message}");
             }
         }
-        List<CompanyLeaderOverview> leaderList = [];
+
         Dictionary<string, PersonRole> valuePairs = [];
         foreach (var person in PersonRoles)
         {
@@ -159,9 +152,9 @@ public class ReturnStructure
                 Console.WriteLine($"Update error occured: {ex.Message}");
             }
         }
-
-        List<CompanyShareholderInfo> shareList = [];
-        if (Shareholders != null) foreach (var shareholder in Shareholders)
+        if (Shareholders == null) return;
+        {
+            foreach (var shareholder in Shareholders)
             {
                 try
                 {
@@ -174,6 +167,7 @@ public class ReturnStructure
                     Console.WriteLine($"Update failed: {ex.Message}");
                 }
             }
+        }
     }
 }
 
@@ -183,29 +177,19 @@ public class EcoDataStructure
     public Dictionary<string, decimal> CodeValuePairs { get; set; }
     public EcoDataStructure(AccountsInfo accounts)
     {
-        bool ParsingNr;
-        ParsingNr = int.TryParse(accounts.Year, out int TempOutput);
-        if (!ParsingNr) throw new ArgumentException($"Could not parse {accounts.Year} to an integer.");
-        InputYear = TempOutput;
+        var parsingNr = int.TryParse(accounts.Year, result: out var tempOutput);
+        if (!parsingNr) throw new ArgumentException($"Could not parse {accounts.Year} to an integer.");
+        InputYear = tempOutput;
         CodeValuePairs = [];
         foreach (var account in accounts.Accounts)
-            CodeValuePairs[account.Code] = decimal.Parse(account.Amount);
+            CodeValuePairs[account.Code] = decimal.TryParse(account.Amount, out var result) ? Math.Round(result, 4) : 0;
     }
     public List<CompanyEconomicDataPrYear> CraftDbValues(int bedriftId)
     {
         try
         {
             List<CompanyEconomicDataPrYear> dataList = [];
-            foreach (var pair in CodeValuePairs)
-            {
-                dataList.Add(new CompanyEconomicDataPrYear
-                {
-                    CompanyId = bedriftId,
-                    EcoCode = pair.Key,
-                    EcoValue = pair.Value,
-                    Year = InputYear
-                });
-            }
+            dataList.AddRange(CodeValuePairs.Select(pair => new CompanyEconomicDataPrYear { CompanyId = bedriftId, EcoCode = pair.Key, EcoValue = pair.Value, Year = InputYear }));
             return dataList;
         }
         catch (Exception ex)
@@ -250,11 +234,10 @@ public class InsertShareholderStructure
     public string? ShareholderCId { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
-    public InsertShareholderStructure(string UpdatedYear, ShareHolderInfo info)
+    public InsertShareholderStructure(string updatedYear, ShareHolderInfo info)
     {
-        bool parseSuccess;
-        parseSuccess = int.TryParse(UpdatedYear, out int output);
-        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {UpdatedYear} to integer");
+        var parseSuccess = int.TryParse(updatedYear, out int output);
+        if (!parseSuccess) throw new ArgumentException($"Couldn't parse {updatedYear} to integer");
         InputYear = output;
 
         InputNumberOfShares = info.NumberOfShares;

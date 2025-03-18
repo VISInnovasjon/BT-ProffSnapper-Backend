@@ -8,7 +8,11 @@ public partial class CompanyEconomicDataPrYear
 
     public int Year { get; set; }
 
-    public decimal? EcoValue { get; set; }
+    public decimal? EcoValue
+    {
+        get;
+        set;
+    }
 
     public string EcoCode { get; set; } = null!;
 
