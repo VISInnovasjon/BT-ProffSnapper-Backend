@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
+using Util;
 
 namespace Server.Context;
 
@@ -39,6 +40,8 @@ public partial class BtdbContext : DbContext
     public virtual DbSet<FullView> FullViews { get; set; }
     public virtual DbSet<AvgLaborCostPrYear> AvgLaborCostPrYears { get; set; }
     public virtual DbSet<LastUpdate> LastUpdates { get; set; }
+    
+    public virtual DbSet<RawDataFromProff> RawDataFromProff { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.UseNpgsql($"Host={Environment.GetEnvironmentVariable("DATABASE_HOST")};Username={Environment.GetEnvironmentVariable("DATABASE_USER")};Password={Environment.GetEnvironmentVariable("DATABASE_PASSWORD")};Database={Environment.GetEnvironmentVariable("DATABASE_NAME")}");
@@ -359,6 +362,14 @@ public partial class BtdbContext : DbContext
             entity.Property(e => e.TitleCode).HasColumnName("title_code");
             entity.Property(e => e.Year).HasColumnName("year");
             entity.Property(e => e.ZipCode).HasColumnName("zip_code");
+        });
+
+        modelBuilder.Entity<RawDataFromProff>(entity =>
+        {
+            entity.ToTable("raw_data_from_proff").HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.RawData).HasColumnName("rawdata").HasColumnType("jsonb");
+            entity.Property(e => e.UpdateDate).HasColumnName("updatedate").HasColumnType("timestamp without time zone");
         });
 
 

@@ -4,31 +4,32 @@ using Microsoft.EntityFrameworkCore;
 using Server.Context;
 public class UpsertHandler
 {
-    /// <summary>
-    /// Creates a lamdafunction to find and update values in a potential duplicate tracked by EF.
-    /// This spesifically only works when checking towards the Database, not on EF itself.
-    /// </summary>
-    ///<param name="context">
-    ///Database Context
-    ///</param>
-    ///<param name="entity">
-    ///An entity that potentially caused a DbUpdateException
-    ///</param>
-    ///<param name="primaryKeys">
-    ///A list of property names representing the primary keys of the entity in EF
-    ///</param>
-    ///<param name="equalityKeys">
-    ///A list of property names representing the keys that should potentially be updated in an existing entity
-    ///</param>
-    ///<exception cref="NullReferenceException">
-    ///If it fails to create a a Lamda predicate based on the primary keys in question on class T
-    ///</exception>
-    public static void UpsertEntity<T>(BtdbContext context, T entity, bool? detachOnly = false) where T : class
+    ///  <summary>
+    ///  Creates a lamdafunction to find and update values in a potential duplicate tracked by EF.
+    ///  This spesifically only works when checking towards the Database, not on EF itself.
+    ///  </summary>
+    /// <param name="context">
+    /// Database Context
+    /// </param>
+    /// <param name="entity">
+    /// An entity that potentially caused a DbUpdateException
+    /// </param>
+    /// <param name="primaryKeys">
+    /// A list of property names representing the primary keys of the entity in EF
+    /// </param>
+    /// <param name="equalityKeys">
+    /// A list of property names representing the keys that should potentially be updated in an existing entity
+    /// </param>
+    ///  <param name="detachOnly"></param>
+    ///  <exception cref="NullReferenceException">
+    /// If it fails to create a a Lamda predicate based on the primary keys in question on class T
+    /// </exception>
+    public static async Task UpsertEntity<T>(BtdbContext context, T entity, bool? detachOnly = false) where T : class
     {
         context.Entry(entity).State = EntityState.Detached;
         if (detachOnly == true) return;
         var entityType = context.Model.FindEntityType(typeof(T)) ?? throw new NullReferenceException($"Could not find an entity of type {entity}");
-        var primaryKeys = entityType.FindPrimaryKey().Properties.Select(p => p.Name).ToList() ?? throw new NullReferenceException($"Could not find the primary keys of type {entity}");
+        var primaryKeys = entityType.FindPrimaryKey()?.Properties.Select(p => p.Name).ToList() ?? throw new NullReferenceException($"Could not find the primary keys of type {entity}");
         var equalityKeys = entityType.GetProperties().Where(p => !primaryKeys.Contains(p.Name)).Select(p => p.Name).ToList();
         var parameter = Expression.Parameter(typeof(T), "x");
         Expression? predicate = null;
@@ -36,21 +37,21 @@ public class UpsertHandler
         {
             var property = Expression.Property(parameter, key);
             var propertyInfo = typeof(T).GetProperty(key);
-            var propertyType = propertyInfo.PropertyType;
-            var value = Expression.Constant(propertyInfo.GetValue(entity));
+            var propertyType = propertyInfo?.PropertyType;
+            var value = Expression.Constant(propertyInfo?.GetValue(entity));
             value ??= Expression.Constant(null);
             var equals = Expression.Equal(property, value);
             predicate = predicate == null ? equals : Expression.AndAlso(predicate, equals);
         }
         if (predicate == null) throw new NullReferenceException("Could not build predicate for the lamda function.");
         var lamda = Expression.Lambda<Func<T, bool>>(predicate, parameter);
-        var existingEntity = context.Set<T>().SingleOrDefault(lamda);
+        var existingEntity = await context.Set<T>().SingleOrDefaultAsync(lamda);
         if (existingEntity == null)
         {
             try
             {
-                context.Set<T>().Add(entity);
-                context.SaveChanges();
+                await context.Set<T>().AddAsync(entity);
+                await context.SaveChangesAsync();
                 return;
             }
             catch (DbUpdateException ex)
@@ -78,7 +79,7 @@ public class UpsertHandler
         }
         try
         {
-            context.SaveChanges();
+            await context.SaveChangesAsync();
             return;
         }
         catch (DbUpdateException ex)

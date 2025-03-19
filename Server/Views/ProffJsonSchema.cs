@@ -1,4 +1,6 @@
 
+using System.Text.Json;
+
 namespace Server.Views;
 using Microsoft.EntityFrameworkCore;
 using Server.Util;
@@ -81,7 +83,17 @@ public class ReturnStructure
     public List<ShareHolderInfo>? Shareholders { get; set; }
     public required LocationInfo Location { get; set; }
     public required PostalInfo PostalAddress { get; set; }
-    public void InsertIntoDatabase(BtdbContext context)
+
+    public RawDataFromProff ConvertToRawData()
+    {
+        var jsonFormat = JsonSerializer.Serialize(this);
+        var RawData = new RawDataFromProff()
+        {
+            RawData = jsonFormat,
+        };
+        return RawData;
+    }
+    public async Task InsertIntoDatabase(BtdbContext context)
     {
         
         var bedriftId = context.CompanyInfos.Single(b => b.Orgnumber == int.Parse(CompanyId)).CompanyId;
@@ -94,7 +106,7 @@ public class ReturnStructure
         ).CraftDbValues(bedriftId);
         try
         {
-            UpsertHandler.UpsertEntity(context, genInfo);
+            await UpsertHandler.UpsertEntity(context, genInfo);
         }
         catch (DbUpdateException ex)
         {
@@ -106,7 +118,7 @@ public class ReturnStructure
         {
             foreach (var entity in annList)
             {
-                UpsertHandler.UpsertEntity(context, entity);
+                await UpsertHandler.UpsertEntity(context, entity);
             }
         }
         catch (DbUpdateException ex)
@@ -121,7 +133,7 @@ public class ReturnStructure
             {
                 foreach (var entity in ecoList)
                 {
-                    UpsertHandler.UpsertEntity(context, entity);
+                    await UpsertHandler.UpsertEntity(context, entity);
                 };
             }
             catch (DbUpdateException ex)
@@ -143,7 +155,7 @@ public class ReturnStructure
         {
             try
             {
-                UpsertHandler.UpsertEntity(context, new CompanyLeaderStructure(
+                await UpsertHandler.UpsertEntity(context, new CompanyLeaderStructure(
                 ShareholdersLastUpdatedDate, pair.Value
             ).CraftDbValues(bedriftId));
             }
@@ -158,7 +170,7 @@ public class ReturnStructure
             {
                 try
                 {
-                    UpsertHandler.UpsertEntity(context, new InsertShareholderStructure(
+                    await UpsertHandler.UpsertEntity(context, new InsertShareholderStructure(
                         ShareholdersLastUpdatedDate, shareholder
                     ).CraftDbValues(bedriftId));
                 }

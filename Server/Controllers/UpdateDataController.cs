@@ -12,75 +12,73 @@ namespace Server.Controllers;
 [Route("api")]
 public class UpdateHandler(BtdbContext context) : ControllerBase
 {
-    private readonly BtdbContext _context = context;
-
     [HttpGet("scheduleupdate")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateSchedule()
+    public async Task<IActionResult> ScheduleUpdate()
     {
         var now = DateTime.Now.ToLongDateString();
-        string filePath = $"./UpdateReport{now}.txt";
-        List<int> orgNrList = context.CompanyInfos.Where(b => b.Liquidated != true).Select(b => b.Orgnumber).ToList();
+        var filePath = $"./UpdateReport{now}.txt";
+        var orgNrList = context.CompanyInfos.Where(b => b.Liquidated != true).Select(b => b.Orgnumber).ToList();
         List<ReturnStructure> fetchedData = [];
-        using (StreamWriter writer = new StreamWriter(filePath, true))
+        await using var writer = new StreamWriter(filePath, true);
+        if (orgNrList.Count > 0) fetchedData = await FetchProffData.GetDatabaseValues(orgNrList, writer);
+        var rawData = fetchedData.Select(data => data.ConvertToRawData());
+        await context.RawDataFromProff.AddRangeAsync(rawData);
+
+        if (fetchedData.Count > 0)
         {
-            if (orgNrList.Count > 0) fetchedData = await FetchProffData.GetDatabaseValues(orgNrList, writer);
-
-            if (fetchedData.Count > 0)
+            foreach (var param in fetchedData)
             {
-                foreach (var param in fetchedData)
-                {
-                    writer.WriteLine($"Adding {param.Name} to DB");
-                    try
-                    {
-                        param.InsertIntoDatabase(context);
-                    }
-                    catch (Exception ex)
-                    {
-                        writer.WriteLine($"Error passing param to database: {ex.Message}");
-                        if (ex.InnerException != null)
-                        {
-                            writer.WriteLine($"Inner Exception: {ex.InnerException.Message}");
-                        }
-
-                    }
-                }
-                writer.WriteLine("Insert Complete, updating views.");
+                await writer.WriteLineAsync($"Adding {param.Name} to DB");
                 try
                 {
-                    context.Database.ExecuteSqlRaw("CALL update_delta()");
-                    context.Database.ExecuteSqlRaw("CALL update_views()");
-
+                    await param.InsertIntoDatabase(context);
                 }
                 catch (Exception ex)
                 {
-                    writer.WriteLine($"Error updating views: {ex.Message}");
+                    await writer.WriteLineAsync($"Error passing param to database: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        await writer.WriteLineAsync($"Inner Exception: {ex.InnerException.Message}");
+                    }
+
                 }
             }
-            LaborCostFromSSBController ssbController = new(context);
-            await ssbController.UpdateLabourCost(writer);
+            await writer.WriteLineAsync("Insert Complete, updating views.");
             try
             {
-                _context.LastUpdates.Add(new LastUpdate
-                {
-                    UpdateDate = DateTime.Now
-                });
+                await context.Database.ExecuteSqlRawAsync("CALL update_delta()");
+                await context.Database.ExecuteSqlRawAsync("CALL update_views()");
+
             }
             catch (Exception ex)
             {
-                writer.WriteLine(ex.Message);
+                await writer.WriteLineAsync($"Error updating views: {ex.Message}");
             }
-            writer.WriteLine($"Scheduler updated.");
-            writer.WriteLine("--------------------------------");
-            return Ok();
         }
+        LaborCostFromSSBController ssbController = new(context);
+        await ssbController.UpdateLabourCost(writer);
+        try
+        {
+            context.LastUpdates.Add(new LastUpdate
+            {
+                UpdateDate = DateTime.Now
+            });
+        }
+        catch (Exception ex)
+        {
+            await writer.WriteLineAsync(ex.Message);
+        }
+        await writer.WriteLineAsync($"Scheduler updated.");
+        await writer.WriteLineAsync("--------------------------------");
+        return Ok();
     }
     [HttpPost("updateecocode")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-    public async Task<IActionResult> UpdateEcoCodes([FromForm] IFormFile file)
+    public async Task<IActionResult> UpdateEcoCode([FromForm] IFormFile? file)
     {
         if (file == null || file.Length == 0)
         {
@@ -89,7 +87,7 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
         var extention = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (extention != "json") return BadRequest("Please submit a JSON file.");
         Dictionary<string, string>? ecoCodes;
-        using (var stream = file.OpenReadStream())
+        await using (var stream = file.OpenReadStream())
         {
             ecoCodes = await JsonSerializer.DeserializeAsync<Dictionary<string, string>>(stream);
         }
@@ -102,7 +100,7 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
             foreach (var pair in ecoCodes)
             {
 
-                _context.EcoCodeLookups.Add(
+                context.EcoCodeLookups.Add(
                     new EcoKodeLookup()
                     {
                         EcoCode = pair.Key,
@@ -110,7 +108,7 @@ public class UpdateHandler(BtdbContext context) : ControllerBase
                     }
                 );
             }
-            _context.SaveChanges();
+            await context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
